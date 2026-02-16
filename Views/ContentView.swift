@@ -22,6 +22,12 @@ struct ContentView: View {
                             insertion: .opacity,
                             removal: .scale(scale: 1.2).combined(with: .opacity)
                         ))
+                case .levelMap:
+                    LevelMapView()
+                        .transition(.asymmetric(
+                            insertion: .opacity,
+                            removal: .opacity
+                        ))
                 case .lesson(_):
                     LessonView()
                         .transition(.move(edge: .bottom).combined(with: .opacity))

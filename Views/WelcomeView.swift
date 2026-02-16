@@ -2,93 +2,106 @@ import SwiftUI
 
 struct WelcomeView: View {
     @ObservedObject var gameManager = GameManager.shared
-    @State private var animate = false
-    @State private var isRevealing = false
+    @State private var showText = false
+    @State private var rotate = false
     
     var body: some View {
         ZStack {
-            Color(red: 0.05, green: 0.05, blue: 0.1).ignoresSafeArea()
-            
-            BlueprintGridView()
-                .opacity(isRevealing ? 0 : 1)
-            
-            VStack(spacing: 40) {
-                Spacer()
-                
-                // Logo / Title
-                VStack(spacing: 15) {
-                    ZStack {
-                        Image(systemName: "square.3.layers.3d.down.right")
-                            .font(.system(size: 80))
-                            .foregroundColor(.cyan)
-                            .shadow(color: .cyan, radius: 20)
-                        
-                        // Architectural Braces
-                        Image(systemName: "angle")
-                            .font(.system(size: 100))
-                            .foregroundColor(.cyan.opacity(0.3))
-                            .rotationEffect(.degrees(-45))
+            // Radial Background
+            RadialGradient(
+                colors: [.voidBlack.opacity(0.8), .black],
+                center: .center,
+                startRadius: 50,
+                endRadius: 400
+            )
+            .ignoresSafeArea()
+            .overlay(
+                // Scanlines
+                VStack(spacing: 4) {
+                    ForEach(0..<200) { _ in
+                        Rectangle()
+                            .fill(Color.tacticalAmber.opacity(0.05))
+                            .frame(height: 1)
+                        Spacer()
                     }
-                    .scaleEffect(animate ? 1.05 : 1.0)
-                    .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: animate)
-                    
-                    Text("ARchitect")
-                        .font(.system(size: 60, weight: .black))
-                        .foregroundStyle(LinearGradient(colors: [.cyan, .white], startPoint: .top, endPoint: .bottom))
-                        .shadow(color: .cyan.opacity(0.5), radius: 10, x: 0, y: 5)
-                        .kerning(4)
-                    
-                    Text("DESIGN • BUILD • LEARN")
-                        .font(.caption.bold())
-                        .foregroundColor(.cyan.opacity(0.7))
-                        .kerning(2)
-                    
-                    Rectangle()
-                        .fill(Color.cyan.opacity(0.5))
-                        .frame(width: 150, height: 1)
                 }
-                .opacity(isRevealing ? 0 : 1)
-                .offset(y: isRevealing ? -50 : 0)
-                
+                .ignoresSafeArea()
+            )
+            
+            VStack(spacing: 60) {
                 Spacer()
                 
-                // Start Button
-                Button {
-                    withAnimation(.easeInOut(duration: 0.8)) {
-                        isRevealing = true
-                    }
+                // 3D Visual Logo
+                ZStack {
+                    Circle()
+                        .stroke(Color.tacticalAmber.opacity(0.3), lineWidth: 2)
+                        .frame(width: 200, height: 200)
                     
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                        gameManager.startLesson(1)
-                    }
-                } label: {
-                    HStack {
-                        Text("INITIALIZE PROTOCOL")
-                            .font(.headline.bold())
-                        Image(systemName: "terminal")
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        ZStack {
-                            Color.cyan.opacity(0.2)
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.cyan, lineWidth: 2)
-                        }
-                    )
-                    .foregroundColor(.cyan)
-                    .cornerRadius(10)
+                    Circle()
+                        .trim(from: 0, to: 0.7)
+                        .stroke(Color.tacticalAmber, style: StrokeStyle(lineWidth: 4, lineCap: .round, dash: [10, 10]))
+                        .frame(width: 200, height: 200)
+                        .rotationEffect(.degrees(rotate ? 360 : 0))
+                        .animation(.linear(duration: 10).repeatForever(autoreverses: false), value: rotate)
+                    
+                    Image(systemName: "cube.transparent.fill")
+                        .font(.system(size: 80))
+                        .foregroundColor(.white)
+                        .shadow(color: .tacticalAmber, radius: 20)
                 }
-                .padding(.horizontal, 60)
-                .opacity(isRevealing ? 0 : 1)
-                .scaleEffect(isRevealing ? 0.9 : 1.0)
+                .onAppear { rotate = true }
+                
+                // Title
+                VStack(spacing: 10) {
+                    Text("ARCHITECT")
+                        .font(.tacticalHeader(size: 60))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.white, .tacticalAmber],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: .tacticalAmber.opacity(0.5), radius: 10)
+                        .kerning(5)
+                    
+                    Text("BUILDER SIMULATOR v1.0")
+                        .font(.tacticalData(size: 14))
+                        .foregroundColor(.alertRed)
+                        .tracking(3)
+                }
                 
                 Spacer()
+                
+                // Press Start
+                Button(action: {
+                    HapticsManager.shared.notify(.success)
+                    withAnimation(.easeIn(duration: 0.2)) {
+                        gameManager.appState = .levelMap
+                    }
+                }) {
+                    Text("Tap to Start Mission")
+                        .font(.tacticalBody(size: 20))
+                        .foregroundColor(.white)
+                        .padding(.vertical, 15)
+                        .padding(.horizontal, 40)
+                        .background(Color.tacticalAmber.opacity(0.2))
+                        .cornerRadius(5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(Color.tacticalAmber, lineWidth: 2)
+                        )
+                        .shadow(color: .tacticalAmber, radius: showText ? 10 : 0)
+                        .scaleEffect(showText ? 1.05 : 1.0)
+                        .opacity(showText ? 1 : 0.5)
+                }
+                .padding(.bottom, 50)
             }
-            .blur(radius: isRevealing ? 20 : 0)
         }
         .onAppear {
-            animate = true
+            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                showText = true
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ struct Lesson: Identifiable {
     let title: String
     let instruction: String
     let codeSnippet: String
+    let challenges: [Challenge]
 }
 
 @MainActor
@@ -24,7 +25,10 @@ class LessonManager {
             // 2. Add Anchor
             let anchor = AnchorEntity(world: transform)
             arView.scene.addAnchor(anchor)
-            """
+            """,
+            challenges: [
+                Challenge(id: "L1_C1", description: "Place 3 Anchors", targetCount: 3, xpReward: 30)
+            ]
         ),
         Lesson(
             id: 2,
@@ -37,7 +41,10 @@ class LessonManager {
             // 2. Change Material
             var mat = SimpleMaterial(color: .red, isMetallic: true)
             entity.model?.materials = [mat]
-            """
+            """,
+            challenges: [
+                Challenge(id: "L2_C1", description: "Change material 5 times", targetCount: 5, xpReward: 40)
+            ]
         ),
         Lesson(
             id: 3,
@@ -53,7 +60,10 @@ class LessonManager {
             // 2. Add Collision
             model.components[CollisionComponent.self] = 
                 CollisionComponent(shapes: [.generateBox(size: ...)])
-            """
+            """,
+            challenges: [
+                Challenge(id: "L3_C1", description: "Spawn 10 Cubes", targetCount: 10, xpReward: 50)
+            ]
         ),
         Lesson(
             id: 4,
@@ -65,7 +75,10 @@ class LessonManager {
             
             // 2. Apply Impulse
             projectile.applyLinearImpulse(force, relativeTo: nil)
-            """
+            """,
+            challenges: [
+                Challenge(id: "L4_C1", description: "Knock over 5 towers", targetCount: 5, xpReward: 60)
+            ]
         ),
         Lesson(
             id: 5,
@@ -78,7 +91,10 @@ class LessonManager {
                 extrusionDepth: 0.01,
                 font: .systemFont(ofSize: 0.1)
             )
-            """
+            """,
+            challenges: [
+                Challenge(id: "L5_C1", description: "Place 3 Labels", targetCount: 3, xpReward: 50)
+            ]
         )
     ]
     
