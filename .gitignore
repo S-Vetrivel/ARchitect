@@ -1,0 +1,25 @@
+# Xcode
+#
+# gitignore contributors: mirror of split of user project gitignores from https://github.com/github/gitignore
+
+## Build results
+build/
+DerivedData/
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+
+## User settings
+xcuserdata/
+*.xcuserdatad
+.swiftpm/xcode/xcuserdata/
+.swiftpm/xcode/package.xcworkspace/xcuserdata/
+
+## Swift Package Manager
+.build/
+.swiftpm/
+
+## Misc
+*.o
+*.pyc
+.DS_Store
