@@ -4,6 +4,7 @@ struct Lesson: Identifiable {
     let id: Int
     let title: String
     let instruction: String
+    let conceptExplanation: String // New field for educational content
     let codeSnippet: String
     let challenges: [Challenge]
 }
@@ -16,13 +17,26 @@ class LessonManager {
         Lesson(
             id: 1,
             title: "1. Foundations",
-            instruction: "Find a horizontal surface and TAP to place an Anchor.",
+            instruction: "Find a horizontal surface (floor/table) and TAP to place an Anchor.",
+            conceptExplanation: """
+            **Anchors & Planes**
+            
+            Global tracking uses the camera to understand the world.
+            
+            - **Plane Detection**: Determines where the floor or table is.
+            - **Anchor**: A coordinate point (X, Y, Z) that stays fixed in the real world.
+            - **Entity**: The 3D object we attach to the anchor.
+            """,
             codeSnippet: """
             // 1. Detect Plane
             let config = ARWorldTrackingConfiguration()
             config.planeDetection = [.horizontal]
             
-            // 2. Add Anchor
+            // 2. Add Anchor & Object
+            // Try changing these values!
+            // width: 0.15, height: 0.05, chamfer: 0.02
+            // color: .blue
+            
             let anchor = AnchorEntity(world: transform)
             arView.scene.addAnchor(anchor)
             """,
@@ -34,6 +48,12 @@ class LessonManager {
             id: 2,
             title: "2. Gestures & Materials",
             instruction: "TAP the blue box to change its material to Red.",
+            conceptExplanation: """
+            **Materials & Interactivity**
+            
+            - **Materials**: Define how surface looks (Color, Metallic, Roughness).
+            - **Raycasting**: Clicking on 3D objects.
+            """,
             codeSnippet: """
             // 1. Raycast to find Entity
             let entity = arView.entity(at: tapLocation)
@@ -50,6 +70,12 @@ class LessonManager {
             id: 3,
             title: "3. Physics & Gravity",
             instruction: "TAP anywhere to spawn a cube carrying physics!",
+            conceptExplanation: """
+            **Physics Simulation**
+            
+            - **PhysicsBody**: Gives mass and gravity.
+            - **CollisionComponent**: Solid boundaries.
+            """,
             codeSnippet: """
             // 1. Add Physics Component
             model.components[PhysicsBodyComponent.self] = 
@@ -69,6 +95,12 @@ class LessonManager {
             id: 4,
             title: "4. Forces",
             instruction: "TAP to shoot a ball and knock over the cubes.",
+            conceptExplanation: """
+            **Forces & Impulses**
+            
+            - **Impulse**: A sudden force (like a kick).
+            - **Vector**: Direction + Magnitude.
+            """,
             codeSnippet: """
             // 1. Create Force Vector
             let force = SIMD3<Float>(0, 0, -10)
@@ -84,6 +116,12 @@ class LessonManager {
             id: 5,
             title: "5. UI & Text",
             instruction: "TAP an object to attach a 3D Label.",
+            conceptExplanation: """
+            **3D User Interface**
+            
+            - **MeshResource.generateText**: Creates 3D geometry from strings.
+            - **Billboard**: Text that always faces the user.
+            """,
             codeSnippet: """
             // 1. Create Text Mesh
             let mesh = MeshResource.generateText(

@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import ARKit
 
 enum AppState: Equatable {
     case welcome
@@ -25,6 +26,9 @@ class GameManager: ObservableObject {
     @Published var isTaskCompleted: Bool = false
     @Published var feedbackMessage: String = ""
     @Published var codeSnippet: String = ""
+    @Published var isSimulationMode: Bool = false
+    @Published var viewRecreationId: Int = 0 // Forces ARView recreation on toggle
+    @Published var joystickInput: SIMD2<Float> = .zero // x: Orbit, y: Zoom (Forward/Back)
     
     // Computed Properties
     var currentLevelInfo: LevelInfo {
@@ -40,7 +44,29 @@ class GameManager: ObservableObject {
         return progress / range
     }
     
-    private init() {}
+    var isARActive: Bool {
+        if case .lesson(_) = appState { return true }
+        if case .arExperience = appState { return true }
+        return false
+    }
+    
+    private init() {
+        // Auto-detect Simulation Mode for non-AR devices
+        #if targetEnvironment(simulator) || targetEnvironment(macCatalyst)
+        isSimulationMode = true
+        #else
+        isSimulationMode = !ARWorldTrackingConfiguration.isSupported
+        #endif
+    }
+    
+    func toggleSimulationMode() {
+        isSimulationMode.toggle()
+        viewRecreationId += 1 // Forces ARView to be destroyed and recreated
+        // Re-enter the lesson to reset state
+        if case .lesson(let id) = appState {
+            startLesson(id)
+        }
+    }
     
     func startLesson(_ lesson: Int) {
         currentLessonIndex = lesson

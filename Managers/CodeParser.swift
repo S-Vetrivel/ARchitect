@@ -32,15 +32,27 @@ struct CodeParser {
     
     static func parseSize(from code: String, defaultSize: Float = 0.1) -> Float {
         let pattern = "size:\\s*([0-9]*\\.?[0-9]+)"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return defaultSize }
-        
-        let nsString = code as NSString
-        let results = regex.matches(in: code, options: [], range: NSRange(location: 0, length: nsString.length))
-        
-        if let match = results.first, let size = Float(nsString.substring(with: match.range(at: 1))) {
-            return size
-        }
-        return defaultSize
+        return parseFloat(from: code, pattern: pattern) ?? defaultSize
+    }
+    
+    static func parseWidth(from code: String, defaultWidth: Float = 0.1) -> Float {
+        let pattern = "width:\\s*([0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultWidth
+    }
+    
+    static func parseHeight(from code: String, defaultHeight: Float = 0.1) -> Float {
+        let pattern = "height:\\s*([0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultHeight
+    }
+    
+    static func parseDepth(from code: String, defaultDepth: Float = 0.1) -> Float {
+        let pattern = "depth:\\s*([0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultDepth
+    }
+    
+    static func parseChamfer(from code: String, defaultChamfer: Float = 0.0) -> Float {
+        let pattern = "chamfer:\\s*([0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultChamfer
     }
     
     static func parseForce(from code: String) -> SIMD3<Float> {
@@ -59,5 +71,16 @@ struct CodeParser {
         }
         
         return SIMD3<Float>(0, 0, -10)
+    }
+    
+    // Helper
+    private static func parseFloat(from code: String, pattern: String) -> Float? {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return nil }
+        let nsString = code as NSString
+        let results = regex.matches(in: code, options: [], range: NSRange(location: 0, length: nsString.length))
+        if let match = results.first, let value = Float(nsString.substring(with: match.range(at: 1))) {
+            return value
+        }
+        return nil
     }
 }

@@ -8,10 +8,21 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // Background
-            ARViewContainer()
+            // Background
+            if gameManager.isARActive {
+                ARViewContainer()
+                    .edgesIgnoringSafeArea(.all)
+                    .transition(.opacity)
+                    .id(gameManager.viewRecreationId) // Recreate ARView on mode toggle
+            } else {
+                // Static Background for non-AR screens to save battery
+                LinearGradient(
+                    colors: [Color.black, Color(uiColor: .darkGray)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
                 .edgesIgnoringSafeArea(.all)
-                .grayscale(gameManager.appState == .welcome ? 1.0 : 0.0)
-                .blur(radius: gameManager.appState == .welcome ? 10 : 0)
+            }
             
             // UI Overlay
             Group {
