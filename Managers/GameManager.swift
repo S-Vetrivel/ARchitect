@@ -24,6 +24,7 @@ class GameManager: ObservableObject {
     // Lesson Progress
     @Published var isTaskCompleted: Bool = false
     @Published var feedbackMessage: String = ""
+    @Published var codeSnippet: String = ""
     
     // Computed Properties
     var currentLevelInfo: LevelInfo {
@@ -46,6 +47,9 @@ class GameManager: ObservableObject {
         appState = .lesson(lesson)
         isTaskCompleted = false
         feedbackMessage = ""
+        if let lessonData = LessonManager.shared.getLesson(id: lesson) {
+            codeSnippet = lessonData.codeSnippet
+        }
     }
     
     func completeTask() {

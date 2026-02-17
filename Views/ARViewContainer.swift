@@ -95,7 +95,8 @@ struct ARViewContainer: UIViewRepresentable {
             
             // Blue Box with "Wireframe" feel or glow
             let mesh = MeshResource.generateBox(size: 0.1)
-            var mat = SimpleMaterial(color: .cyan, isMetallic: true)
+            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
+            var mat = SimpleMaterial(color: color, isMetallic: true)
             mat.roughness = 0.2
             let model = ModelEntity(mesh: mesh, materials: [mat])
             model.position.y = 0.05
@@ -113,7 +114,8 @@ struct ARViewContainer: UIViewRepresentable {
             // Lesson 2: Tap entity to change material
             if let entity = arView.entity(at: location) as? ModelEntity {
                 // Change to Architect Red (Blueprint Red)
-                let mat = SimpleMaterial(color: .red, isMetallic: true)
+                let color = CodeParser.parseColor(from: gameManager.codeSnippet)
+                let mat = SimpleMaterial(color: color, isMetallic: true)
                 entity.model?.materials = [mat]
                 
                 // Techy bounce animation
@@ -134,7 +136,8 @@ struct ARViewContainer: UIViewRepresentable {
             // Lesson 3: Spaawn Physics Cube
             let cameraTransform = arView.cameraTransform
             
-            let mesh = MeshResource.generateBox(size: 0.1)
+            let size = CodeParser.parseSize(from: gameManager.codeSnippet, defaultSize: 0.1)
+            let mesh = MeshResource.generateBox(size: size)
             let mat = SimpleMaterial(color: .green, isMetallic: false)
             let model = ModelEntity(mesh: mesh, materials: [mat])
             
@@ -147,7 +150,7 @@ struct ARViewContainer: UIViewRepresentable {
             
             // Physics
             model.components[PhysicsBodyComponent.self] = PhysicsBodyComponent(massProperties: .default, material: .default, mode: .dynamic)
-            model.components[CollisionComponent.self] = CollisionComponent(shapes: [.generateBox(size: [0.1, 0.1, 0.1])])
+            model.components[CollisionComponent.self] = CollisionComponent(shapes: [.generateBox(size: [size, size, size])])
             
             let anchor = AnchorEntity(world: .zero)
             arView.scene.addAnchor(anchor)
@@ -176,7 +179,13 @@ struct ARViewContainer: UIViewRepresentable {
             
             // Force
             let forward = cameraTransform.matrix.columns.2
-            let force = SIMD3<Float>(-forward.x, -forward.y, -forward.z) * 5.0
+            // let force = SIMD3<Float>(-forward.x, -forward.y, -forward.z) * 5.0
+            
+            // Use parsed force Z component as magnitude multiplier
+            let parsedForce = CodeParser.parseForce(from: gameManager.codeSnippet)
+            let magnitude = abs(parsedForce.z)
+            let force = SIMD3<Float>(-forward.x, -forward.y, -forward.z) * magnitude
+            
             projectile.applyLinearImpulse(force, relativeTo: nil)
             
             gameManager.completeTask()

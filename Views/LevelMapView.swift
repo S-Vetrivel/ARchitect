@@ -1,304 +1,456 @@
 import SwiftUI
 
+// MARK: - Cyberpunk Level Map
+
 struct LevelMapView: View {
-    // Keeping your existing managers
     @ObservedObject var gameManager = GameManager.shared
-    @State private var showBadges = false
+    @Environment(\.verticalSizeClass) var verticalSizeClass
+    @State private var selectedPage: Int = 0
     
-    // Animation state for the background blobs
-    @State private var animateBlobs = false
+    var isLandscape: Bool { verticalSizeClass == .compact }
     
     var body: some View {
         ZStack {
-            // MARK: - Layer 1: Animated Ambient Background
-            GeometryReader { proxy in
-                ZStack {
-                    Color(uiColor: .systemGroupedBackground) // Adaptive light/dark base
-                        .ignoresSafeArea()
-                    
-                    // Blob 1 (Purple/Blue)
-                    Circle()
-                        .fill(Color.blue.opacity(0.4))
-                        .frame(width: 300, height: 300)
-                        .blur(radius: 60)
-                        .offset(x: animateBlobs ? -100 : 100, y: animateBlobs ? -150 : -50)
-                    
-                    // Blob 2 (Cyan/Teal)
-                    Circle()
-                        .fill(Color.cyan.opacity(0.4))
-                        .frame(width: 350, height: 350)
-                        .blur(radius: 60)
-                        .offset(x: animateBlobs ? 150 : -50, y: animateBlobs ? 200 : 0)
-                    
-                    // Blob 3 (Indigo)
-                    Circle()
-                        .fill(Color.indigo.opacity(0.3))
-                        .frame(width: 250, height: 250)
-                        .blur(radius: 50)
-                        .offset(x: animateBlobs ? -50 : 120, y: animateBlobs ? 300 : 100)
-                }
+            // MARK: - Background
+            LinearGradient(
+                colors: [
+                    Color(red: 0.02, green: 0.01, blue: 0.08),
+                    Color(red: 0.05, green: 0.02, blue: 0.12),
+                    Color(red: 0.02, green: 0.01, blue: 0.06)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            
+            CyberpunkGridView()
                 .ignoresSafeArea()
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 7).repeatForever(autoreverses: true)) {
-                        animateBlobs.toggle()
-                    }
-                }
-            }
             
-            // MARK: - Layer 2: Main Content
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    
-                    // --- Modern Header ---
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Welcome back,")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Text(gameManager.userName)
-                                .font(.system(size: 34, weight: .bold, design: .rounded))
-                                .primaryGradient()
-                        }
-                        Spacer()
-                        
-                        // Level Pill
-                        HStack(spacing: 12) {
-                            VStack(alignment: .trailing, spacing: 0) {
-                                Text("LEVEL")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.secondary)
-                                Text("\(gameManager.currentLevelInfo.level)")
-                                    .font(.title2)
-                                    .fontWeight(.black)
-                                    .foregroundColor(.blue)
-                            }
+
+            
+            // MARK: - Main Content
+            VStack(spacing: 0) {
+                // Header
+                CyberpunkHeader(userName: gameManager.userName)
+                    .padding(.top, isLandscape ? 8 : 16)
+                    .padding(.bottom, isLandscape ? 4 : 8)
+                
+                // Page indicator
+                LevelIndicatorBar(
+                    total: LessonManager.shared.lessons.count,
+                    current: $selectedPage,
+                    getLessonState: { getLessonState(id: $0) }
+                )
+                .padding(.bottom, isLandscape ? 4 : 10)
+                
+                // Paging carousel
+                TabView(selection: $selectedPage) {
+                    ForEach(LessonManager.shared.lessons) { lesson in
+                        GeometryReader { geo in
+                            let midX = geo.frame(in: .global).midX
+                            let screenMidX = UIScreen.main.bounds.width / 2
+                            let distance = abs(midX - screenMidX)
+                            let maxDist: CGFloat = UIScreen.main.bounds.width * 0.6
+                            let normalizedDist = min(distance / maxDist, 1.0)
+                            let scale = 1.0 - (normalizedDist * 0.3)
+                            let blurAmount = normalizedDist * 8
                             
-                            // Avatar Placeholder
-                            Image(systemName: "person.crop.circle.fill")
-                                .resizable()
-                                .frame(width: 44, height: 44)
-                                .foregroundColor(.gray.opacity(0.3))
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 1))
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 20)
-                    
-                    // --- Glass Stats Row ---
-                    HStack(spacing: 15) {
-                        // You can hook these up to real data if you have it
-                        GlassStatPill(icon: "checkmark.circle.fill", title: "Completed", value: "3", color: .green)
-                        GlassStatPill(icon: "lock.open.fill", title: "Unlocked", value: "1", color: .orange)
-                        GlassStatPill(icon: "star.fill", title: "Badges", value: "12", color: .yellow)
-                    }
-                    .padding(.horizontal)
-                    
-                    // --- Mission List ---
-                    VStack(alignment: .leading, spacing: 15) {
-                        Text("MISSION PROTOCOLS")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal)
-                        
-                        ForEach(Array(LessonManager.shared.lessons.enumerated()), id: \.element.id) { index, lesson in
-                            GlassMissionRow(
+                            FullScreenLevelNode(
                                 lesson: lesson,
-                                isUnlocked: isLessonUnlocked(id: lesson.id),
-                                isCompleted: gameManager.isLessonCompleted(id: lesson.id)
+                                state: getLessonState(id: lesson.id),
+                                isLandscape: isLandscape
                             )
+                            .scaleEffect(scale)
+                            .blur(radius: blurAmount)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
+                        .tag(lesson.id)
                     }
-                    .padding(.bottom, 100)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .onAppear {
+                    selectedPage = gameManager.currentLessonIndex
                 }
             }
-            
-            // MARK: - Layer 3: Floating Footer
-            VStack {
-                Spacer()
-                Button(action: { showBadges.toggle() }) {
-                    HStack {
-                        Image(systemName: "trophy.fill")
-                            .font(.headline)
-                        Text("View Service Record")
-                            .font(.headline)
+        }
+    }
+    
+    func getLessonState(id: Int) -> LessonNodeState {
+        if gameManager.isLessonCompleted(id: id) {
+            return .completed
+        } else if id == gameManager.currentLessonIndex {
+            return .current
+        } else {
+            return .locked
+        }
+    }
+}
+
+// MARK: - Lesson Node State
+
+enum LessonNodeState {
+    case locked, current, completed
+}
+
+// MARK: - Level Indicator Bar
+
+struct LevelIndicatorBar: View {
+    let total: Int
+    @Binding var current: Int
+    let getLessonState: (Int) -> LessonNodeState
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<total, id: \.self) { i in
+                let lessonId = i + 1
+                let state = getLessonState(lessonId)
+                let isCurrent = lessonId == current
+                
+                Capsule()
+                    .fill(barColor(state: state, isCurrent: isCurrent))
+                    .frame(width: isCurrent ? 24 : 8, height: 4)
+                    .shadow(color: isCurrent ? barColor(state: state, isCurrent: true).opacity(0.6) : .clear, radius: 4)
+                    .animation(.easeInOut(duration: 0.3), value: current)
+                    .onTapGesture {
+                        if state != .locked {
+                            withAnimation {
+                                current = lessonId
+                            }
+                        }
                     }
-                    .foregroundColor(.white)
-                    .padding(.vertical, 16)
-                    .padding(.horizontal, 32)
+            }
+        }
+    }
+    
+    func barColor(state: LessonNodeState, isCurrent: Bool) -> Color {
+        if isCurrent {
+            switch state {
+            case .completed: return Color(red: 0.0, green: 1.0, blue: 0.4)
+            case .current: return .cyan
+            case .locked: return Color(red: 0.4, green: 0.3, blue: 0.6)
+            }
+        }
+        switch state {
+        case .completed: return Color(red: 0.0, green: 1.0, blue: 0.4).opacity(0.3)
+        case .current: return .cyan.opacity(0.3)
+        case .locked: return .white.opacity(0.1)
+        }
+    }
+}
+
+// MARK: - Full-Screen Level Node
+
+struct FullScreenLevelNode: View {
+    let lesson: Lesson
+    let state: LessonNodeState
+    let isLandscape: Bool
+    @ObservedObject var gameManager = GameManager.shared
+    @State private var ringRotation: Double = 0
+    @State private var nodeGlow: Bool = false
+    @State private var outerPulse: Bool = false
+    
+    var nodeAccent: Color {
+        switch state {
+        case .completed: return Color(red: 0.0, green: 1.0, blue: 0.4)
+        case .current: return .cyan
+        case .locked: return Color(red: 0.3, green: 0.2, blue: 0.5)
+        }
+    }
+    
+    // Dynamic sizing based on orientation
+    var circleSize: CGFloat { isLandscape ? 160 : 200 }
+    var ringSize: CGFloat { isLandscape ? 190 : 240 }
+    var outerRingSize: CGFloat { isLandscape ? 220 : 270 }
+    var iconSize: CGFloat { isLandscape ? 44 : 56 }
+    var numberSize: CGFloat { isLandscape ? 52 : 64 }
+    
+    var body: some View {
+        VStack(spacing: isLandscape ? 16 : 28) {
+            // Module tag
+            HStack(spacing: 6) {
+                Rectangle()
+                    .fill(nodeAccent.opacity(0.4))
+                    .frame(width: 20, height: 1)
+                Text("LEVEL \(String(format: "%02d", lesson.id))")
+                    .font(.system(size: isLandscape ? 10 : 12, weight: .heavy, design: .monospaced))
+                    .foregroundColor(nodeAccent)
+                    .tracking(3)
+                Rectangle()
+                    .fill(nodeAccent.opacity(0.4))
+                    .frame(width: 20, height: 1)
+            }
+            
+            // The Big Circle
+            Button(action: {
+                if state != .locked {
+                    HapticsManager.shared.selection()
+                    gameManager.startLesson(lesson.id)
+                }
+            }) {
+                ZStack {
+                    // Outermost ambient pulse
+                    if state != .locked {
+                        Circle()
+                            .stroke(nodeAccent.opacity(0.06), lineWidth: 1)
+                            .frame(width: outerRingSize, height: outerRingSize)
+                            .scaleEffect(outerPulse ? 1.15 : 1.0)
+                            .opacity(outerPulse ? 0.0 : 0.6)
+                    }
+                    
+                    // Rotating tech ring
+                    if state == .current {
+                        CyberpunkRing()
+                            .stroke(nodeAccent.opacity(0.5), lineWidth: 2)
+                            .frame(width: ringSize, height: ringSize)
+                            .rotationEffect(.degrees(ringRotation))
+                        
+                        // Counter-rotating inner ring
+                        CyberpunkRing()
+                            .stroke(nodeAccent.opacity(0.2), lineWidth: 1)
+                            .frame(width: ringSize - 20, height: ringSize - 20)
+                            .rotationEffect(.degrees(-ringRotation * 0.6))
+                    }
+                    
+                    // Glow halo
+                    Circle()
+                        .fill(nodeAccent.opacity(0.2))
+                        .frame(width: circleSize + 30, height: circleSize + 30)
+                        .blur(radius: state == .current ? 30 : 15)
+                    
+                    // Main circle border
+                    Circle()
+                        .stroke(nodeAccent.opacity(state == .locked ? 0.15 : 0.7), lineWidth: 3)
+                        .frame(width: circleSize, height: circleSize)
+                    
+                    // Fill
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    nodeAccent.opacity(state == .locked ? 0.05 : 0.25),
+                                    Color(red: 0.03, green: 0.02, blue: 0.1).opacity(0.9)
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: circleSize / 2
+                            )
+                        )
+                        .frame(width: circleSize - 4, height: circleSize - 4)
+                    
+                    // Inner detail rings
+                    Circle()
+                        .stroke(nodeAccent.opacity(0.15), lineWidth: 0.5)
+                        .frame(width: circleSize * 0.7, height: circleSize * 0.7)
+                    
+                    Circle()
+                        .stroke(nodeAccent.opacity(0.08), lineWidth: 0.5)
+                        .frame(width: circleSize * 0.45, height: circleSize * 0.45)
+                    
+                    // Icon
+                    if state == .completed {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: iconSize, weight: .bold))
+                            .foregroundColor(nodeAccent)
+                            .shadow(color: nodeAccent, radius: 12)
+                    } else if state == .locked {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: iconSize * 0.7))
+                            .foregroundColor(nodeAccent.opacity(0.3))
+                    } else {
+                        Text("\(lesson.id)")
+                            .font(.system(size: numberSize, weight: .black, design: .monospaced))
+                            .foregroundColor(.white)
+                            .shadow(color: nodeAccent, radius: 16)
+                    }
+                }
+            }
+            .disabled(state == .locked)
+            .buttonStyle(CyberpunkButtonStyle())
+            
+            // Title
+            VStack(spacing: 8) {
+                Text(lesson.title.uppercased())
+                    .font(.system(size: isLandscape ? 16 : 20, weight: .bold, design: .monospaced))
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(state == .locked ? .white.opacity(0.25) : .white.opacity(0.9))
+                    .lineLimit(2)
+                    .frame(maxWidth: 280)
+                
+                // Status label
+                if state == .current {
+                    HStack(spacing: 4) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 9))
+                        Text("START")
+                            .font(.system(size: 11, weight: .black, design: .monospaced))
+                    }
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 7)
                     .background(
                         Capsule()
-                            .fill(Color.blue)
-                            .shadow(color: .blue.opacity(0.4), radius: 10, x: 0, y: 5)
+                            .fill(Color.cyan)
+                            .shadow(color: .cyan.opacity(0.7), radius: 8)
                     )
-                }
-                .padding(.bottom, 30)
-            }
-        }
-        .sheet(isPresented: $showBadges) {
-            BadgeGalleryView()
-        }
-    }
-    
-    // Helper to keep your existing logic
-    func isLessonUnlocked(id: Int) -> Bool {
-        if id == 1 { return true }
-        return gameManager.isLessonCompleted(id: id - 1)
-    }
-}
-
-// MARK: - Subviews
-
-struct GlassMissionRow: View {
-    let lesson: Lesson
-    let isUnlocked: Bool
-    let isCompleted: Bool
-    @ObservedObject var gameManager = GameManager.shared
-    
-    var body: some View {
-        Button(action: {
-            if isUnlocked {
-                let generator = UIImpactFeedbackGenerator(style: .medium)
-                generator.impactOccurred()
-                gameManager.startLesson(lesson.id)
-            }
-        }) {
-            HStack(spacing: 16) {
-                // Icon Container
-                ZStack {
-                    Circle()
-                        .fill(statusColor.opacity(0.15))
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: statusIcon)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(statusColor)
-                }
-                
-                // Text Content
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("SECTOR 0\(lesson.id)")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(statusColor)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(statusColor.opacity(0.1))
-                            .cornerRadius(4)
-                        
-                        Spacer()
+                    .padding(.top, 4)
+                } else if state == .completed {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 10))
+                        Text("COMPLETED")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
                     }
-                    
-                    Text(lesson.title)
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundColor(isUnlocked ? .primary : .gray)
-                        .multilineTextAlignment(.leading)
-                    
-                    // You can uncomment this if your Lesson model has a description
-                    // Text(lesson.description)
-                    //    .font(.caption)
-                    //    .foregroundColor(.secondary)
-                    //    .lineLimit(1)
-                }
-                
-                Spacer()
-                
-                // Action Arrow
-                if isUnlocked {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.gray.opacity(0.5))
+                    .foregroundColor(nodeAccent.opacity(0.6))
+                    .padding(.top, 4)
+                } else {
+                    Text("LOCKED")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(Color(red: 1.0, green: 0.2, blue: 0.4).opacity(0.4))
+                        .padding(.top, 4)
                 }
             }
-            .padding(16)
-            .background(.ultraThinMaterial) // The key Glass effect
-            .cornerRadius(24)
-            // Frost border
-            .overlay(
-                RoundedRectangle(cornerRadius: 24)
-                    .stroke(LinearGradient(colors: [.white.opacity(0.6), .white.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
-            .padding(.horizontal)
-            .opacity(isUnlocked ? 1 : 0.6)
-            .scaleEffect(isUnlocked ? 1 : 0.98)
-            .saturation(isUnlocked ? 1 : 0)
         }
-        .disabled(!isUnlocked)
-        .buttonStyle(BouncyButtonStyle())
-    }
-    
-    var statusColor: Color {
-        if isCompleted { return .green }
-        if isUnlocked { return .blue }
-        return .gray
-    }
-    
-    var statusIcon: String {
-        if isCompleted { return "checkmark" }
-        if isUnlocked { return "play.fill" }
-        return "lock.fill"
+        .onAppear {
+            if state == .current {
+                withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
+                    ringRotation = 360
+                }
+            }
+            if state != .locked {
+                withAnimation(.easeInOut(duration: 2).repeatForever()) {
+                    outerPulse.toggle()
+                }
+            }
+            withAnimation(.easeInOut(duration: 1.8).repeatForever()) {
+                nodeGlow.toggle()
+            }
+        }
     }
 }
 
-struct GlassStatPill: View {
-    let icon: String
-    let title: String
-    let value: String
-    let color: Color
+// MARK: - Cyberpunk Header
+
+struct CyberpunkHeader: View {
+    let userName: String
+    @Environment(\.verticalSizeClass) var verticalSizeClass
+    @State private var glitchActive = false
+    
+    var isLandscape: Bool { verticalSizeClass == .compact }
     
     var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                Spacer()
-                Text(value)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-            }
-            .font(.caption)
+        VStack(spacing: isLandscape ? 4 : 8) {
+            Text("LEARN ARKIT")
+                .font(.system(size: isLandscape ? 18 : 24, weight: .black, design: .monospaced))
+                .foregroundColor(.white)
+                .tracking(2)
             
-            HStack {
-                Text(title)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                Spacer()
+            Text("Build augmented reality experiences")
+                .font(.system(size: isLandscape ? 9 : 11, weight: .medium, design: .monospaced))
+                .foregroundColor(.cyan.opacity(0.5))
+            
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [.clear, .cyan.opacity(0.4), .cyan.opacity(0.7), .cyan.opacity(0.4), .clear],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: 1)
+                .padding(.horizontal, isLandscape ? 120 : 60)
+                .padding(.top, 1)
+        }
+        .onAppear { triggerGlitch() }
+    }
+    
+    func triggerGlitch() {
+        Timer.scheduledTimer(withTimeInterval: 3.5, repeats: true) { _ in
+            Task { @MainActor in
+                withAnimation(.easeInOut(duration: 0.05)) { glitchActive = true }
+                try? await Task.sleep(nanoseconds: 80_000_000) // 0.08s
+                withAnimation(.easeInOut(duration: 0.05)) { glitchActive = false }
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity)
-        .background(.ultraThinMaterial)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(.white.opacity(0.5), lineWidth: 1)
-        )
     }
 }
 
-// MARK: - Utilities
+// MARK: - Cyberpunk Ring Shape
 
-struct BouncyButtonStyle: ButtonStyle {
+struct CyberpunkRing: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2
+        let segments = 8
+        let gapAngle: Double = 8
+        let segmentAngle = (360.0 / Double(segments)) - gapAngle
+        
+        for i in 0..<segments {
+            let startAngle = Double(i) * (360.0 / Double(segments))
+            let endAngle = startAngle + segmentAngle
+            path.addArc(center: center, radius: radius,
+                        startAngle: .degrees(startAngle), endAngle: .degrees(endAngle), clockwise: false)
+        }
+        return path
+    }
+}
+
+// MARK: - Cyberpunk Grid Background
+
+struct CyberpunkGridView: View {
+    var body: some View {
+        ZStack {
+            Canvas { context, size in
+                let spacing: CGFloat = 50
+                let cols = Int(size.width / spacing) + 1
+                let rows = Int(size.height / spacing) + 1
+                
+                for i in 0...cols {
+                    var path = Path()
+                    path.move(to: CGPoint(x: CGFloat(i) * spacing, y: 0))
+                    path.addLine(to: CGPoint(x: CGFloat(i) * spacing, y: size.height))
+                    context.stroke(path, with: .color(Color.cyan.opacity(0.04)), lineWidth: 0.5)
+                }
+                for i in 0...rows {
+                    var path = Path()
+                    path.move(to: CGPoint(x: 0, y: CGFloat(i) * spacing))
+                    path.addLine(to: CGPoint(x: size.width, y: CGFloat(i) * spacing))
+                    context.stroke(path, with: .color(Color.cyan.opacity(0.04)), lineWidth: 0.5)
+                }
+                for col in 0...cols {
+                    for row in 0...rows {
+                        if (col + row) % 7 == 0 {
+                            let pt = CGPoint(x: CGFloat(col) * spacing, y: CGFloat(row) * spacing)
+                            context.fill(Path(ellipseIn: CGRect(x: pt.x - 1.5, y: pt.y - 1.5, width: 3, height: 3)),
+                                         with: .color(Color.cyan.opacity(0.12)))
+                        }
+                    }
+                }
+            }
+            
+            RadialGradient(colors: [Color(red: 0.8, green: 0.0, blue: 0.6).opacity(0.06), .clear],
+                           center: .topLeading, startRadius: 0, endRadius: 400)
+            RadialGradient(colors: [Color.cyan.opacity(0.05), .clear],
+                           center: .bottomTrailing, startRadius: 0, endRadius: 400)
+        }
+    }
+}
+
+// MARK: - Button Styles
+
+struct CyberpunkButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .brightness(configuration.isPressed ? 0.15 : 0.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.5), value: configuration.isPressed)
     }
 }
 
-extension Text {
-    func primaryGradient() -> some View {
-        self.foregroundStyle(
-            LinearGradient(
-                colors: [.primary, .blue.opacity(0.8)],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        )
+struct BouncyScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.9 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }
