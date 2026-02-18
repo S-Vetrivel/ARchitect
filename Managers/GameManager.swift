@@ -155,7 +155,25 @@ class GameManager: ObservableObject {
             case 2: unlockBadge(id: "physics_beginner")
             case 3: unlockBadge(id: "bounce_master")
             case 4: unlockBadge(id: "force_wielder")
+            case 5: unlockBadge(id: "scale_artist")
+            case 6: unlockBadge(id: "color_wizard")
+            case 7: unlockBadge(id: "shape_master")
+            case 8: unlockBadge(id: "sharpshooter")
+            case 9: unlockBadge(id: "demolition_expert")
+            case 17: unlockBadge(id: "physics_master")
+            case 25: unlockBadge(id: "marksman")
+            case 33: unlockBadge(id: "master_builder")
+            case 41: unlockBadge(id: "creative_genius")
+            case 49: unlockBadge(id: "grand_master")
+            case 50: unlockBadge(id: "free_builder")
             default: break
+            }
+            
+            // Check if all 50 levels are complete
+            let allLessonIds = [1,2,3,4,5,6,7,8,9] + Array(10...50)
+            let allComplete = allLessonIds.allSatisfy { isLessonCompleted(id: $0) }
+            if allComplete {
+                unlockBadge(id: "completionist")
             }
         }
     }
