@@ -54,10 +54,10 @@ struct TutorialOverlayView: View {
     
     var body: some View {
         VStack {
-            Spacer()
-            
             // Coach Card
             if gameManager.tutorialStep < 7 {
+                Color.clear // Transparent background that allows touches through? No, Color.clear BLOCKS touches by default unless contentShape is used or allowsHitTesting(false)
+                    .allowsHitTesting(false) // Ensure the full screen background doesn't block touches
                 VStack(spacing: 16) {
                     // Step indicator dots
                     HStack(spacing: 6) {
@@ -144,6 +144,7 @@ struct TutorialOverlayView: View {
                 .animation(.spring(response: 0.5, dampingFraction: 0.8), value: gameManager.tutorialStep)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         .onAppear {
             withAnimation(.easeInOut(duration: 1.2).repeatForever()) {
                 pulseAnimation = true

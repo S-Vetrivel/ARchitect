@@ -55,22 +55,49 @@ struct CodeParser {
         return parseFloat(from: code, pattern: pattern) ?? defaultChamfer
     }
     
-    static func parseForce(from code: String) -> SIMD3<Float> {
-        // Look for SIMD3<Float>(x, y, z) pattern, simplified
-        // Or just look for specific values if the lesson allows editing specific vector components
-        // For Lesson 4, we might just look for a multiplier or specific Z value
-        
-        let pattern = "SIMD3<Float>\\(0,\\s*0,\\s*(-?[0-9]*\\.?[0-9]+)\\)"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return SIMD3<Float>(0, 0, -10) }
-        
+    // MARK: - Physics Parsers
+    
+    static func parseMass(from code: String, defaultMass: Float = 1.0) -> Float {
+        let pattern = "mass:\\s*([0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultMass
+    }
+    
+    static func parseRestitution(from code: String, defaultRestitution: Float = 0.5) -> Float {
+        let pattern = "restitution:\\s*([0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultRestitution
+    }
+    
+    static func parseShape(from code: String) -> String {
+        let pattern = "shape:\\s*([a-zA-Z]+)"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return "box" }
         let nsString = code as NSString
         let results = regex.matches(in: code, options: [], range: NSRange(location: 0, length: nsString.length))
-        
-        if let match = results.first, let zForce = Float(nsString.substring(with: match.range(at: 1))) {
-             return SIMD3<Float>(0, 0, zForce)
+        if let match = results.first {
+            return nsString.substring(with: match.range(at: 1)).lowercased()
         }
-        
-        return SIMD3<Float>(0, 0, -10)
+        return "box"
+    }
+    
+    static func parseForceX(from code: String, defaultValue: Float = 0.0) -> Float {
+        let pattern = "forceX:\\s*(-?[0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultValue
+    }
+    
+    static func parseForceY(from code: String, defaultValue: Float = 5.0) -> Float {
+        let pattern = "forceY:\\s*(-?[0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultValue
+    }
+    
+    static func parseForceZ(from code: String, defaultValue: Float = -3.0) -> Float {
+        let pattern = "forceZ:\\s*(-?[0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultValue
+    }
+    
+    static func parseForce(from code: String) -> SIMD3<Float> {
+        let x = parseForceX(from: code)
+        let y = parseForceY(from: code)
+        let z = parseForceZ(from: code)
+        return SIMD3<Float>(x, y, z)
     }
     
     // Helper

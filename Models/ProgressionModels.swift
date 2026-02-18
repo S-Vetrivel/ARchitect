@@ -28,6 +28,9 @@ struct Badge: Identifiable, Codable, Equatable {
     
     static let allBadges: [Badge] = [
         Badge(id: "first_steps", name: "First Steps", description: "Complete the tutorial.", iconName: "shoeprints.fill", xpReward: 50),
+        Badge(id: "physics_beginner", name: "Physics Beginner", description: "Learn gravity & mass.", iconName: "arrow.down.to.line.alt", xpReward: 75),
+        Badge(id: "bounce_master", name: "Bounce Master", description: "Master restitution & collisions.", iconName: "basketball.fill", xpReward: 100),
+        Badge(id: "force_wielder", name: "Force Wielder", description: "Control impulse forces.", iconName: "wind", xpReward: 125),
         Badge(id: "completionist", name: "Certified ARchitect", description: "Complete all lessons.", iconName: "checkmark.seal.fill", xpReward: 500)
     ]
 }

@@ -29,11 +29,12 @@ class GameManager: ObservableObject {
     @Published var isSimulationMode: Bool = false
     @Published var viewRecreationId: Int = 0 // Forces ARView recreation on toggle
     
-    // Tutorial State (Level 1)
-    @Published var tutorialStep: Int = 0  // 0=not started, 1-7=active steps
+    // Tutorial/Lesson Step State
+    @Published var tutorialStep: Int = 0  // Used for ALL lessons now: 0=not started, 1+=active steps
     @Published var tutorialWalkDistance: Float = 0
     @Published var joystickInput: SIMD2<Float> = .zero
     @Published var zoomInput: Float = 0 // +1 = zoom in, -1 = zoom out (for buttons)
+    @Published var placedObjectCount: Int = 0 // Track objects placed in current lesson
     
     // Computed Properties
     var currentLevelInfo: LevelInfo {
@@ -53,6 +54,42 @@ class GameManager: ObservableObject {
         if case .lesson(_) = appState { return true }
         if case .arExperience = appState { return true }
         return false
+    }
+    
+    var currentLesson: Lesson? {
+        LessonManager.shared.getLesson(id: currentLessonIndex)
+    }
+    
+    /// Total steps for the current lesson
+    var currentStepCount: Int {
+        if currentLessonIndex == 1 {
+            return 7 // Level 1 uses hardcoded tutorial steps
+        }
+        return currentLesson?.steps.count ?? 0
+    }
+
+    var highestUnlockedLevelIndex: Int {
+        let completed = completedLessonIds.split(separator: ",").compactMap { Int($0) }
+        let maxCompleted = completed.max() ?? 0
+        return min(maxCompleted + 1, LessonManager.shared.lessons.count)
+    }
+    
+    /// Whether the current step should show the code editor
+    var shouldShowCodeEditor: Bool {
+        guard currentLessonIndex > 1, let lesson = currentLesson else {
+            // Level 1 uses hardcoded logic (step >= 6)
+            return currentLessonIndex == 1 && tutorialStep >= 6
+        }
+        if tutorialStep < lesson.steps.count {
+            return lesson.steps[tutorialStep].showCodeEditor
+        }
+        return false
+    }
+    
+    /// Whether the code editor should be available (any step from codeEditorStartStep onward)
+    var isCodeEditorAvailable: Bool {
+        guard let lesson = currentLesson else { return false }
+        return tutorialStep >= lesson.codeEditorStartStep
     }
     
     private init() {
@@ -80,18 +117,20 @@ class GameManager: ObservableObject {
         feedbackMessage = ""
         tutorialStep = 0
         tutorialWalkDistance = 0
+        placedObjectCount = 0
         if let lessonData = LessonManager.shared.getLesson(id: lesson) {
             codeSnippet = lessonData.codeSnippet
         }
     }
     
     func advanceTutorial() {
-        guard tutorialStep < 7 else { return }
+        let maxSteps = currentStepCount
+        guard tutorialStep < maxSteps else { return }
         tutorialStep += 1
         HapticsManager.shared.notify(.success)
         
-        if tutorialStep == 7 {
-            // Tutorial complete!
+        if tutorialStep >= maxSteps {
+            // Lesson complete!
             completeTask()
         }
     }
@@ -99,6 +138,7 @@ class GameManager: ObservableObject {
     func resetTutorial() {
         tutorialStep = 0
         tutorialWalkDistance = 0
+        placedObjectCount = 0
         isTaskCompleted = false
     }
     
@@ -108,6 +148,15 @@ class GameManager: ObservableObject {
             feedbackMessage = "Great job! Task Completed. ✅"
             addXP(50) // Base XP for completing a task
             markLessonComplete(id: currentLessonIndex)
+            
+            // Award badges based on lesson
+            switch currentLessonIndex {
+            case 1: unlockBadge(id: "first_steps")
+            case 2: unlockBadge(id: "physics_beginner")
+            case 3: unlockBadge(id: "bounce_master")
+            case 4: unlockBadge(id: "force_wielder")
+            default: break
+            }
         }
     }
     
@@ -141,6 +190,11 @@ class GameManager: ObservableObject {
         return unlockedBadgeIds.split(separator: ",").contains(Substring(id))
     }
     
+    func isLessonUnlocked(id: Int) -> Bool {
+        if id == 1 { return true }
+        return isLessonCompleted(id: id - 1)
+    }
+
     func isLessonCompleted(id: Int) -> Bool {
         return completedLessonIds.split(separator: ",").contains(Substring(String(id)))
     }

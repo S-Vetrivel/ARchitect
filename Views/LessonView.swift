@@ -28,25 +28,36 @@ struct LessonView: View {
             // Left: AR View + Tutorial Overlay
             ZStack {
                 VStack {
-                    // Mode Toggle (top)
-                    Button(action: {
-                        withAnimation { gameManager.toggleSimulationMode() }
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: gameManager.isSimulationMode ? "video.slash.fill" : "video.fill")
-                            Text(gameManager.isSimulationMode ? "SIM" : "LIVE")
-                                .font(.caption2)
-                                .fontWeight(.bold)
+                    // Top Controls
+                    HStack(spacing: 12) {
+                        CyberpunkBackButton()
+                        
+                        // Mode Toggle (grouped with back button for cleaner UI)
+                        Button(action: {
+                            withAnimation { gameManager.toggleSimulationMode() }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: gameManager.isSimulationMode ? "cube.transparent" : "camera.fill")
+                                    .font(.system(size: 12))
+                                Text(gameManager.isSimulationMode ? "SIMULATION" : "AR LIVE")
+                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            }
+                            .foregroundColor(gameManager.isSimulationMode ? .orange : .cyan)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(.ultraThinMaterial)
+                            .background(gameManager.isSimulationMode ? Color.orange.opacity(0.1) : Color.cyan.opacity(0.1))
+                            .cornerRadius(20)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(gameManager.isSimulationMode ? Color.orange.opacity(0.3) : Color.cyan.opacity(0.3), lineWidth: 1)
+                            )
                         }
-                        .foregroundColor(gameManager.isSimulationMode ? .orange : .green)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(20)
+                        
+                        Spacer()
                     }
-                    .padding(.top, 50)
-                    
-                    Spacer()
+                    .padding(.top, 40)
+                    .padding(.horizontal, 24)
                     
                     if gameManager.isTaskCompleted {
                         MissionSuccessBadge()
@@ -54,19 +65,23 @@ struct LessonView: View {
                             .transition(.scale.combined(with: .opacity))
                     }
                 }
+                .frame(maxHeight: .infinity, alignment: .top)
                 
-                // Tutorial Overlay
-                TutorialOverlayView()
+                // Lesson Overlay
+                if gameManager.currentLessonIndex == 1 {
+                    TutorialOverlayView()
+                } else {
+                    LessonOverlayView()
+                }
                 
                 // Controls (bottom area)
                 if gameManager.isSimulationMode {
                     VStack {
-                        Spacer()
                         HStack(alignment: .bottom) {
                             Spacer()
                             
-                            // Zoom Buttons (from Step 4+)
-                            if gameManager.tutorialStep >= 4 {
+                            // Zoom Buttons (Level 1: from Step 4+ / Levels 2+: always)
+                            if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 4 {
                                 VStack(spacing: 8) {
                                     ZoomButton(label: "+", zoomValue: 1)
                                     ZoomButton(label: "−", zoomValue: -1)
@@ -75,8 +90,8 @@ struct LessonView: View {
                                 .transition(.scale.combined(with: .opacity))
                             }
                             
-                            // Joystick (from Step 3+)
-                            if gameManager.tutorialStep >= 3 {
+                            // Joystick (Level 1: from Step 3+ / Levels 2+: always)
+                            if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 3 {
                                 JoystickView()
                                     .padding(.trailing, 40)
                                     .transition(.scale.combined(with: .opacity))
@@ -84,12 +99,13 @@ struct LessonView: View {
                         }
                         .padding(.bottom, 40)
                     }
+                    .frame(maxHeight: .infinity, alignment: .bottom)
                 }
             }
             .frame(width: geo.size.width * 0.65)
             
-            // Right: Code Editor (only show from Step 6+)
-            if gameManager.tutorialStep >= 6 {
+            // Right: Code Editor
+            if gameManager.isCodeEditorAvailable {
                 codeEditorPanel(geo: geo)
                     .frame(width: geo.size.width * 0.35)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
@@ -105,42 +121,32 @@ struct LessonView: View {
         ZStack {
             VStack(spacing: 0) {
                 // Top HUD
-                HStack {
-                    Button(action: {
-                        HapticsManager.shared.play(.light)
-                        gameManager.appState = .levelMap
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "chevron.left")
-                            Text("Exit")
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial)
-                        .background(Color.blue.opacity(0.2))
-                        .cornerRadius(20)
-                    }
-                    
-                    Spacer()
+                HStack(spacing: 12) {
+                    CyberpunkBackButton()
                     
                     // Mode Toggle
                     Button(action: {
                         withAnimation { gameManager.toggleSimulationMode() }
                     }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: gameManager.isSimulationMode ? "video.slash.fill" : "video.fill")
-                                .font(.caption2)
-                            Text(gameManager.isSimulationMode ? "SIM" : "LIVE")
-                                .font(.caption2)
-                                .fontWeight(.bold)
+                        HStack(spacing: 6) {
+                            Image(systemName: gameManager.isSimulationMode ? "cube.transparent" : "camera.fill")
+                                .font(.system(size: 12))
+                            Text(gameManager.isSimulationMode ? "SIM" : "AR")
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
                         }
-                        .foregroundColor(gameManager.isSimulationMode ? .orange : .green)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
+                        .foregroundColor(gameManager.isSimulationMode ? .orange : .cyan)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
                         .background(.ultraThinMaterial)
+                        .background(gameManager.isSimulationMode ? Color.orange.opacity(0.1) : Color.cyan.opacity(0.1))
                         .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(gameManager.isSimulationMode ? Color.orange.opacity(0.3) : Color.cyan.opacity(0.3), lineWidth: 1)
+                        )
                     }
+                    
+                    Spacer()
                 }
                 .padding()
                 
@@ -152,18 +158,22 @@ struct LessonView: View {
                         .transition(.scale.combined(with: .opacity))
                 }
             }
+            .frame(maxHeight: .infinity, alignment: .top)
             
-            // Tutorial Overlay
-            TutorialOverlayView()
+            // Lesson Overlay
+            if gameManager.currentLessonIndex == 1 {
+                TutorialOverlayView()
+            } else {
+                LessonOverlayView()
+            }
             
             // Controls (bottom area)
             if gameManager.isSimulationMode {
                 VStack {
-                    Spacer()
                     HStack(alignment: .bottom) {
                         Spacer()
                         
-                        if gameManager.tutorialStep >= 4 {
+                        if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 4 {
                             VStack(spacing: 8) {
                                 ZoomButton(label: "+", zoomValue: 1)
                                 ZoomButton(label: "−", zoomValue: -1)
@@ -172,7 +182,7 @@ struct LessonView: View {
                             .transition(.scale.combined(with: .opacity))
                         }
                         
-                        if gameManager.tutorialStep >= 3 {
+                        if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 3 {
                             JoystickView()
                                 .padding(.trailing, 30)
                                 .transition(.scale.combined(with: .opacity))
@@ -180,11 +190,12 @@ struct LessonView: View {
                     }
                     .padding(.bottom, 180)
                 }
+                .frame(maxHeight: .infinity, alignment: .bottom)
                 .transition(.scale.combined(with: .opacity))
             }
             
-            // Code Editor Drawer (only from Step 6+)
-            if gameManager.tutorialStep >= 6 {
+            // Code Editor Drawer
+            if gameManager.isCodeEditorAvailable {
                 CodeDrawer(showCode: $showCode, codeSnippet: $gameManager.codeSnippet)
                     .transition(.move(edge: .bottom))
             }
@@ -513,5 +524,37 @@ struct RoundedCorner: Shape {
     func path(in rect: CGRect) -> Path {
         let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
         return Path(path.cgPath)
+    }
+}
+
+// MARK: - Back Button
+
+struct CyberpunkBackButton: View {
+    @ObservedObject var gameManager = GameManager.shared
+    
+    var body: some View {
+        Button(action: {
+            HapticsManager.shared.play(.light)
+            withAnimation {
+                gameManager.appState = .levelMap
+            }
+        }) {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 14, weight: .bold))
+                Text("EXIT")
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial)
+            .background(Color.red.opacity(0.2))
+            .cornerRadius(20)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.red.opacity(0.4), lineWidth: 1)
+            )
+        }
     }
 }

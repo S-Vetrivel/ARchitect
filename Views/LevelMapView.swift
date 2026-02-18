@@ -69,7 +69,7 @@ struct LevelMapView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .onAppear {
-                    selectedPage = gameManager.currentLessonIndex
+                    selectedPage = gameManager.highestUnlockedLevelIndex
                 }
             }
         }
@@ -78,8 +78,8 @@ struct LevelMapView: View {
     func getLessonState(id: Int) -> LessonNodeState {
         if gameManager.isLessonCompleted(id: id) {
             return .completed
-        } else if id == gameManager.currentLessonIndex {
-            return .current
+        } else if gameManager.isLessonUnlocked(id: id) {
+             return .current
         } else {
             return .locked
         }
