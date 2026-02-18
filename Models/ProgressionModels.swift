@@ -22,16 +22,12 @@ struct Badge: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let description: String
-    let iconName: String // System image name
+    let iconName: String
     let xpReward: Int
     var isUnlocked: Bool = false
     
     static let allBadges: [Badge] = [
-        Badge(id: "first_steps", name: "First Steps", description: "Complete the Foundations lesson.", iconName: "shoeprints.fill", xpReward: 50),
-        Badge(id: "material_master", name: "Material Master", description: "Change an object's material 5 times.", iconName: "paintbrush.fill", xpReward: 75),
-        Badge(id: "gravity_guru", name: "Gravity Guru", description: "Spawn 10 physics objects.", iconName: "apple.logo", xpReward: 75),
-        Badge(id: "force_wielder", name: "Force Wielder", description: "Knock over 5 towers.", iconName: "wind", xpReward: 100),
-        Badge(id: "scribe", name: "Scribe", description: "Place 3 text labels in the world.", iconName: "text.bubble.fill", xpReward: 50),
+        Badge(id: "first_steps", name: "First Steps", description: "Complete the tutorial.", iconName: "shoeprints.fill", xpReward: 50),
         Badge(id: "completionist", name: "Certified ARchitect", description: "Complete all lessons.", iconName: "checkmark.seal.fill", xpReward: 500)
     ]
 }

@@ -28,7 +28,12 @@ class GameManager: ObservableObject {
     @Published var codeSnippet: String = ""
     @Published var isSimulationMode: Bool = false
     @Published var viewRecreationId: Int = 0 // Forces ARView recreation on toggle
-    @Published var joystickInput: SIMD2<Float> = .zero // x: Orbit, y: Zoom (Forward/Back)
+    
+    // Tutorial State (Level 1)
+    @Published var tutorialStep: Int = 0  // 0=not started, 1-7=active steps
+    @Published var tutorialWalkDistance: Float = 0
+    @Published var joystickInput: SIMD2<Float> = .zero
+    @Published var zoomInput: Float = 0 // +1 = zoom in, -1 = zoom out (for buttons)
     
     // Computed Properties
     var currentLevelInfo: LevelInfo {
@@ -73,9 +78,28 @@ class GameManager: ObservableObject {
         appState = .lesson(lesson)
         isTaskCompleted = false
         feedbackMessage = ""
+        tutorialStep = 0
+        tutorialWalkDistance = 0
         if let lessonData = LessonManager.shared.getLesson(id: lesson) {
             codeSnippet = lessonData.codeSnippet
         }
+    }
+    
+    func advanceTutorial() {
+        guard tutorialStep < 7 else { return }
+        tutorialStep += 1
+        HapticsManager.shared.notify(.success)
+        
+        if tutorialStep == 7 {
+            // Tutorial complete!
+            completeTask()
+        }
+    }
+    
+    func resetTutorial() {
+        tutorialStep = 0
+        tutorialWalkDistance = 0
+        isTaskCompleted = false
     }
     
     func completeTask() {

@@ -12,10 +12,8 @@ struct LessonView: View {
         GeometryReader { geo in
             ZStack {
                 if geo.size.width > geo.size.height {
-                    // MARK: - Landscape / iPad Layout
                     landscapeLayout(geo: geo)
                 } else {
-                    // MARK: - Portrait Layout
                     portraitLayout(geo: geo)
                 }
             }
@@ -27,10 +25,10 @@ struct LessonView: View {
     @ViewBuilder
     func landscapeLayout(geo: GeometryProxy) -> some View {
         HStack(spacing: 0) {
-            // Left Side: AR View Overlay
+            // Left: AR View + Tutorial Overlay
             ZStack {
                 VStack {
-                    // Mode Toggle
+                    // Mode Toggle (top)
                     Button(action: {
                         withAnimation { gameManager.toggleSimulationMode() }
                     }) {
@@ -57,144 +55,47 @@ struct LessonView: View {
                     }
                 }
                 
-                // Joystick (Bottom Right)
+                // Tutorial Overlay
+                TutorialOverlayView()
+                
+                // Controls (bottom area)
                 if gameManager.isSimulationMode {
                     VStack {
                         Spacer()
-                        HStack {
+                        HStack(alignment: .bottom) {
                             Spacer()
-                            JoystickView()
-                                .padding(.trailing, 40)
-                                .padding(.bottom, 40)
+                            
+                            // Zoom Buttons (from Step 4+)
+                            if gameManager.tutorialStep >= 4 {
+                                VStack(spacing: 8) {
+                                    ZoomButton(label: "+", zoomValue: 1)
+                                    ZoomButton(label: "−", zoomValue: -1)
+                                }
+                                .padding(.trailing, 12)
+                                .transition(.scale.combined(with: .opacity))
+                            }
+                            
+                            // Joystick (from Step 3+)
+                            if gameManager.tutorialStep >= 3 {
+                                JoystickView()
+                                    .padding(.trailing, 40)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
                         }
+                        .padding(.bottom, 40)
                     }
                 }
             }
             .frame(width: geo.size.width * 0.65)
             
-            // Right Side: Code Editor (35%)
-            ZStack {
-                if #available(iOS 15.0, *) {
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-                        .overlay(Color.blue.opacity(0.2))
-                        .ignoresSafeArea()
-                } else {
-                    Color.black.opacity(0.8)
-                        .overlay(Color.blue.opacity(0.2))
-                        .ignoresSafeArea()
-                }
-                
-                VStack(spacing: 0) {
-                    // Header
-                    HStack {
-                        Text("Code Editor")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
-                        Spacer()
-                        Button(action: {
-                            HapticsManager.shared.play(.light)
-                            gameManager.appState = .levelMap
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white.opacity(0.6))
-                                .symbolRenderingMode(.hierarchical)
-                        }
-                    }
-                    .padding()
-                    .background(Color.white.opacity(0.05))
-                    
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 24) {
-                            // Objective
-                            VStack(alignment: .leading, spacing: 8) {
-                                Label("OBJECTIVE", systemImage: "target")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-                                Text(currentLesson?.title ?? "Unknown Lesson")
-                                    .font(.title3)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                            }
-                            
-                            // Instructions
-                            VStack(alignment: .leading, spacing: 8) {
-                                Label("INSTRUCTIONS", systemImage: "list.bullet")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-                                Text(formatInstruction(currentLesson?.instruction ?? "No instructions provided."))
-                                    .font(.body)
-                                    .foregroundColor(.white.opacity(0.9))
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            
-                            Divider()
-                                .overlay(Color.white.opacity(0.2))
-                            
-                            // Concept Card
-                            if let concept = currentLesson?.conceptExplanation, !concept.isEmpty {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Label("CONCEPT", systemImage: "lightbulb.fill")
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.yellow.opacity(0.9))
-                                    
-                                    Text(concept)
-                                        .font(.subheadline)
-                                        .foregroundColor(.white.opacity(0.95))
-                                        .padding(12)
-                                        .background(Color.white.opacity(0.1))
-                                        .cornerRadius(8)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                                
-                                Divider()
-                                    .overlay(Color.white.opacity(0.2))
-                            }
-                            
-                            // Code Editor
-                            VStack(alignment: .leading, spacing: 12) {
-                                Label("SWIFT SNIPPET", systemImage: "chevron.left.forwardslash.chevron.right")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-                                ZStack(alignment: .topLeading) {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.black.opacity(0.3))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                                        )
-                                    
-                                    if #available(iOS 16.0, *) {
-                                        TextEditor(text: $gameManager.codeSnippet)
-                                            .font(.system(.body, design: .monospaced))
-                                            .foregroundColor(.white)
-                                            .scrollContentBackground(.hidden)
-                                            .padding(12)
-                                            .frame(minHeight: 300)
-                                    } else {
-                                        TextEditor(text: $gameManager.codeSnippet)
-                                            .font(.system(.body, design: .monospaced))
-                                            .foregroundColor(.white)
-                                            .padding(12)
-                                            .frame(minHeight: 300)
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                    }
-                }
+            // Right: Code Editor (only show from Step 6+)
+            if gameManager.tutorialStep >= 6 {
+                codeEditorPanel(geo: geo)
+                    .frame(width: geo.size.width * 0.35)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
             }
-            .frame(width: geo.size.width * 0.35)
         }
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: gameManager.tutorialStep)
     }
     
     // MARK: - Portrait Layout
@@ -240,37 +141,8 @@ struct LessonView: View {
                         .background(.ultraThinMaterial)
                         .cornerRadius(20)
                     }
-                    
-                    Text("Lesson \(currentLesson?.id ?? 0)")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial)
-                        .background(Color.blue.opacity(0.2))
-                        .cornerRadius(20)
                 }
                 .padding()
-                
-                // Instruction Card
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("TASK", systemImage: "checkmark.circle")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    Text(formatInstruction(currentLesson?.instruction ?? ""))
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.ultraThinMaterial)
-                .background(Color.blue.opacity(0.15))
-                .cornerRadius(16)
-                .padding(.horizontal)
                 
                 Spacer()
                 
@@ -281,31 +153,121 @@ struct LessonView: View {
                 }
             }
             
-            // Joystick (Bottom Right)
+            // Tutorial Overlay
+            TutorialOverlayView()
+            
+            // Controls (bottom area)
             if gameManager.isSimulationMode {
                 VStack {
                     Spacer()
-                    HStack {
+                    HStack(alignment: .bottom) {
                         Spacer()
-                        JoystickView()
-                            .padding(.trailing, 30)
-                            .padding(.bottom, 120)
+                        
+                        if gameManager.tutorialStep >= 4 {
+                            VStack(spacing: 8) {
+                                ZoomButton(label: "+", zoomValue: 1)
+                                ZoomButton(label: "−", zoomValue: -1)
+                            }
+                            .padding(.trailing, 12)
+                            .transition(.scale.combined(with: .opacity))
+                        }
+                        
+                        if gameManager.tutorialStep >= 3 {
+                            JoystickView()
+                                .padding(.trailing, 30)
+                                .transition(.scale.combined(with: .opacity))
+                        }
                     }
+                    .padding(.bottom, 180)
                 }
+                .transition(.scale.combined(with: .opacity))
             }
             
-            // Bottom Code Sheet
-            CodeDrawer(showCode: $showCode, codeSnippet: $gameManager.codeSnippet)
+            // Code Editor Drawer (only from Step 6+)
+            if gameManager.tutorialStep >= 6 {
+                CodeDrawer(showCode: $showCode, codeSnippet: $gameManager.codeSnippet)
+                    .transition(.move(edge: .bottom))
+            }
         }
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: gameManager.tutorialStep)
     }
     
-    // MARK: - Helpers
+    // MARK: - Code Editor Panel (Landscape)
     
-    func formatInstruction(_ text: String) -> String {
-        guard gameManager.isSimulationMode else { return text }
-        return text.replacingOccurrences(of: "Tap", with: "Click")
-                   .replacingOccurrences(of: "TAP", with: "CLICK")
-                   .replacingOccurrences(of: "Move", with: "Drag")
+    @ViewBuilder
+    func codeEditorPanel(geo: GeometryProxy) -> some View {
+        ZStack {
+            if #available(iOS 15.0, *) {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(Color.blue.opacity(0.2))
+                    .ignoresSafeArea()
+            } else {
+                Color.black.opacity(0.8)
+                    .overlay(Color.blue.opacity(0.2))
+                    .ignoresSafeArea()
+            }
+            
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("Code Editor")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Button(action: {
+                        HapticsManager.shared.play(.light)
+                        gameManager.appState = .levelMap
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white.opacity(0.6))
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                }
+                .padding()
+                .background(Color.white.opacity(0.05))
+                
+                // Code snippet hint
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("EDIT THE CODE", systemImage: "pencil")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.yellow.opacity(0.9))
+                    
+                    Text("Change `color: .blue` to another color like `.red`, `.green`, or `.purple`, then tap your object!")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding()
+                .background(Color.yellow.opacity(0.08))
+                
+                // Editor
+                ZStack(alignment: .topLeading) {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.black.opacity(0.3))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        )
+                    
+                    if #available(iOS 16.0, *) {
+                        TextEditor(text: $gameManager.codeSnippet)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.white)
+                            .scrollContentBackground(.hidden)
+                            .padding(12)
+                    } else {
+                        TextEditor(text: $gameManager.codeSnippet)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.white)
+                            .padding(12)
+                    }
+                }
+                .padding()
+            }
+        }
     }
 }
 
@@ -320,40 +282,22 @@ struct MissionSuccessBadge: View {
                 .font(.system(size: 48))
                 .foregroundColor(.white)
                 .symbolRenderingMode(.hierarchical)
-                .padding(.bottom, 4)
             
-            Text("Lesson Complete!")
+            Text("Tutorial Complete!")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
             
-            if gameManager.currentLessonIndex < 5 {
-                Button(action: {
-                    HapticsManager.shared.notify(.success)
-                    withAnimation {
-                        gameManager.startLesson(gameManager.currentLessonIndex + 1)
-                    }
-                }) {
-                    Text("Next Lesson")
-                        .font(.headline)
-                        .foregroundColor(.blue)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(12)
-                }
-            } else {
-                Button(action: {
-                    withAnimation { gameManager.appState = .levelMap }
-                }) {
-                    Text("Finish")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue.opacity(0.8))
-                        .cornerRadius(12)
-                }
+            Button(action: {
+                withAnimation { gameManager.appState = .levelMap }
+            }) {
+                Text("Back to Map")
+                    .font(.headline)
+                    .foregroundColor(.blue)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(12)
             }
         }
         .padding(24)
@@ -392,7 +336,6 @@ struct CodeDrawer: View {
                 .background(Color.blue.opacity(0.2))
                 .cornerRadius(16, corners: [.topLeft, .topRight])
             }
-            .shadow(color: .black.opacity(0.1), radius: 5, y: -2)
             
             if showCode {
                 ZStack(alignment: .topLeading) {
@@ -408,6 +351,19 @@ struct CodeDrawer: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 0) {
+                        // Hint bar
+                        HStack(spacing: 6) {
+                            Image(systemName: "lightbulb.fill")
+                                .font(.caption2)
+                                .foregroundColor(.yellow)
+                            Text("Change color: .blue to .red, then tap your object!")
+                                .font(.caption)
+                                .foregroundColor(.yellow.opacity(0.8))
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(Color.yellow.opacity(0.08))
+                        
                         if #available(iOS 16.0, *) {
                             TextEditor(text: $codeSnippet)
                                 .font(.system(.body, design: .monospaced))
@@ -426,6 +382,45 @@ struct CodeDrawer: View {
                 .transition(.move(edge: .bottom))
             }
         }
+    }
+}
+
+// MARK: - Zoom Button
+
+struct ZoomButton: View {
+    let label: String
+    let zoomValue: Float
+    @ObservedObject var gameManager = GameManager.shared
+    @State private var isPressed = false
+    
+    var body: some View {
+        Text(label)
+            .font(.system(size: 22, weight: .bold, design: .monospaced))
+            .foregroundColor(.white)
+            .frame(width: 44, height: 44)
+            .background(
+                Circle()
+                    .fill(Color.white.opacity(isPressed ? 0.3 : 0.15))
+                    .overlay(
+                        Circle()
+                            .stroke(Color.cyan.opacity(0.4), lineWidth: 1)
+                    )
+            )
+            .scaleEffect(isPressed ? 0.9 : 1.0)
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        if !isPressed {
+                            isPressed = true
+                            gameManager.zoomInput = zoomValue
+                        }
+                    }
+                    .onEnded { _ in
+                        isPressed = false
+                        gameManager.zoomInput = 0
+                    }
+            )
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
 }
 

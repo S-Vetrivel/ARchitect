@@ -16,7 +16,7 @@ let package = Package(
         .iOSApplication(
             name: "ARchitect",
             targets: ["AppModule"],
-            bundleIdentifier: "vetrivel.ARchitect",
+            bundleIdentifier: "V3.ARchitect",
             teamIdentifier: "S749N6FFP2",
             displayVersion: "1.0",
             bundleVersion: "1",
