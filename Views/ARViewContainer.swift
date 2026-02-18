@@ -36,11 +36,12 @@ struct ARViewContainer: UIViewRepresentable {
             // Turn on physics to let objects collide with the real world mesh
             arView.environment.sceneUnderstanding.options.insert(.physics)
             
-            // Render the mesh for debugging? No, user asked to remove debug visuals. 
+            // Render the mesh for debugging? No, user asked to remove debug visuals.
             // keeping separate debug options off.
-        
-        context.coordinator.setupGestures()
-        context.coordinator.setupSubscriptions()
+            
+            context.coordinator.setupGestures()
+            context.coordinator.setupSubscriptions()
+        }
         
         return arView
     }
@@ -129,7 +130,7 @@ struct ARViewContainer: UIViewRepresentable {
                     if dist > 0.5 {
                         gameManager.advanceTutorial()
                     }
-                } 
+                }
                 // Step 4: Move Closer (AR)
                 else if gameManager.tutorialStep == 4 {
                     if startPosition == .zero {
