@@ -8,23 +8,45 @@ struct TutorialOverlayView: View {
     let totalSteps = 7
     
     var stepData: (icon: String, title: String, instruction: String, hint: String) {
+        let isSim = gameManager.isSimulationMode
+        
         switch gameManager.tutorialStep {
         case 0:
-            return ("hand.tap.fill", "Welcome!", "Welcome to ARchitect Academy!\nTap anywhere on the screen to begin.", "")
+            if isSim {
+                 return ("hand.tap.fill", "Welcome (Simulation Mode)", "Welcome to ARchitect Academy!\nYou are in Simulation Mode.\nTap to begin.", "AR Mode available on iPad/iPhone")
+            } else {
+                 return ("hand.tap.fill", "Welcome!", "Welcome to ARchitect Academy!\nTap anywhere on the screen to begin.", "")
+            }
         case 1:
             return ("hand.tap.fill", "Step 1: Get Started", "Tap anywhere on the 3D view to begin your journey.", "Just tap!")
         case 2:
-            return ("hand.draw.fill", "Step 2: Look Around", "Swipe or drag the screen to look around your virtual studio.", "Try swiping in any direction")
+            if isSim {
+                return ("hand.draw.fill", "Step 2: Look Around", "Drag on the screen to rotate your view of the studio.", "Try dragging to look around")
+            } else {
+                 return ("hand.draw.fill", "Step 2: Look Around", "Move your device around to scan the room.", "Scan the area")
+            }
         case 3:
-            return ("circle.circle.fill", "Step 3: Walk", "Use the joystick (bottom-right) to walk forward.\nMove toward the glowing marker!", "Push the joystick forward")
+            if isSim {
+                return ("circle.circle.fill", "Step 3: Navigate", "Use the joystick (bottom-right) to fly the camera.\nMove toward the glowing marker!", "Use joystick to move")
+            } else {
+                return ("figure.walk", "Step 3: Walk", "Walk physically or use the joystick to move.\nMove toward the glowing marker!", "Walk forward or use joystick")
+            }
         case 4:
-            return ("arrow.up.left.and.arrow.down.right", "Step 4: Zoom", "Pinch the screen to zoom in and out.\nOn Mac: use scroll wheel.", "Try zooming in and out")
+            if isSim {
+                return ("arrow.up.left.and.arrow.down.right", "Step 4: Zoom", "Pinch the screen to zoom in and out.\nOn Mac: use scroll wheel.", "Try zooming in and out")
+            } else {
+                return ("arrow.up.left.and.arrow.down.right", "Step 4: Move Closer", "Physically move your device closer to objects to see details.", "Move closer")
+            }
         case 5:
             return ("cube.fill", "Step 5: Place Object", "Tap anywhere on the floor to place your first 3D object!", "Tap the floor!")
         case 6:
             return ("chevron.left.forwardslash.chevron.right", "Step 6: Edit Code", "Open the code editor and change\n`color: .blue` to `color: .red`\nThen tap your object to apply!", "Edit the code, then tap the object")
         case 7:
-            return ("checkmark.circle.fill", "Tutorial Complete! 🎉", "You're ready to build in AR!\nYou now know how to navigate, build, and code.", "")
+             if isSim {
+                 return ("checkmark.circle.fill", "Tutorial Complete! 🎉", "You're ready to build!\n(Note: Switch to a device for full AR experience)", "")
+             } else {
+                 return ("checkmark.circle.fill", "Tutorial Complete! 🎉", "You're ready to build in AR!\nYou now know how to navigate, build, and code.", "")
+             }
         default:
             return ("questionmark", "Unknown", "", "")
         }

@@ -18,8 +18,8 @@ struct ARViewContainer: UIViewRepresentable {
             // Configure AR session
             let config = ARWorldTrackingConfiguration()
             config.planeDetection = [.horizontal]
+            arView.session.delegate = context.coordinator // Set delegate
             arView.session.run(config)
-            arView.debugOptions = [.showFeaturePoints]
         }
         
         context.coordinator.setupGestures()
@@ -37,7 +37,7 @@ struct ARViewContainer: UIViewRepresentable {
     // MARK: - Coordinator
     
     @MainActor
-    class Coordinator: NSObject {
+    class Coordinator: NSObject, ARSessionDelegate {
         var arView: ARView?
         var gameManager: GameManager
         var subscriptions: Set<AnyCancellable> = []
@@ -53,8 +53,82 @@ struct ARViewContainer: UIViewRepresentable {
         var hasZoomed = false
         var startPosition: SIMD3<Float> = .zero
         
+        // AR Tracking
+        var startLookRotation: simd_quatf?
+        var maxLookDeviation: Float = 0
+        
         init(gameManager: GameManager) {
             self.gameManager = gameManager
+        }
+        
+        // MARK: - AR Session Delegate
+        
+        nonisolated func session(_ session: ARSession, didUpdate frame: ARFrame) {
+            Task { @MainActor in
+                // Only process for AR mode tutorial steps
+                guard !gameManager.isSimulationMode else { return }
+                
+                let transform = frame.camera.transform
+                let position = SIMD3<Float>(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z)
+                let rotation = simd_quatf(transform)
+                
+                // Step 2: Look Around (AR)
+                if gameManager.tutorialStep == 2 && !hasLookedAround {
+                    if startLookRotation == nil {
+                        startLookRotation = rotation
+                    }
+                    
+                    if let startRot = startLookRotation {
+                        // Calculate angle difference from start rotation
+                        let angleFunc = startRot.inverse * rotation
+                        let deviation = angleFunc.angle
+                        
+                        if deviation > maxLookDeviation {
+                            maxLookDeviation = deviation
+                        }
+                        
+                        // Trigger if user has rotated at least 30 degrees (approx 0.52 radians)
+                        if maxLookDeviation > 0.5 {
+                            hasLookedAround = true
+                            startLookRotation = nil // Reset
+                            gameManager.advanceTutorial()
+                        }
+                    }
+                } else if gameManager.tutorialStep != 2 {
+                    // Reset tracker if not on step 2
+                    startLookRotation = nil
+                    maxLookDeviation = 0
+                }
+                
+                // Step 3: Walk (AR)
+                if gameManager.tutorialStep == 3 {
+                    // Initialize start position for this step if needed
+                    if startPosition == .zero {
+                        startPosition = position
+                    }
+                    
+                    let dist = simd_distance(position, startPosition)
+                    // Walk 0.5 meters to complete
+                    if dist > 0.5 {
+                        gameManager.advanceTutorial()
+                    }
+                } 
+                // Step 4: Move Closer (AR)
+                else if gameManager.tutorialStep == 4 {
+                    if startPosition == .zero {
+                        startPosition = position
+                    }
+                    
+                    let dist = simd_distance(position, startPosition)
+                    // Move 0.3 meters to complete
+                    if dist > 0.3 {
+                        gameManager.advanceTutorial()
+                    }
+                }
+                else {
+                    startPosition = .zero
+                }
+            }
         }
         
         // MARK: - Virtual Environment Setup
@@ -353,8 +427,14 @@ struct ARViewContainer: UIViewRepresentable {
                     )
                 }
             } else {
-                if let result = arView.raycast(from: location, allowing: .estimatedPlane, alignment: .horizontal).first {
-                    worldTransform = result.worldTransform
+                // Try to find a solid existing plane first for realism
+                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .existingPlaneInfinite, .estimatedPlane]
+                
+                for target in queries {
+                    if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
+                        worldTransform = result.worldTransform
+                        break
+                    }
                 }
             }
             
