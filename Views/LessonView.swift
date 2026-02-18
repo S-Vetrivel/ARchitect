@@ -197,77 +197,153 @@ struct LessonView: View {
     @ViewBuilder
     func codeEditorPanel(geo: GeometryProxy) -> some View {
         ZStack {
-            if #available(iOS 15.0, *) {
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .overlay(Color.blue.opacity(0.2))
-                    .ignoresSafeArea()
-            } else {
-                Color.black.opacity(0.8)
-                    .overlay(Color.blue.opacity(0.2))
-                    .ignoresSafeArea()
-            }
+            Color.black.opacity(0.9)
+                .ignoresSafeArea()
             
-            VStack(spacing: 0) {
-                // Header
-                HStack {
-                    Text("Code Editor")
-                        .font(.system(size: 17, weight: .semibold))
+            VStack(spacing: 20) {
+                // Header / Intro
+                VStack(spacing: 8) {
+                    Text("Mission: Color Change")
+                        .font(.headline)
                         .foregroundColor(.white)
-                    Spacer()
-                    Button(action: {
-                        HapticsManager.shared.play(.light)
-                        gameManager.appState = .levelMap
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white.opacity(0.6))
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                }
-                .padding()
-                .background(Color.white.opacity(0.05))
-                
-                // Code snippet hint
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("EDIT THE CODE", systemImage: "pencil")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.yellow.opacity(0.9))
                     
-                    Text("Change `color: .blue` to another color like `.red`, `.green`, or `.purple`, then tap your object!")
+                    Text("Change the color of your object to proceed.")
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                        .fixedSize(horizontal: false, vertical: true)
+                        .foregroundColor(.gray)
                 }
-                .padding()
-                .background(Color.yellow.opacity(0.08))
+                .padding(.top, 40)
                 
                 // Editor
-                ZStack(alignment: .topLeading) {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.black.opacity(0.3))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                    
-                    if #available(iOS 16.0, *) {
-                        TextEditor(text: $gameManager.codeSnippet)
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundColor(.white)
-                            .scrollContentBackground(.hidden)
-                            .padding(12)
-                    } else {
-                        TextEditor(text: $gameManager.codeSnippet)
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundColor(.white)
-                            .padding(12)
-                    }
+                ModernCodeEditor(text: $gameManager.codeSnippet, showCode: $showCode)
+                    .frame(maxHeight: .infinity)
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                
+                // Code Hint Box
+                HStack(spacing: 12) {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundColor(.blue)
+                    Text("Try changing `.blue` to `.red`, `.green`, or `.orange`.")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.8))
+                    Spacer()
                 }
                 .padding()
+                .background(Color.white.opacity(0.08))
+                .cornerRadius(12)
+                .padding(.horizontal)
+                .padding(.bottom, 20)
             }
         }
+    }
+}
+
+// MARK: - Components
+
+struct ModernCodeEditor: View {
+    @Binding var text: String
+    @Binding var showCode: Bool // To close/minimize if needed
+    
+    @FocusState private var isFocused: Bool
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Toolbar / Header
+            HStack {
+                HStack(spacing: 6) {
+                    Circle().fill(Color.red).frame(width: 10, height: 10)
+                    Circle().fill(Color.yellow).frame(width: 10, height: 10)
+                    Circle().fill(Color.green).frame(width: 10, height: 10)
+                }
+                .onTapGesture {
+                    withAnimation { showCode = false }
+                }
+                
+                Spacer()
+                
+                Text("main.swift")
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(.gray)
+                
+                Spacer()
+                
+                Button(action: {
+                    // Simulate "Run" action
+                    HapticsManager.shared.play(.medium)
+                    isFocused = false // Dismiss keyboard
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 10))
+                        Text("RUN")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(4)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color(red: 0.15, green: 0.15, blue: 0.17))
+            
+            Divider().background(Color.white.opacity(0.1))
+            
+            // Editor Area
+            ZStack(alignment: .topLeading) {
+                Color(red: 0.11, green: 0.11, blue: 0.13) // Dark Background
+                
+                HStack(alignment: .top, spacing: 0) {
+                    // Line Numbers
+                    Text(lineNumbers)
+                        .font(.system(size: 14, design: .monospaced)) // Match Editor font
+                        .foregroundColor(.gray.opacity(0.5))
+                        .multilineTextAlignment(.trailing)
+                        .padding(.top, 8) // Match TextEditor padding default roughly
+                        .padding(.leading, 12)
+                        .padding(.trailing, 8)
+                        .frame(minWidth: 30, alignment: .trailing)
+                        .background(Color(red: 0.13, green: 0.13, blue: 0.15))
+                    
+                    // Code Input
+                    if #available(iOS 16.0, *) {
+                        TextEditor(text: $text)
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundColor(.white)
+                            .scrollContentBackground(.hidden)
+                            .focused($isFocused)
+                            .padding(.top, 0) // Align with line numbers
+                    } else {
+                        TextEditor(text: $text)
+                            .font(.system(size: 14, design: .monospaced))
+                            .foregroundColor(.white)
+                            .focused($isFocused)
+                            .padding(.top, 0)
+                    }
+                }
+            }
+        }
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    isFocused = false
+                }
+            }
+        }
+    }
+    
+    var lineNumbers: String {
+        let count = text.split(separator: "\n", omittingEmptySubsequences: false).count
+        return (1...max(1, count)).map { "\($0)" }.joined(separator: "\n")
     }
 }
 
@@ -317,6 +393,7 @@ struct CodeDrawer: View {
         VStack(spacing: 0) {
             Spacer()
             
+            // Drawer Tab
             Button(action: {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     showCode.toggle()
@@ -336,49 +413,46 @@ struct CodeDrawer: View {
                 .background(Color.blue.opacity(0.2))
                 .cornerRadius(16, corners: [.topLeft, .topRight])
             }
+            .opacity(showCode ? 0 : 1) // Hide tab when open, or keep it? Let's hide it effectively or just transition it. 
+            // Actually, keep the tab logic simple. If open, we show the full editor which has its own header.
             
             if showCode {
-                ZStack(alignment: .topLeading) {
+                ZStack(alignment: .top) {
                     if #available(iOS 15.0, *) {
                         Rectangle()
                             .fill(.ultraThinMaterial)
-                            .overlay(Color.blue.opacity(0.2))
+                            .overlay(Color.black.opacity(0.8))
                             .ignoresSafeArea()
                     } else {
-                        Color.black.opacity(0.85)
-                            .overlay(Color.blue.opacity(0.2))
+                        Color.black.opacity(0.9)
                             .ignoresSafeArea()
                     }
                     
-                    VStack(alignment: .leading, spacing: 0) {
+                    VStack(spacing: 0) {
                         // Hint bar
                         HStack(spacing: 6) {
                             Image(systemName: "lightbulb.fill")
                                 .font(.caption2)
                                 .foregroundColor(.yellow)
-                            Text("Change color: .blue to .red, then tap your object!")
+                            Text("Hint: Change .blue to .red")
                                 .font(.caption)
                                 .foregroundColor(.yellow.opacity(0.8))
+                            Spacer()
+                            Button(action: { withAnimation { showCode = false } }) {
+                                Image(systemName: "chevron.down.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
-                        .background(Color.yellow.opacity(0.08))
+                        .padding()
+                        .background(Color.yellow.opacity(0.05))
                         
-                        if #available(iOS 16.0, *) {
-                            TextEditor(text: $codeSnippet)
-                                .font(.system(.body, design: .monospaced))
-                                .foregroundColor(.white)
-                                .scrollContentBackground(.hidden)
-                                .padding()
-                        } else {
-                            TextEditor(text: $codeSnippet)
-                                .font(.system(.body, design: .monospaced))
-                                .foregroundColor(.white)
-                                .padding()
-                        }
+                        ModernCodeEditor(text: $codeSnippet, showCode: $showCode)
+                            .padding()
+                            .frame(maxHeight: 400)
                     }
                 }
-                .frame(height: 350)
+                .frame(height: 450)
                 .transition(.move(edge: .bottom))
             }
         }

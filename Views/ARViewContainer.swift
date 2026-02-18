@@ -17,10 +17,27 @@ struct ARViewContainer: UIViewRepresentable {
         } else {
             // Configure AR session
             let config = ARWorldTrackingConfiguration()
-            config.planeDetection = [.horizontal]
+            config.planeDetection = [.horizontal, .vertical]
+            config.environmentTexturing = .automatic
+            
+            if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
+                config.sceneReconstruction = .mesh
+            }
+            
             arView.session.delegate = context.coordinator // Set delegate
             arView.session.run(config)
-        }
+            
+            // Enable Occlusion and Physics for real-world Interaction
+            arView.environment.sceneUnderstanding.options = []
+            
+            // Turn on occlusion to hide virtual objects behind real ones
+            arView.environment.sceneUnderstanding.options.insert(.occlusion)
+            
+            // Turn on physics to let objects collide with the real world mesh
+            arView.environment.sceneUnderstanding.options.insert(.physics)
+            
+            // Render the mesh for debugging? No, user asked to remove debug visuals. 
+            // keeping separate debug options off.
         
         context.coordinator.setupGestures()
         context.coordinator.setupSubscriptions()
