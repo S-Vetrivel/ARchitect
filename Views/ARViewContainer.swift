@@ -77,7 +77,6 @@ struct ARViewContainer: UIViewRepresentable {
         var cameraPitch: Float = -0.3
         
         // Tutorial tracking
-        var targetMarker: ModelEntity?
         var hasLookedAround = false
         var hasZoomed = false
         var startPosition: SIMD3<Float> = .zero
@@ -212,11 +211,25 @@ struct ARViewContainer: UIViewRepresentable {
             floorMat.roughness = 0.9
             let floorEntity = ModelEntity(mesh: floorMesh, materials: [floorMat])
             floorEntity.name = "VirtualFloor"
-            floorEntity.components[CollisionComponent.self] = CollisionComponent(shapes: [.generateBox(size: [20, 0.01, 20])])
+            // THICKER FLOOR: increase thickness to 1.0 to prevent fast objects falling through
+            let floorShape = ShapeResource.generateBox(size: [20, 1.0, 20])
+            // Offset the collision component so the top surface is at y=0 (center at y=-0.5)
+            let floorCollision = CollisionComponent(shapes: [floorShape], mode: .default, filter: .default)
+            floorEntity.components[CollisionComponent.self] = floorCollision
             floorEntity.components[PhysicsBodyComponent.self] = PhysicsBodyComponent(massProperties: .default, material: .default, mode: .static)
+            
+            // We need a separate entity for collision if we want to offset it, OR we just accept the visual floor is at 0 and collision is centered at 0.
+            // Correct approach: Create a child entity for collision that is offset downwards.
+            
+            let floorCollisionEntity = Entity()
+            floorCollisionEntity.name = "FloorCollision"
+            floorCollisionEntity.position.y = -0.5 // Move down by half thickness
+            floorCollisionEntity.components[CollisionComponent.self] = floorCollision
+            floorCollisionEntity.components[PhysicsBodyComponent.self] = PhysicsBodyComponent(massProperties: .default, material: .default, mode: .static)
             
             let anchor = AnchorEntity(world: .zero)
             anchor.addChild(floorEntity)
+            anchor.addChild(floorCollisionEntity) // Add collision separately
             arView.scene.addAnchor(anchor)
             
             // Lighting
@@ -241,16 +254,6 @@ struct ARViewContainer: UIViewRepresentable {
             virtualCamera = camera
             
             arView.cameraMode = .nonAR
-            
-            // Tutorial: Place glowing target marker for Step 3 (walk toward it)
-            let markerMesh = MeshResource.generateBox(size: [0.3, 0.02, 0.3], cornerRadius: 0.02)
-            var markerMat = SimpleMaterial(color: .cyan, isMetallic: true)
-            markerMat.roughness = 0.1
-            let marker = ModelEntity(mesh: markerMesh, materials: [markerMat])
-            marker.position = [0, 0.01, 0] // At origin on the floor
-            marker.name = "TutorialMarker"
-            anchor.addChild(marker)
-            targetMarker = marker
         }
         
         // MARK: - Gesture Setup
@@ -364,7 +367,6 @@ struct ARViewContainer: UIViewRepresentable {
             arView.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
                 self?.updateMovement(deltaTime: event.deltaTime)
                 self?.updateZoom(deltaTime: event.deltaTime)
-                self?.updateTutorialMarker(deltaTime: event.deltaTime)
             }.store(in: &subscriptions)
         }
         
@@ -423,27 +425,7 @@ struct ARViewContainer: UIViewRepresentable {
             }
         }
         
-        // MARK: - Tutorial Marker Animation
-        
-        private var markerTime: Float = 0
-        
-        private func updateTutorialMarker(deltaTime: Double) {
-            guard let marker = targetMarker else { return }
-            
-            markerTime += Float(deltaTime)
-            
-            // Pulse the marker opacity
-            let pulse = (sin(markerTime * 3.0) + 1.0) / 2.0
-            let showMarker = gameManager.tutorialStep <= 3
-            
-            if showMarker {
-                marker.isEnabled = true
-                // Gentle float animation
-                marker.position.y = 0.01 + pulse * 0.03
-            } else {
-                marker.isEnabled = false
-            }
-        }
+
         
         // MARK: - Tap Handler
         
@@ -504,7 +486,7 @@ struct ARViewContainer: UIViewRepresentable {
             default:
                 if step > 5 {
                     if let entity = arView.entity(at: location) as? ModelEntity,
-                       entity.name != "VirtualFloor" && entity.name != "TutorialMarker" {
+                       entity.name != "VirtualFloor" {
                         handleCodeApply(location: location, in: arView)
                     } else {
                         handlePlaceObject(location: location, in: arView)
@@ -608,6 +590,29 @@ struct ARViewContainer: UIViewRepresentable {
             
             let anchor = AnchorEntity(world: transform)
             arView.scene.addAnchor(anchor)
+            
+            // AR FIX: Create an invisible physics floor at this location to prevent falling to infinity
+            if !gameManager.isSimulationMode {
+                let floorSize: Float = 50.0 // Large enough coverage
+                let floorThickness: Float = 1.0
+                let arFloor = ModelEntity(
+                    mesh: .generatePlane(width: floorSize, depth: floorSize),
+                    materials: [OcclusionMaterial()] 
+                )
+                // Collision box offset downwards
+                let floorShape = ShapeResource.generateBox(size: [floorSize, floorThickness, floorSize])
+                let collisionEntity = Entity()
+                collisionEntity.position.y = -floorThickness / 2
+                collisionEntity.components[CollisionComponent.self] = CollisionComponent(shapes: [floorShape], mode: .default, filter: .default)
+                collisionEntity.components[PhysicsBodyComponent.self] = PhysicsBodyComponent(massProperties: .default, material: .default, mode: .static)
+                
+                arFloor.addChild(collisionEntity)
+                
+                // We anchor it slightly below the hit point to avoid visual Z-fighting if mapped, 
+                // but for physics we want it exactly at the hit level.
+                arFloor.position.y = -0.001 
+                anchor.addChild(arFloor)
+            }
             
             let shape = CodeParser.parseShape(from: gameManager.codeSnippet)
             let color = CodeParser.parseColor(from: gameManager.codeSnippet)
@@ -720,6 +725,26 @@ struct ARViewContainer: UIViewRepresentable {
             
             let anchor = AnchorEntity(world: transform)
             arView.scene.addAnchor(anchor)
+            
+            // AR FIX: Create an invisible physics floor at this location
+            if !gameManager.isSimulationMode {
+                let floorSize: Float = 50.0
+                let floorThickness: Float = 1.0
+                let arFloor = ModelEntity(
+                    mesh: .generatePlane(width: floorSize, depth: floorSize),
+                    materials: [OcclusionMaterial()]
+                )
+                
+                let floorShape = ShapeResource.generateBox(size: [floorSize, floorThickness, floorSize])
+                let collisionEntity = Entity()
+                collisionEntity.position.y = -floorThickness / 2
+                collisionEntity.components[CollisionComponent.self] = CollisionComponent(shapes: [floorShape], mode: .default, filter: .default)
+                collisionEntity.components[PhysicsBodyComponent.self] = PhysicsBodyComponent(massProperties: .default, material: .default, mode: .static)
+                
+                arFloor.addChild(collisionEntity)
+                arFloor.position.y = -0.001
+                anchor.addChild(arFloor)
+            }
             
             let color = CodeParser.parseColor(from: gameManager.codeSnippet)
             let restitution = CodeParser.parseRestitution(from: gameManager.codeSnippet)
