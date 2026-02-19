@@ -36,6 +36,10 @@ class GameManager: ObservableObject {
     @Published var zoomInput: Float = 0 // +1 = zoom in, -1 = zoom out (for buttons)
     @Published var placedObjectCount: Int = 0 // Track objects placed in current lesson
     
+    // Joystick State (Global for gesture/visual sync)
+    @Published var isJoystickActive: Bool = false
+    @Published var joystickOrigin: CGPoint = .zero
+    
     // Computed Properties
     // Rank system removed
     

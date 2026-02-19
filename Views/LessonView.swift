@@ -92,27 +92,13 @@ struct LessonView: View {
                     .zIndex(1)
             }
             
-            // 3. Bottom Controls (Joystick) - Bottom Right
-            if gameManager.isSimulationMode {
-                VStack {
-                    Spacer()
-                    HStack(alignment: .bottom) {
-                        Spacer()
-                        
-                        // Joystick (Level 1: from Step 3+ / Levels 2+: always)
-                        if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 3 {
-                            JoystickView()
-                                .transition(.scale.combined(with: .opacity))
-                                .padding(.trailing, 40)
-                                .padding(.bottom, 40)
-                        }
-                    }
-                }
+            // 3. Joystick Visuals (Overlay)
+            JoystickVisuals()
                 .zIndex(3)
-            }
+                .transition(.opacity)
             
             // 4. Code Editor - Floating Right Panel
-            if gameManager.isCodeEditorAvailable {
+            if gameManager.isCodeEditorAvailable && !gameManager.isTaskCompleted {
                 HStack {
                     Spacer()
                     codeEditorPanel(geo: geo)
@@ -186,26 +172,13 @@ struct LessonView: View {
             }
             .zIndex(1)
             
-            // 2. Bottom Controls Layer
-            if gameManager.isSimulationMode {
-                VStack {
-                    Spacer()
-                    HStack(alignment: .bottom) {
-                        Spacer()
-                        
-                        if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 3 {
-                            JoystickView()
-                                .transition(.scale.combined(with: .opacity))
-                                .padding(.trailing, 30)
-                                .padding(.bottom, 180)
-                        }
-                    }
-                }
+            // 2. Joystick Visuals (Overlay)
+            JoystickVisuals()
                 .zIndex(2)
-            }
+                .transition(.opacity)
             
             // 3. Code Drawer - Bottom Sheet
-            if gameManager.isCodeEditorAvailable {
+            if gameManager.isCodeEditorAvailable && !gameManager.isTaskCompleted {
                 CodeDrawer(showCode: $showCode, codeSnippet: $gameManager.codeSnippet)
                     .zIndex(3)
                     .transition(.move(edge: .bottom))
@@ -267,6 +240,7 @@ struct LessonView: View {
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }
+
 
 // MARK: - Components
 
@@ -394,16 +368,54 @@ struct MissionSuccessBadge: View {
                 .fontWeight(.bold)
                 .foregroundColor(.white)
             
-            Button(action: {
-                withAnimation { gameManager.appState = .levelMap }
-            }) {
-                Text("Back to Map")
-                    .font(.headline)
-                    .foregroundColor(.blue)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.white)
+            HStack(spacing: 20) {
+                // Back to Map
+                Button(action: {
+                    withAnimation { gameManager.appState = .levelMap }
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "map.fill")
+                            .font(.system(size: 20))
+                        Text("Map")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                    }
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(width: 80, height: 60)
+                    .background(Color.white.opacity(0.1))
                     .cornerRadius(12)
+                }
+                
+                // Next Mission (Primary)
+                Button(action: {
+                    withAnimation {
+                        let nextLevel = gameManager.currentLessonIndex + 1
+                        if nextLevel <= 50 { // Max levels
+                            gameManager.startLesson(nextLevel)
+                        } else {
+                            gameManager.appState = .levelMap
+                        }
+                    }
+                }) {
+                    HStack {
+                        Text("Next Mission")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                        Image(systemName: "arrow.right.circle.fill")
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 60)
+                    .background(
+                        LinearGradient(
+                            colors: [.cyan, .blue],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(12)
+                    .shadow(color: .cyan.opacity(0.5), radius: 8)
+                }
             }
         }
         .padding(24)

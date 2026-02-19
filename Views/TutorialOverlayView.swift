@@ -27,15 +27,15 @@ struct TutorialOverlayView: View {
             }
         case 3:
             if isSim {
-                return ("circle.circle.fill", "Step 3: Navigate", "Use the joystick (bottom-right) to fly the camera.\nMove toward the glowing marker!", "Use joystick to move")
+                return ("circle.circle.fill", "Step 3: Navigate", "Click & Hold anywhere to spawn the joystick.\nDrag to fly the camera!", "Click & Hold to move")
             } else {
-                return ("figure.walk", "Step 3: Walk", "Walk physically or use the joystick to move.\nMove toward the glowing marker!", "Walk forward or use joystick")
+                return ("figure.walk", "Step 3: Walk", "Touch & Hold anywhere to spawn the joystick.\nDrag to move through the space!", "Touch & Hold to move")
             }
         case 4:
             if isSim {
-                return ("arrow.up.left.and.arrow.down.right", "Step 4: Zoom", "Pinch the screen to zoom in and out.\nOn Mac: use scroll wheel.", "Try zooming in and out")
+                return ("arrow.up.left.and.arrow.down.right", "Step 4: Zoom", "Pinch trackpad or use Scroll Wheel to zoom.\n(Mac/Simulator)", "Pinch or Scroll to zoom")
             } else {
-                return ("arrow.up.left.and.arrow.down.right", "Step 4: Move Closer", "Physically move your device closer to objects to see details.", "Move closer")
+                return ("arrow.up.left.and.arrow.down.right", "Step 4: Zoom", "Press Volume Buttons (+/−) to Zoom.\n(Or pinch the screen)", "Use Volume Keys")
             }
         case 5:
             return ("cube.fill", "Step 5: Place Object", "Tap anywhere on the floor to place your first 3D object!", "Tap the floor!")

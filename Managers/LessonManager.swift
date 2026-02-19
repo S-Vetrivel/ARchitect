@@ -35,703 +35,365 @@ class LessonManager {
     
     let lessons: [Lesson] = [
         
-        // MARK: - Level 1: Welcome Tutorial
+        // MARK: - Cosmic Architect: Building the Universe (1-5)
+        
+        // Level 1: The Void (Hello World)
         Lesson(
             id: 1,
-            title: "Welcome to ARchitect",
-            instruction: "Follow the interactive guide to learn the controls.",
+            title: "The Void",
+            instruction: "Initialize a basic sphere in empty space.",
             conceptExplanation: """
-            **Your Virtual Studio**
+            **Creation Engine Online**
             
-            ARchitect lets you build 3D worlds using code and gestures.
+            Welcome to the Void, Architect.
+            Your first task is to manifest a basic celestial body.
             
-            In this tutorial, you'll learn:
-            - 👀 How to **look around** (swipe/drag)
-            - 🚶 How to **walk** (joystick)
-            - 🔍 How to **zoom** (pinch/scroll)
-            - 📦 How to **place objects** (tap)
-            - 💻 How to **edit code** (code editor)
+            You'll learn:
+            - 🪐 How to initialize a **Sphere**
+            - 📍 How to place it in 3D space
             """,
             codeSnippet: """
-            // Change the values below and tap!
-            // Try: .red, .green, .yellow, .purple
-            // width: 0.15, height: 0.05, chamfer: 0.02
+            // MISSION 01: GENESIS
+            // Goal: Create a Planet (Sphere)
+            // Warning: Start small.
+            // radius: 0.1 (10cm)
             // color: .blue
             
-            let anchor = AnchorEntity(world: transform)
-            let mesh = MeshResource.generateBox(
-                size: [0.15, 0.05, 0.15],
-                cornerRadius: 0.02
-            )
-            var mat = SimpleMaterial(
-                color: .blue,
-                isMetallic: true
-            )
-            arView.scene.addAnchor(anchor)
+            let mesh = MeshResource.generateSphere(radius: 0.1)
+            let material = SimpleMaterial(color: .blue, isMetallic: false)
             """,
-            challenges: [
-                Challenge(id: "tutorial_complete", description: "Complete the tutorial", targetCount: 1, xpReward: 100)
-            ],
-            steps: [], // Level 1 uses TutorialOverlayView's hardcoded steps
+            challenges: [Challenge(id: "genesis", description: "Create a Planet", targetCount: 1, xpReward: 100)],
+            steps: [], // Level 1 uses TutorialOverlayView
             codeEditorStartStep: 6
         ),
         
-        // MARK: - Level 2: Gravity & Mass
+        // Level 2: Planetary Scale (Scale 10.0)
         Lesson(
             id: 2,
-            title: "Gravity & Mass",
-            instruction: "Learn how gravity and mass affect objects in AR.",
+            title: "Planetary Scale",
+            instruction: "Scale a planet to Gas Giant proportions.",
             conceptExplanation: """
-            **Newton's First Lesson**
+            **Gas Giant Protocol**
             
-            In the real world, objects fall because of gravity.
-            In AR, objects float unless you give them physics!
+            The current planet is too small to sustain an atmosphere.
+            We need a Gas Giant like Jupiter.
             
-            You'll learn:
-            - ⬇️ How to enable **gravity** on objects
-            - ⚖️ How **mass** changes fall behavior
-            - 📦 How to make objects **solid** with collision
+            Task:
+            - 📏 Increase **Scale** to 10.0
+            - 🧱 Mass will increase exponentially
             """,
             codeSnippet: """
-            // Physics Properties
-            // Change mass to see different effects!
-            // mass: 1.0  (try 0.1, 5.0, 20.0)
-            // color: .cyan
-            // shape: box
+            // MISSION 02: GIGANTISM
+            // Goal: Scale to Gas Giant size
+            // Current Scale: 1.0 (Earth-sized)
+            // Target Scale: 10.0 (Jupiter-sized)
+            
+            entity.scale = SIMD3<Float>(1.0, 1.0, 1.0) // CHANGE THIS!
+            """,
+            challenges: [Challenge(id: "gas_giant", description: "Create a Gas Giant", targetCount: 1, xpReward: 150)],
+            steps: [
+                LessonStep(icon: "circle.circle.fill", title: "Scale Mismatch", instruction: "This planet is too small.\nWe need a Gas Giant.\nTap to assess.", hint: "Scale 1.0 is too small"),
+                LessonStep(icon: "arrow.up.left.and.arrow.down.right", title: "Step 1: Place Prototype", instruction: "Place a standard planet.\nObserve its insufficient size.", hint: "Tap floor to place", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Access Mainframe", instruction: "Open the code editor.\nChange `1.0` to `10.0`\non ALL axes (x, y, z).", hint: "scale = SIMD3(10, 10, 10)", showCodeEditor: true),
+                LessonStep(icon: "globe.asia.australia.fill", title: "Step 3: Manifest Giant", instruction: "Place the new planet.\nWitness the scale difference!", hint: "It will be huge!", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Planetary scale achieved.\nGravity well stabilizing.", hint: "")
+            ],
+            codeEditorStartStep: 2
+        ),
+        
+        // Level 3: Atmospheric Colors (Mars Red)
+        Lesson(
+            id: 3,
+            title: "Red Planet",
+            instruction: "Terraform the planet to Mars-like conditions.",
+            conceptExplanation: """
+            **Atmospheric Re-entry**
+            
+            We are approaching Sector 4 (Mars).
+            The current planet is stuck in Ocean Mode (Blue).
+            
+            Task:
+            - 🎨 Change atmospheric color to **.red**
+            - 🌡️ Iron Oxide detection expected
+            """,
+            codeSnippet: """
+            // MISSION 03: RED DUST
+            // Goal: Terraform to Mars
+            // Current Atmosphere: .blue
+            // Target Atmosphere: .red
+            
+            var material = SimpleMaterial(color: .blue, isMetallic: false) // FIX THIS
+            """,
+            challenges: [Challenge(id: "mars_terraform", description: "Create Mars", targetCount: 1, xpReward: 150)],
+            steps: [
+                LessonStep(icon: "paintpalette.fill", title: "Wrong Sector", instruction: "This planet matches Earth data.\nWe need Mars data.\nTap to Initialize.", hint: "Color mismatch detected"),
+                LessonStep(icon: "circle.fill", title: "Step 1: Scan Planet", instruction: "Place the current planet.\nConfirm it is Blue.", hint: "Tap floor", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Recalibrate", instruction: "Open Inspector.\nChange `.blue` to `.red`\nto match Martian soil.", hint: "color: .red", showCodeEditor: true),
+                LessonStep(icon: "globe.americas.fill", title: "Step 3: Terraform", instruction: "Place the new planet.\nWelcome to Mars, Architect.", hint: "Red Planet achieved", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Atmosphere stabilized.\nIron oxide levels nominal.", hint: "")
+            ],
+            codeEditorStartStep: 2
+        ),
+        
+        // Level 4: Rocky vs Gas (Metallic)
+        Lesson(
+            id: 4,
+            title: "Asteroid Mining",
+            instruction: "Identify metallic asteroids vs matte moons.",
+            conceptExplanation: """
+            **Material Scanner**
+            
+            We need to distinguish between valuable **Metals**
+            and common **Rock**.
+            
+            Task:
+            - ✨ Create a **Shiny Asteroid** (Metallic: True)
+            - 🌑 Create a **Matte Moon** (Metallic: False)
+            """,
+            codeSnippet: """
+            // MISSION 04: ORE SCAN
+            // Goal: Create Metallic Asteroid
+            // isMetallic: false (Rock/Moon)
+            // isMetallic: true (Metal/Treasure)
+            
+            var material = SimpleMaterial(
+                color: .gray,
+                isMetallic: false // CHANGE TO TRUE
+            )
+            """,
+            challenges: [Challenge(id: "metallic_asteroid", description: "Create Metallic Object", targetCount: 1, xpReward: 150)],
+            steps: [
+                LessonStep(icon: "sparkles", title: "Ore Detection", instruction: "Scanner picking up silicate (Rock).\nWe need Metal.\nTap to calibrate.", hint: "Metallic surfaces reflect light"),
+                LessonStep(icon: "circle.fill", title: "Step 1: Analyze Rock", instruction: "Place a standard moon.\nNotice the matte, dull finish.", hint: "Tap floor", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Refine Ore", instruction: "Open Code.\nSet `isMetallic: true`\nTurn rock into iron.", hint: "true = shiny", showCodeEditor: true),
+                LessonStep(icon: "star.fill", title: "Step 3: Forge", instruction: "Place the new asteroid.\nIt should shine in the starlight!", hint: "Look for the shine", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Rich metal deposits found.\nMining drones deployed.", hint: "")
+            ],
+            codeEditorStartStep: 2
+        ),
+        
+        // Level 5: Planetary Rings (Shapes)
+        Lesson(
+            id: 5,
+            title: "Saturn's Rings",
+            instruction: "Construct orbital rings using flattened cylinders.",
+            conceptExplanation: """
+            **Orbital Architecture**
+            
+            Saturn is missing its signature rings.
+            We need to fabricate a debris field.
+            
+            Task:
+            - 🔵 Use **Cylinder** shape
+            - 📉 Flatten it: **ScaleY: 0.1**
+            - 🌌 Expand it: **ScaleX/Z: 5.0**
+            """,
+            codeSnippet: """
+            // MISSION 05: RING BUILDER
+            // Goal: Create Saturn's Rings
+            // Shape: Cylinder
+            // ScaleY: 0.1 (Flat)
+            
+            let mesh = MeshResource.generateCylinder(height: 0.2, radius: 0.5)
+            entity.scale = SIMD3<Float>(1.0, 1.0, 1.0) // FLATTEN THIS!
+            """,
+            challenges: [Challenge(id: "saturn_ring", description: "Create Orbital Ring", targetCount: 1, xpReward: 200)],
+            steps: [
+                LessonStep(icon: "smallcircle.filled.circle", title: "Ring System Offline", instruction: "Planet is naked.\nInitiating Ring Construction Protocol.\nTap to begin.", hint: "Rings are just flat cylinders"),
+                LessonStep(icon: "cylinder.fill", title: "Step 1: Raw Material", instruction: "Place a standard cylinder.\nIt looks like a can, not a ring.", hint: "Tap floor", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Flatten", instruction: "Open Code.\nSet `scaleY` to `0.1` (Thin)\nSet `scaleX/Z` to `3.0` (Wide)", hint: "Y is height, X/Z is width", showCodeEditor: true),
+                LessonStep(icon: "record.circle.fill", title: "Step 3: Deploy Ring", instruction: "Place the flattened cylinder.\nA perfect orbital disc!", hint: "Saturn would be proud", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Ring system stable.\nScenic rating increased to 100%.", hint: "")
+            ],
+            codeEditorStartStep: 2
+        ),
+        
+        // MARK: - Starfleet Academy: Physics & Space (6-10)
+        
+        // Level 6: Anti-Gravity (Mass 0)
+        Lesson(
+            id: 6,
+            title: "Anti-Gravity",
+            instruction: "Defy gravity by nullifying mass.",
+            conceptExplanation: """
+            **Gravity Nullifier**
+            
+            Standard objects plummet to the surface.
+            Satellites must stay in orbit.
+            
+            Task:
+            - ⚖️ Set **Mass** to **0.0**
+            - 🛰️ Object becomes **Kinematic** (Unaffected by forces)
+            """,
+            codeSnippet: """
+            // MISSION 06: ORBITAL LOCK
+            // Goal: Float in Space
+            // Mass 1.0 = Falls (Dynamic)
+            // Mass 0.0 = Floats (Kinematic)
             
             let physics = PhysicsBodyComponent(
-                massProperties: .init(mass: 1.0),
+                massProperties: .init(mass: 1.0), // CHANGE TO 0.0
                 material: .default,
                 mode: .dynamic
             )
-            entity.components[PhysicsBodyComponent.self] = physics
             """,
-            challenges: [
-                Challenge(id: "gravity_drop", description: "Drop an object with gravity", targetCount: 1, xpReward: 75)
-            ],
+            challenges: [Challenge(id: "anti_gravity", description: "Create Floating Satellite", targetCount: 1, xpReward: 200)],
             steps: [
-                LessonStep(
-                    icon: "arrow.down.to.line.alt",
-                    title: "Welcome to Physics!",
-                    instruction: "In this lesson, you'll learn how gravity\nworks in augmented reality.\nTap to begin!",
-                    hint: "Gravity pulls objects down"
-                ),
-                LessonStep(
-                    icon: "cube.fill",
-                    title: "Step 1: Place a Box",
-                    instruction: "Tap on the floor to place a static box.\nNotice it just sits there — no physics yet!",
-                    hint: "Tap the floor!",
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "chevron.left.forwardslash.chevron.right",
-                    title: "Step 2: Read the Code",
-                    instruction: "Open the code editor.\nThis code adds a PhysicsBody to your object.\n`mass: 1.0` controls how heavy it is.",
-                    hint: "Swipe up the code editor",
-                    showCodeEditor: true
-                ),
-                LessonStep(
-                    icon: "arrow.down.circle.fill",
-                    title: "Step 3: Enable Gravity!",
-                    instruction: "Tap your box to apply physics.\nWatch it fall with gravity! 🎉",
-                    hint: "Tap your placed object",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "scalemass.fill",
-                    title: "Step 4: Change the Mass",
-                    instruction: "In the code editor, change\n`mass: 1.0` to `mass: 10.0`\nPlace a new box and apply physics.\nSee the difference!",
-                    hint: "Heavier objects look the same but interact differently",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "checkmark.circle.fill",
-                    title: "Level Complete! 🎉",
-                    instruction: "You've learned basic gravity!\nObjects need PhysicsBody to be affected\nby gravity and collisions.",
-                    hint: ""
-                )
+                LessonStep(icon: "arrow.down.to.line.alt", title: "Gravity Alert", instruction: "Satellites are crashing.\nGravity is too strong.\nTap to fix.", hint: "Mass 0 disables gravity"),
+                LessonStep(icon: "cube.fill", title: "Step 1: Observe Crash", instruction: "Place a satellite (Box).\nIt falls immediately.", hint: "Tap floor", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Nullify Mass", instruction: "Open Code.\nSet `mass: 1.0` to `mass: 0.0`\nThis creates a 'Static' body.", hint: "0.0 = no gravity effect", showCodeEditor: true),
+                LessonStep(icon: "cloud.fill", title: "Step 3: Orbit Achieved", instruction: "Place the new satellite.\nIt floats perfectly in the air!", hint: "Look at it float!", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Anti-gravity generators online.\nOrbit established.", hint: "")
             ],
             codeEditorStartStep: 2
         ),
         
-        // MARK: - Level 3: Bounce & Collide
+        // Level 7: Thruster Engage (Force Z)
         Lesson(
-            id: 3,
-            title: "Bounce & Collide",
-            instruction: "Discover how objects bounce and collide.",
+            id: 7,
+            title: "Thruster Engage",
+            instruction: "Launch a probe into deep space.",
             conceptExplanation: """
-            **Elastic Worlds**
+            **Launch Detection**
             
-            When objects hit the ground, do they stop or bounce?
-            That depends on **restitution** — the bounciness factor!
+            We need to send a probe to the Outer Rim.
+            Gravity is not enough. We need **Thrust**.
             
-            You'll learn:
-            - 🏀 How **restitution** controls bounce
-            - 🔵 How to create **spheres** that roll
-            - 💥 How objects **collide** with each other
+            Task:
+            - 💨 Apply **Force Z: -10.0**
+            - 🚀 Launch **Forward** (Negative Z is forward in AR)
             """,
             codeSnippet: """
-            // Bounce Physics
-            // restitution: 0.8  (0=no bounce, 1=perfect bounce)
-            // mass: 1.0
-            // color: .orange
-            // shape: sphere
+            // MISSION 07: DEEP SPACE
+            // Goal: Launch Forward
+            // forceZ: 0.0 (Drifting)
+            // forceZ: -10.0 (Warp Speed)
             
-            let material = PhysicsMaterialResource.generate(
-                staticFriction: 0.5,
-                dynamicFriction: 0.5,
-                restitution: 0.8
+            let force = SIMD3<Float>(0.0, 1.0, 0.0) // THIS PUSHES UP. FIX IT.
+            entity.addForce(force, relativeTo: nil)
+            """,
+            challenges: [Challenge(id: "thruster_launch", description: "Launch Deep Space Probe", targetCount: 1, xpReward: 200)],
+            steps: [
+                LessonStep(icon: "flame.fill", title: "Launch Pad", instruction: "Probe ready for departure.\nEngine check required.\nTap to begin.", hint: "Negative Z = Forward"),
+                LessonStep(icon: "arrow.up", title: "Step 1: Test Fire", instruction: "Place probe.\nNotice it hops UP (Y-axis).\nWe need it to go FORWARD.", hint: "Tap floor", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Vector Alignment", instruction: "Open Code.\nChange `forceY: 1.0` to `0.0`\nSet `forceZ` to `-10.0`", hint: "-10.0 is forward", showCodeEditor: true),
+                LessonStep(icon: "rocket.fill", title: "Step 3: Engage", instruction: "Place probe.\nWatch it launch into the void!\nWave goodbye! 👋", hint: "There it goes...", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Probe trajectory confirmed.\nETA to Outer Rim: 400 years.", hint: "")
+            ],
+            codeEditorStartStep: 2
+        ),
+        
+        // Level 8: Frictionless Space (Friction 0)
+        Lesson(
+            id: 8,
+            title: "Void Glider",
+            instruction: "Simulate a frictionless vacuum.",
+            conceptExplanation: """
+            **Vacuum Physics**
+            
+            In space, there is no air resistance or friction.
+            An object in motion stays in motion.
+            
+            Task:
+            - 🧊 Set **Friction** to **0.0**
+            - ⛸️ Push object and watch it **glide forever**
+            """,
+            codeSnippet: """
+            // MISSION 08: VACUUM DRIFT
+            // Goal: Perpetual Motion
+            // friction: 1.0 (High Drag)
+            // friction: 0.0 (No Drag)
+            
+            var material = PhysicsMaterialResource.generate(
+                friction: 1.0, // TOO HIGH
+                restitution: 0.0
             )
+            """,
+            challenges: [Challenge(id: "frictionless_glide", description: "Create Frictionless Object", targetCount: 1, xpReward: 200)],
+            steps: [
+                LessonStep(icon: "wind.snow", title: "Drag Detected", instruction: "Space hull is slowing down.\nSomething is dragging on it.\nTap to fix.", hint: "Friction slows things down"),
+                LessonStep(icon: "stop.fill", title: "Step 1: Friction Test", instruction: "Place the hull. Push it.\nIt stops quickly due to friction.", hint: "Tap floor", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Remove Drag", instruction: "Open Code.\nSet `friction` to `0.0`\nThis simulates a vacuum.", hint: "0.0 = ice mode", showCodeEditor: true),
+                LessonStep(icon: "arrow.right", title: "Step 3: Eternal Glide", instruction: "Place hull. Tap to push.\nIt will slide forever until it hits a wall.", hint: "Weeeee!", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Friction systems offline.\nHull efficiency at 100%.", hint: "")
+            ],
+            codeEditorStartStep: 2
+        ),
+        
+        // Level 9: Asteroid Collision (Mass 50)
+        Lesson(
+            id: 9,
+            title: "Asteroid Impact",
+            instruction: "Use mass to obliterate obstacles.",
+            conceptExplanation: """
+            **Kinetic Impact**
+            
+            A debris field is blocking our path.
+            We need a heavy projectile to clear it.
+            
+            Task:
+            - 🧱 Set **Mass** to **50.0**
+            - 💥 **Smash** through lighter objects
+            """,
+            codeSnippet: """
+            // MISSION 09: DEBRIS CLEARANCE
+            // Goal: Smash Obstacles
+            // Mass 1.0 = Weak Impact
+            // Mass 50.0 = Heavy Impact
+            
             let physics = PhysicsBodyComponent(
-                massProperties: .init(mass: 1.0),
-                material: material,
+                massProperties: .init(mass: 1.0), // TOO LIGHT
+                material: .default,
                 mode: .dynamic
             )
             """,
-            challenges: [
-                Challenge(id: "bounce_object", description: "Make an object bounce", targetCount: 1, xpReward: 100)
-            ],
+            challenges: [Challenge(id: "asteroid_smash", description: "Clear Debris Field", targetCount: 1, xpReward: 250)],
             steps: [
-                LessonStep(
-                    icon: "basketball.fill",
-                    title: "Welcome to Bouncing!",
-                    instruction: "Objects can bounce when they collide.\nIt all depends on their bounciness.\nTap to begin!",
-                    hint: "restitution = bounciness"
-                ),
-                LessonStep(
-                    icon: "circle.fill",
-                    title: "Step 1: Place a Sphere",
-                    instruction: "Tap the floor to place a bouncy sphere.\nIt will drop with gravity and bounce!",
-                    hint: "Tap the floor!",
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "eye.fill",
-                    title: "Step 2: Watch it Bounce!",
-                    instruction: "See how the sphere bounces?\nThe code has `restitution: 0.8`\nwhich means 80% bounce energy.\nTap to continue.",
-                    hint: "Higher restitution = more bounce",
-                    showCodeEditor: true
-                ),
-                LessonStep(
-                    icon: "chevron.left.forwardslash.chevron.right",
-                    title: "Step 3: Max Bounce!",
-                    instruction: "Change `restitution: 0.8` to\n`restitution: 1.0` in the code.\nPlace another sphere to see\na perfect bounce!",
-                    hint: "1.0 = no energy lost",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "arrow.triangle.2.circlepath",
-                    title: "Step 4: No Bounce",
-                    instruction: "Now try `restitution: 0.0`\nPlace another sphere —\nit should thud and stop!",
-                    hint: "0.0 = all energy absorbed",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "checkmark.circle.fill",
-                    title: "Level Complete! 🎉",
-                    instruction: "You now understand restitution!\n0 = dead stop, 1 = perfect bounce.\nReal-world rubber is about 0.8.",
-                    hint: ""
-                )
+                LessonStep(icon: "exclamationmark.triangle.fill", title: "Path Blocked", instruction: "Satellite debris ahead.\nStandard lasers ineffective.\nKinetic ram required.", hint: "Heavy objects push light ones"),
+                LessonStep(icon: "circle.dotted", title: "Step 1: Weak Impact", instruction: "Drop a standard rock (Mass 1.0).\nIt bounces off the debris.", hint: "Tap floor", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Increase Density", instruction: "Open Code.\nSet `mass` to `50.0`\nMake it a dense iron asteroid.", hint: "50x heavier!", showCodeEditor: true),
+                LessonStep(icon: "burst.fill", title: "Step 3: Impact!", instruction: "Drop the asteroid.\nWatch it crush the debris!\nPath cleared.", hint: "Boom!", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Debris field neutralized.\nRoute confirmed.", hint: "")
             ],
             codeEditorStartStep: 2
         ),
         
-        // MARK: - Level 4: Forces & Impulse
+        // Level 10: Deflector Shields (Restitution 1.0)
         Lesson(
-            id: 4,
-            title: "Forces & Impulse",
-            instruction: "Learn to push objects with code-driven forces.",
+            id: 10,
+            title: "Deflector Shields",
+            instruction: "Bounce projectiles away with shields.",
             conceptExplanation: """
-            **Push & Launch**
+            **Shield Generator**
             
-            Gravity pulls things down, but forces can push
-            objects in ANY direction!
+            Meteors are incoming!
+            We need a shield that reflects kinetic energy perfectly.
             
-            You'll learn:
-            - 💨 How to apply **impulse** forces
-            - ➡️ How **direction vectors** work (x, y, z)
-            - 🎯 How to aim and launch objects
+            Task:
+            - 🛡️ Set **Restitution** to **1.0**
+            - 💫 **Bounce** threats away without damage
             """,
             codeSnippet: """
-            // Force Control
-            // Edit the force vector to change direction!
-            // forceX: 0.0  (left/right)
-            // forceY: 5.0  (up/down)
-            // forceZ: -3.0 (forward/back)
-            // mass: 1.0
-            // color: .green
-            // shape: box
+            // MISSION 10: SHIELD UP
+            // Goal: Perfect Reflection
+            // Restitution 0.0 = Absorb (Damage)
+            // Restitution 1.0 = Reflect (Safe)
             
-            let force = SIMD3<Float>(0.0, 5.0, -3.0)
-            entity.addForce(force, relativeTo: nil)
-            """,
-            challenges: [
-                Challenge(id: "launch_object", description: "Launch an object with force", targetCount: 1, xpReward: 125)
-            ],
-            steps: [
-                LessonStep(
-                    icon: "wind",
-                    title: "Welcome to Forces!",
-                    instruction: "In this lesson, you'll launch objects\nusing force vectors.\nTap to begin!",
-                    hint: "F = m × a"
-                ),
-                LessonStep(
-                    icon: "cube.fill",
-                    title: "Step 1: Place an Object",
-                    instruction: "Tap the floor to place your launch pad.\nThis will be your projectile!",
-                    hint: "Tap the floor!",
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "chevron.left.forwardslash.chevron.right",
-                    title: "Step 2: Read the Force Code",
-                    instruction: "The code defines a force vector:\n`forceY: 5.0` pushes UP\n`forceZ: -3.0` pushes FORWARD\nTap to continue.",
-                    hint: "Positive Y = up, Negative Z = forward",
-                    showCodeEditor: true
-                ),
-                LessonStep(
-                    icon: "arrow.up.forward",
-                    title: "Step 3: Launch It!",
-                    instruction: "Tap your object to apply the force!\nWatch it fly! 🚀",
-                    hint: "Tap the object you placed",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "pencil.circle.fill",
-                    title: "Step 4: Change Direction",
-                    instruction: "Edit the code:\n`forceY: 10.0` for higher launch\n`forceZ: -8.0` for further reach\nPlace and launch again!",
-                    hint: "Bigger numbers = stronger force",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "checkmark.circle.fill",
-                    title: "Level Complete! 🎉",
-                    instruction: "You can now control forces!\nForce vectors (x, y, z) let you\npush objects in any direction.",
-                    hint: ""
-                )
-            ],
-            codeEditorStartStep: 2
-        ),
-        
-        // MARK: - Level 5: Scaling & Transform
-        Lesson(
-            id: 5,
-            title: "Scaling & Transform",
-            instruction: "Learn to resize objects using scale transforms.",
-            conceptExplanation: """
-            **Size Matters**
-            
-            Every 3D object has a scale transform that controls
-            its size along X, Y, and Z axes.
-            
-            You'll learn:
-            - 📏 How to **scale** objects bigger or smaller
-            - ↔️ How X, Y, Z axes control **width, height, depth**
-            - 🏗️ How to build **tall towers** and **wide platforms**
-            """,
-            codeSnippet: """
-            // Scale Transform
-            // Change scale to resize objects!
-            // scaleX: 1.0  (width)
-            // scaleY: 1.0  (height)
-            // scaleZ: 1.0  (depth)
-            // color: .purple
-            // shape: box
-            
-            entity.scale = SIMD3<Float>(1.0, 1.0, 1.0)
-            """,
-            challenges: [
-                Challenge(id: "scale_object", description: "Create a scaled object", targetCount: 1, xpReward: 100)
-            ],
-            steps: [
-                LessonStep(
-                    icon: "arrow.up.left.and.arrow.down.right",
-                    title: "Welcome to Scaling!",
-                    instruction: "Objects can be any size you want.\nJust change their scale transform!\nTap to begin!",
-                    hint: "scale = size multiplier"
-                ),
-                LessonStep(
-                    icon: "cube.fill",
-                    title: "Step 1: Place a Box",
-                    instruction: "Tap the floor to place a normal-sized box.\nThis is scale 1.0 (default size).",
-                    hint: "Tap the floor!",
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "chevron.left.forwardslash.chevron.right",
-                    title: "Step 2: Read Scale Code",
-                    instruction: "The code shows `scaleX/Y/Z: 1.0`\n1.0 = normal size\n2.0 = double size\n0.5 = half size",
-                    hint: "Each axis scales independently",
-                    showCodeEditor: true
-                ),
-                LessonStep(
-                    icon: "arrow.up.forward.and.arrow.down.backward",
-                    title: "Step 3: Make it Tall!",
-                    instruction: "Change `scaleY: 1.0` to\n`scaleY: 3.0` in the code.\nPlace a new box — it's a tower!",
-                    hint: "Y = height",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "rectangle.expand.vertical",
-                    title: "Step 4: Make it Wide!",
-                    instruction: "Now try:\n`scaleX: 3.0, scaleY: 0.2, scaleZ: 3.0`\nYou just made a platform!",
-                    hint: "X = width, Z = depth",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "checkmark.circle.fill",
-                    title: "Level Complete! 🎉",
-                    instruction: "You can now resize any object!\nScale transforms let you build\ntowers, platforms, and more.",
-                    hint: ""
-                )
-            ],
-            codeEditorStartStep: 2
-        ),
-        
-        // MARK: - Level 6: Color Lab
-        Lesson(
-            id: 6,
-            title: "Color Lab",
-            instruction: "Master materials and color properties.",
-            conceptExplanation: """
-            **Paint Your World**
-            
-            Every object has a material that controls its
-            appearance — color, shininess, and texture.
-            
-            You'll learn:
-            - 🎨 How to change **colors** with code
-            - ✨ How **metallic** materials reflect light
-            - 🖌️ How to create **matte** vs **shiny** surfaces
-            """,
-            codeSnippet: """
-            // Material Properties
-            // color: .cyan  (try .red, .green, .purple)
-            // metallic: true  (try false for matte)
-            // shape: sphere
-            
-            var mat = SimpleMaterial(
-                color: .cyan,
-                isMetallic: true
+            var material = PhysicsMaterialResource.generate(
+                friction: 0.5,
+                restitution: 0.1 // SHIELDS DOWN!
             )
-            entity.model?.materials = [mat]
             """,
-            challenges: [
-                Challenge(id: "color_change", description: "Change an object's color", targetCount: 1, xpReward: 100)
-            ],
+            challenges: [Challenge(id: "shield_reflect", description: "Reflect Meteor", targetCount: 1, xpReward: 300)],
             steps: [
-                LessonStep(
-                    icon: "paintpalette.fill",
-                    title: "Welcome to Color Lab!",
-                    instruction: "Let's learn how materials work.\nYou'll paint objects with code!\nTap to begin!",
-                    hint: "Materials = appearance"
-                ),
-                LessonStep(
-                    icon: "circle.fill",
-                    title: "Step 1: Place a Sphere",
-                    instruction: "Tap the floor to place a shiny\ncyan sphere. That's the default!",
-                    hint: "Tap the floor!",
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "chevron.left.forwardslash.chevron.right",
-                    title: "Step 2: Read the Code",
-                    instruction: "See `color: .cyan`?\nThis controls the object's color.\n`metallic: true` makes it shiny.",
-                    hint: "Try different colors!",
-                    showCodeEditor: true
-                ),
-                LessonStep(
-                    icon: "paintbrush.fill",
-                    title: "Step 3: Change Color!",
-                    instruction: "Change `color: .cyan` to\n`color: .red` in the code.\nTap your sphere to repaint it! 🎨",
-                    hint: "Tap an existing object to repaint",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "sparkles",
-                    title: "Step 4: Go Matte!",
-                    instruction: "Change `metallic: true` to\n`metallic: false`\nPlace a new sphere — see the\ndifference? Matte vs shiny!",
-                    hint: "Metallic reflects environment",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "checkmark.circle.fill",
-                    title: "Level Complete! 🎉",
-                    instruction: "You're now an AR painter!\nMaterials control how light\ninteracts with your objects.",
-                    hint: ""
-                )
+                LessonStep(icon: "shield.slash.fill", title: "Shields Critical", instruction: "Incoming meteors detected.\nShields are at 10% capacity.\nImpact imminent.", hint: "Restitution is reflection"),
+                LessonStep(icon: "arrow.down", title: "Step 1: Hull Breach", instruction: "Place the shield.\nDrop a test meteor.\nIt hits hard and stops. Damage taken.", hint: "Tap floor", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Max Power", instruction: "Open Code.\nSet `restitution` to `1.0`\nMaximum bounce capability.", hint: "1.0 = 100% reflection", showCodeEditor: true),
+                LessonStep(icon: "shield.fill", title: "Step 3: Reflect!", instruction: "Place shield.\nDrop meteor.\nIt bounces off harmlessly!", hint: "Boing!", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Shields holding at 100%.\nSector secured.\nWelcome to Starfleet.", hint: "")
             ],
             codeEditorStartStep: 2
         ),
-        
-        // MARK: - Level 7: Shape Factory
-        Lesson(
-            id: 7,
-            title: "Shape Factory",
-            instruction: "Build with different 3D shapes.",
-            conceptExplanation: """
-            **Beyond the Box**
-            
-            Boxes are great, but AR has many shapes!
-            Each shape has unique properties.
-            
-            You'll learn:
-            - 🟦 **Box** — flat surfaces, stackable
-            - 🟢 **Sphere** — rolls, bounces
-            - 🔵 **Cylinder** — columns, wheels
-            - 🏔️ **Cone** — pointy, directional
-            """,
-            codeSnippet: """
-            // Shape Builder
-            // shape: box  (try sphere, cylinder, cone)
-            // radius: 0.08
-            // color: .green
-            // mass: 1.0
-            
-            let mesh = MeshResource.generateBox(size: 0.15)
-            // or: .generateSphere(radius: 0.08)
-            // or: .generateCylinder(height: 0.2, radius: 0.06)
-            // or: .generateCone(height: 0.2, radius: 0.08)
-            """,
-            challenges: [
-                Challenge(id: "shape_variety", description: "Place different shapes", targetCount: 1, xpReward: 100)
-            ],
-            steps: [
-                LessonStep(
-                    icon: "cube.fill",
-                    title: "Welcome to Shape Factory!",
-                    instruction: "Let's explore all the 3D shapes\nyou can create in AR.\nTap to begin!",
-                    hint: "4 shapes to discover"
-                ),
-                LessonStep(
-                    icon: "square.fill",
-                    title: "Step 1: Place a Box",
-                    instruction: "Tap the floor. The default shape\nis a box. Solid and stackable!",
-                    hint: "Tap the floor!",
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "chevron.left.forwardslash.chevron.right",
-                    title: "Step 2: Read Shape Code",
-                    instruction: "See `shape: box`?\nChange this to create\ndifferent 3D geometries.",
-                    hint: "box, sphere, cylinder, cone",
-                    showCodeEditor: true
-                ),
-                LessonStep(
-                    icon: "circle.fill",
-                    title: "Step 3: Make a Sphere!",
-                    instruction: "Change `shape: box` to\n`shape: sphere`\nPlace it — watch it roll!",
-                    hint: "Spheres have no flat surfaces",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "cylinder.fill",
-                    title: "Step 4: Build a Column!",
-                    instruction: "Change `shape: sphere` to\n`shape: cylinder`\nPerfect for pillars!",
-                    hint: "Cylinders have flat top & bottom",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "triangle.fill",
-                    title: "Step 5: Create a Cone!",
-                    instruction: "Try `shape: cone`\nCones are great for\nrooftops and markers! 🏔️",
-                    hint: "Cones point upward",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "checkmark.circle.fill",
-                    title: "Level Complete! 🎉",
-                    instruction: "You know all 4 base shapes!\nCombine them to build\nanything you can imagine.",
-                    hint: ""
-                )
-            ],
-            codeEditorStartStep: 2
-        ),
-        
-        // MARK: - Level 8: Target Practice
-        Lesson(
-            id: 8,
-            title: "Target Practice",
-            instruction: "Shoot projectiles at targets!",
-            conceptExplanation: """
-            **Ready, Aim, Fire! 🎯**
-            
-            Combine physics and forces to create
-            a target shooting game!
-            
-            You'll learn:
-            - 🎯 How to **place targets** in AR
-            - 🔴 How to **shoot projectiles** from the camera
-            - 💥 How **collision detection** works
-            - 🏆 How to **score hits**
-            """,
-            codeSnippet: """
-            // Projectile Settings
-            // speed: 8.0  (try 5.0 to 15.0)
-            // radius: 0.03
-            // color: .red
-            // mass: 0.5
-            
-            let velocity = cameraForward * speed
-            projectile.applyLinearImpulse(velocity, relativeTo: nil)
-            """,
-            challenges: [
-                Challenge(id: "hit_target", description: "Hit a target", targetCount: 1, xpReward: 150)
-            ],
-            steps: [
-                LessonStep(
-                    icon: "target",
-                    title: "Target Practice! 🎯",
-                    instruction: "Time to combine everything!\nYou'll shoot projectiles at targets.\nTap to begin!",
-                    hint: "Physics + Forces = Shooting"
-                ),
-                LessonStep(
-                    icon: "mappin.circle.fill",
-                    title: "Step 1: Place a Target",
-                    instruction: "Tap the floor to place a target.\nA glowing ring will appear!",
-                    hint: "Tap the floor!",
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "chevron.left.forwardslash.chevron.right",
-                    title: "Step 2: Projectile Code",
-                    instruction: "The code controls your projectile:\n`speed: 8.0` = how fast\n`radius: 0.03` = bullet size\nTap to continue.",
-                    hint: "Speed = impulse magnitude",
-                    showCodeEditor: true
-                ),
-                LessonStep(
-                    icon: "scope",
-                    title: "Step 3: Aim & Shoot!",
-                    instruction: "Tap anywhere in the air to shoot!\nA ball flies from the camera\ntoward where you tap. Hit the target!",
-                    hint: "Aim at the target ring",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "bolt.circle.fill",
-                    title: "Step 4: Increase Power!",
-                    instruction: "Change `speed: 8.0` to\n`speed: 15.0`\nShoot again — faster bullet!",
-                    hint: "Higher speed = faster projectile",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "checkmark.circle.fill",
-                    title: "Level Complete! 🎉",
-                    instruction: "You built a shooting game!\nProjectiles use impulse forces\nand collision detection. 🎯",
-                    hint: ""
-                )
-            ],
-            codeEditorStartStep: 2
-        ),
-        
-        // MARK: - Level 9: Stack & Topple
-        Lesson(
-            id: 9,
-            title: "Stack & Topple",
-            instruction: "Build towers and knock them down!",
-            conceptExplanation: """
-            **Build It Up, Knock It Down! 💥**
-            
-            Stack physics objects into towers,
-            then launch a ball to topple them!
-            
-            You'll learn:
-            - 🧱 How to **stack** objects precisely
-            - 🏗️ How **count** controls tower height
-            - 🎳 How to **topple** with projectiles
-            - ⚖️ How **mass** affects stability
-            """,
-            codeSnippet: """
-            // Tower Builder
-            // count: 5  (number of blocks, try 3-10)
-            // mass: 0.5
-            // restitution: 0.2
-            // color: .yellow
-            // shape: box
-            
-            for i in 0..<count {
-                let block = makeBox(y: Float(i) * height)
-                tower.addChild(block)
-            }
-            """,
-            challenges: [
-                Challenge(id: "topple_tower", description: "Topple a tower", targetCount: 1, xpReward: 150)
-            ],
-            steps: [
-                LessonStep(
-                    icon: "square.stack.3d.up.fill",
-                    title: "Stack & Topple! 🧱",
-                    instruction: "Let's build towers with physics\nand then smash them!\nTap to begin!",
-                    hint: "Stacking = precise placement"
-                ),
-                LessonStep(
-                    icon: "square.stack.fill",
-                    title: "Step 1: Build a Tower",
-                    instruction: "Tap the floor to auto-stack\n5 blocks into a tower!\nWatch physics keep them balanced.",
-                    hint: "Tap the floor!",
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "chevron.left.forwardslash.chevron.right",
-                    title: "Step 2: Tower Code",
-                    instruction: "`count: 5` = number of blocks\n`mass: 0.5` = block weight\nMore blocks = taller but unstable!",
-                    hint: "Try changing count",
-                    showCodeEditor: true
-                ),
-                LessonStep(
-                    icon: "scope",
-                    title: "Step 3: Knock it Down!",
-                    instruction: "Tap the air to shoot a ball\nat your tower! 🎳\nWatch physics topple it!",
-                    hint: "Aim at the middle for max effect",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "plus.circle.fill",
-                    title: "Step 4: Bigger Tower!",
-                    instruction: "Change `count: 5` to `count: 8`\nTap floor to build a taller tower.\nThen shoot to topple it!",
-                    hint: "More blocks = more satisfying",
-                    showCodeEditor: true,
-                    autoAdvance: true
-                ),
-                LessonStep(
-                    icon: "checkmark.circle.fill",
-                    title: "Level Complete! 🎉",
-                    instruction: "You're a demolition expert!\nPhysics stacking + projectiles\n= endless fun! 🏗️💥",
-                    hint: ""
-                )
-            ],
-            codeEditorStartStep: 2
-        ),
-        
-        // MARK: - Chapter 3: Physics Mastery (10-17)
-        
-        Lesson(id: 10, title: "Heavy vs Light", instruction: "Compare how mass affects falling objects.",
-            conceptExplanation: "**Mass Matters**\n\nTwo objects fall at the same speed in a vacuum,\nbut mass changes how they interact!\n\nYou'll learn:\n- ⚖️ How **mass** affects collisions\n- 🏋️ Heavy vs light impacts\n- 💥 Momentum = mass × velocity",
-            codeSnippet: "// Mass Comparison\n// mass: 0.5  (try 0.1, 1.0, 5.0, 20.0)\n// restitution: 0.5\n// color: .cyan\n// shape: sphere",
-            challenges: [Challenge(id: "mass_compare", description: "Drop objects with different masses", targetCount: 1, xpReward: 100)],
-            steps: [
-                LessonStep(icon: "scalemass.fill", title: "Heavy vs Light!", instruction: "Let's see how mass changes\ncollision behavior!\nTap to begin!", hint: "Mass ≠ size"),
-                LessonStep(icon: "circle.fill", title: "Step 1: Light Ball", instruction: "Place a light sphere (mass: 0.5)\nWatch how it bounces!", hint: "Tap the floor!", autoAdvance: true),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Check Mass", instruction: "The code shows `mass: 0.5`\nThis is a lightweight object.\nLet's make it heavier!", hint: "Edit the mass value", showCodeEditor: true),
-                LessonStep(icon: "scalemass.fill", title: "Step 3: Heavy Ball!", instruction: "Change `mass: 0.5` to\n`mass: 10.0`\nDrop another — feel the impact!", hint: "Heavier = more momentum", showCodeEditor: true, autoAdvance: true),
-                LessonStep(icon: "bolt.fill", title: "Step 4: Super Heavy!", instruction: "Try `mass: 50.0`\nThis one's a wrecking ball!", hint: "Mass affects collision force", showCodeEditor: true, autoAdvance: true),
-                LessonStep(icon: "checkmark.circle.fill", title: "Level Complete! 🎉", instruction: "Mass controls momentum!\nHeavier objects push lighter\nones around in collisions.", hint: "")
-            ], codeEditorStartStep: 2),
         
         Lesson(id: 11, title: "Friction Stop", instruction: "Control how objects slide and stop.",
             conceptExplanation: "**Slip & Grip**\n\nFriction determines how quickly\nobjects slow down and stop.\n\nYou'll learn:\n- 🧊 **Low friction** = slippery ice\n- 🏖️ **High friction** = sticky sand\n- 🎮 How friction affects gameplay",
