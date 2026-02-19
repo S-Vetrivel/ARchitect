@@ -159,6 +159,12 @@ struct CodeParser {
         }
         return defaultValue
     }
+    // MARK: - Gravity Parser (Level 6)
+    
+    static func parseGravity(from code: String, defaultGravity: Float = 9.8) -> Float {
+        let pattern = "gravity:\\s*([0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultGravity
+    }
     
     // Helper
     private static func parseFloat(from code: String, pattern: String) -> Float? {

@@ -210,40 +210,41 @@ class LessonManager {
         
         // MARK: - Starfleet Academy: Physics & Space (6-10)
         
-        // Level 6: Anti-Gravity (Mass 0)
+        // Level 6: Gravity Control
         Lesson(
             id: 6,
-            title: "Anti-Gravity",
-            instruction: "Defy gravity by nullifying mass.",
+            title: "Gravity Control",
+            instruction: "Master the force of gravity itself.",
             conceptExplanation: """
-            **Gravity Nullifier**
+            **Gravity Engine**
             
-            Standard objects plummet to the surface.
-            Satellites must stay in orbit.
+            Every world has gravity pulling objects down.
+            Earth = **9.8** m/s². Moon = **1.6** m/s².
             
             Task:
-            - ⚖️ Set **Mass** to **0.0**
-            - 🛰️ Object becomes **Kinematic** (Unaffected by forces)
+            - 🌍 Default gravity is **9.8** (objects fall normally)
+            - 🌙 Set to **1.6** for Moon gravity (slow fall)
+            - 🛸 Set to **0.0** for Anti-Gravity (objects float!)
             """,
             codeSnippet: """
-            // MISSION 06: ORBITAL LOCK
-            // Goal: Float in Space
-            // Mass 1.0 = Falls (Dynamic)
-            // Mass 0.0 = Floats (Kinematic)
+            // MISSION 06: GRAVITY ENGINE
+            // Change gravity to control how objects fall!
+            // gravity: 9.8  (Earth — normal)
+            // gravity: 1.6  (Moon — slow fall)
+            // gravity: 0.0  (Space — float!)
             
-            let physics = PhysicsBodyComponent(
-                massProperties: .init(mass: 1.0), // CHANGE TO 0.0
-                material: .default,
-                mode: .dynamic
-            )
+            gravity: 9.8
+            color: .cyan
+            shape: sphere
             """,
-            challenges: [Challenge(id: "anti_gravity", description: "Create Floating Satellite", targetCount: 1, xpReward: 200)],
+            challenges: [Challenge(id: "gravity_control", description: "Master Gravity", targetCount: 1, xpReward: 200)],
             steps: [
-                LessonStep(icon: "arrow.down.to.line.alt", title: "Gravity Alert", instruction: "Satellites are crashing.\nGravity is too strong.\nTap to fix.", hint: "Mass 0 disables gravity"),
-                LessonStep(icon: "cube.fill", title: "Step 1: Observe Crash", instruction: "Place a satellite (Box).\nIt falls immediately.", hint: "Tap floor", autoAdvance: true),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Nullify Mass", instruction: "Open Code.\nSet `mass: 1.0` to `mass: 0.0`\nThis creates a 'Static' body.", hint: "0.0 = no gravity effect", showCodeEditor: true),
-                LessonStep(icon: "cloud.fill", title: "Step 3: Orbit Achieved", instruction: "Place the new satellite.\nIt floats perfectly in the air!", hint: "Look at it float!", showCodeEditor: true, autoAdvance: true),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Anti-gravity generators online.\nOrbit established.", hint: "")
+                LessonStep(icon: "arrow.down.to.line.alt", title: "Gravity Lab", instruction: "Welcome to the Gravity Engine.\nObjects fall at 9.8 m/s² by default.\nTap to begin.", hint: "Change gravity in code"),
+                LessonStep(icon: "cube.fill", title: "Step 1: Normal Drop", instruction: "Place an object above the floor.\nIt falls at Earth gravity (9.8).\nWatch it drop!", hint: "Tap the floor", autoAdvance: true),
+                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Zero-G", instruction: "Open Code.\nChange `gravity: 9.8` to\n`gravity: 0.0`\nThis disables gravity!", hint: "0.0 = float in space", showCodeEditor: true),
+                LessonStep(icon: "cloud.fill", title: "Step 3: Anti-Gravity!", instruction: "Place another object.\nIt floats in mid-air! 🛸\nNo gravity = no falling.", hint: "Look! It floats!", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "moon.fill", title: "Step 4: Moon Walk", instruction: "Try `gravity: 1.6`\nPlace an object.\nIt falls slowly — Moon gravity!", hint: "1.6 = lunar gravity", showCodeEditor: true, autoAdvance: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Gravity engine mastered!\n9.8=Earth, 1.6=Moon, 0=Space.\nYou control the universe!", hint: "")
             ],
             codeEditorStartStep: 2
         ),

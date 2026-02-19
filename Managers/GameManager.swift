@@ -35,16 +35,13 @@ class GameManager: ObservableObject {
     @Published var joystickInput: SIMD2<Float> = .zero
     @Published var zoomInput: Float = 0 // +1 = zoom in, -1 = zoom out (for buttons)
     @Published var placedObjectCount: Int = 0 // Track objects placed in current lesson
+    @Published var customGravity: Float = 9.8 // Adjustable gravity (0 = float, 9.8 = Earth, 20 = heavy)
     
     // Joystick State (Global for gesture/visual sync)
     @Published var isJoystickActive: Bool = false
     @Published var joystickOrigin: CGPoint = .zero
     
     // Computed Properties
-    // Rank system removed
-    
-    // progressToNextLevel removed
-
     
     var isARActive: Bool {
         if case .lesson(_) = appState { return true }

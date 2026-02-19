@@ -3,6 +3,8 @@ import SwiftUI
 struct LessonView: View {
     @ObservedObject var gameManager = GameManager.shared
     @State private var showCode = false
+    @State private var isEditing = false
+    @StateObject private var keyboardObserver = KeyboardObserver()
     
     var currentLesson: Lesson? {
         LessonManager.shared.getLesson(id: gameManager.currentLessonIndex)
@@ -16,6 +18,13 @@ struct LessonView: View {
                 } else {
                     portraitLayout(geo: geo)
                 }
+                
+                // Fullscreen Code Editor Overlay (when keyboard is open)
+                if isEditing {
+                    fullscreenCodeEditor(geo: geo)
+                        .transition(.opacity)
+                        .zIndex(100)
+                }
             }
         }
         .onAppear {
@@ -24,6 +33,94 @@ struct LessonView: View {
         .onDisappear {
             VolumeManager.shared.stop()
         }
+    }
+    
+    // MARK: - Fullscreen Code Editor (Keyboard Active)
+    
+    @ViewBuilder
+    func fullscreenCodeEditor(geo: GeometryProxy) -> some View {
+        ZStack {
+            // Dimmed background
+            Color.black.opacity(0.85)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    // Dismiss keyboard on background tap
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
+            
+            VStack(spacing: 0) {
+                // Header bar
+                HStack {
+                    Text("⚡ CODE EDITOR")
+                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                        .foregroundColor(.cyan)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "keyboard.chevron.compact.down")
+                                .font(.system(size: 14))
+                            Text("DONE")
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Color.cyan.opacity(0.3))
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.cyan.opacity(0.5), lineWidth: 1)
+                        )
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color(red: 0.08, green: 0.08, blue: 0.12))
+                
+                // Detailed Instruction Bar
+                if let lesson = currentLesson {
+                    let stepIndex = min(gameManager.tutorialStep, lesson.steps.count - 1)
+                    let hintText = stepIndex >= 0 ? (lesson.steps[stepIndex].hint.isEmpty ? lesson.steps[stepIndex].instruction : lesson.steps[stepIndex].hint) : lesson.instruction
+                    
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundColor(.yellow)
+                            .font(.system(size: 14))
+                            .padding(.top, 2)
+                        
+                        Text(hintText)
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.95))
+                            .fixedSize(horizontal: false, vertical: true)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.yellow.opacity(0.15))
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(Color.yellow.opacity(0.3)),
+                        alignment: .bottom
+                    )
+                }
+                
+                // Code editor fills available space
+                ModernCodeEditor(text: $gameManager.codeSnippet, showCode: $showCode, onFocusChange: { focused in
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        isEditing = focused
+                    }
+                })
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .padding(.bottom, keyboardObserver.keyboardHeight)
+        }
+        .ignoresSafeArea(.keyboard)
     }
     
     // MARK: - Landscape Layout
@@ -75,21 +172,23 @@ struct LessonView: View {
             .zIndex(2)
             
             // 2. Tutorial Overlay - Top Left (floating below header)
-            if gameManager.currentLessonIndex == 1 {
-                VStack {
-                    Spacer().frame(height: 100)
-                    HStack {
-                        TutorialOverlayView()
-                            .frame(width: 380) // Fixed width card
-                            .padding(.leading, 30)
+            if !isEditing {
+                if gameManager.currentLessonIndex == 1 {
+                    VStack {
+                        Spacer().frame(height: 100)
+                        HStack {
+                            TutorialOverlayView()
+                                .frame(width: 380) // Fixed width card
+                                .padding(.leading, 30)
+                            Spacer()
+                        }
                         Spacer()
                     }
-                    Spacer()
-                }
-                .zIndex(1)
-            } else {
-                LessonOverlayView()
                     .zIndex(1)
+                } else {
+                    LessonOverlayView()
+                        .zIndex(1)
+                }
             }
             
             // 3. Joystick Visuals (Overlay)
@@ -98,7 +197,7 @@ struct LessonView: View {
                 .transition(.opacity)
             
             // 4. Code Editor - Floating Right Panel
-            if gameManager.isCodeEditorAvailable && !gameManager.isTaskCompleted {
+            if gameManager.isCodeEditorAvailable && !gameManager.isTaskCompleted && !isEditing {
                 HStack {
                     Spacer()
                     codeEditorPanel(geo: geo)
@@ -151,14 +250,17 @@ struct LessonView: View {
                 .padding(.top, 10)
                 
                 // Tutorial / Lesson Overlay - AT TOP
-                if gameManager.currentLessonIndex == 1 {
-                    TutorialOverlayView()
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal)
-                        .padding(.top, 10)
-                        .frame(height: 300, alignment: .top) // Allocate top space
-                } else {
-                    LessonOverlayView()
+                // Tutorial / Lesson Overlay - AT TOP
+                if !isEditing {
+                    if gameManager.currentLessonIndex == 1 {
+                        TutorialOverlayView()
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal)
+                            .padding(.top, 10)
+                            .frame(height: 300, alignment: .top) // Allocate top space
+                    } else {
+                        LessonOverlayView()
+                    }
                 }
                 
                 Spacer()
@@ -178,8 +280,12 @@ struct LessonView: View {
                 .transition(.opacity)
             
             // 3. Code Drawer - Bottom Sheet
-            if gameManager.isCodeEditorAvailable && !gameManager.isTaskCompleted {
-                CodeDrawer(showCode: $showCode, codeSnippet: $gameManager.codeSnippet)
+            if gameManager.isCodeEditorAvailable && !gameManager.isTaskCompleted && !isEditing {
+                CodeDrawer(showCode: $showCode, codeSnippet: $gameManager.codeSnippet, onFocusChange: { focused in
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        isEditing = focused
+                    }
+                })
                     .zIndex(3)
                     .transition(.move(edge: .bottom))
             }
@@ -215,8 +321,12 @@ struct LessonView: View {
                 }
                 .padding(.top, 24)
                 
-                // Editor
-                ModernCodeEditor(text: $gameManager.codeSnippet, showCode: $showCode)
+                // Editor Preview (Tap to Edit)
+                CodeEditorPreview(text: gameManager.codeSnippet) {
+                    withAnimation {
+                        isEditing = true
+                    }
+                }
                     .frame(maxHeight: .infinity)
                     .padding(.horizontal)
                     .padding(.bottom)
@@ -247,6 +357,7 @@ struct LessonView: View {
 struct ModernCodeEditor: View {
     @Binding var text: String
     @Binding var showCode: Bool // To close/minimize if needed
+    var onFocusChange: ((Bool) -> Void)? = nil
     
     @FocusState private var isFocused: Bool
     
@@ -335,12 +446,13 @@ struct ModernCodeEditor: View {
                 .stroke(Color.white.opacity(0.15), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") {
-                    isFocused = false
-                }
+        .onChange(of: isFocused) { focused in
+            onFocusChange?(focused)
+        }
+        .onAppear {
+            // Auto-focus when appearing in fullscreen overlay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                isFocused = true
             }
         }
     }
@@ -430,6 +542,7 @@ struct MissionSuccessBadge: View {
 struct CodeDrawer: View {
     @Binding var showCode: Bool
     @Binding var codeSnippet: String
+    var onFocusChange: ((Bool) -> Void)? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -489,7 +602,11 @@ struct CodeDrawer: View {
                         .padding()
                         .background(Color.yellow.opacity(0.05))
                         
-                        ModernCodeEditor(text: $codeSnippet, showCode: $showCode)
+                        CodeEditorPreview(text: codeSnippet) {
+                            withAnimation {
+                                onFocusChange?(true) // Trigger isEditing = true via parent callback
+                            }
+                        }
                             .padding()
                             .frame(maxHeight: 400)
                     }
@@ -521,6 +638,84 @@ struct RoundedCorner: Shape {
     }
 }
 
+struct CodeEditorPreview: View {
+    let text: String
+    var onTap: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Static Toolbar
+            HStack {
+                HStack(spacing: 6) {
+                    Circle().fill(Color.red).frame(width: 10, height: 10)
+                    Circle().fill(Color.yellow).frame(width: 10, height: 10)
+                    Circle().fill(Color.green).frame(width: 10, height: 10)
+                }
+                Spacer()
+                Text("main.swift")
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(.gray)
+                Spacer()
+                HStack(spacing: 4) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 10))
+                    Text("RUN")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.green.opacity(0.5))
+                .foregroundColor(.white.opacity(0.8))
+                .cornerRadius(4)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color(red: 0.15, green: 0.15, blue: 0.17))
+            
+            Divider().background(Color.white.opacity(0.1))
+            
+            // Static Content
+            ZStack(alignment: .topLeading) {
+                Color(red: 0.11, green: 0.11, blue: 0.13)
+                
+                HStack(alignment: .top, spacing: 0) {
+                    Text(lineNumbers)
+                        .font(.system(size: 14, design: .monospaced))
+                        .foregroundColor(.gray.opacity(0.5))
+                        .multilineTextAlignment(.trailing)
+                        .padding(.top, 8)
+                        .padding(.leading, 12)
+                        .padding(.trailing, 8)
+                        .frame(minWidth: 30, alignment: .trailing)
+                        .background(Color(red: 0.13, green: 0.13, blue: 0.15))
+                    
+                    Text(text)
+                        .font(.system(size: 14, design: .monospaced))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 8)
+                }
+            }
+        }
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            HapticsManager.shared.play(.light)
+            onTap()
+        }
+    }
+    
+    var lineNumbers: String {
+        let count = text.split(separator: "\n", omittingEmptySubsequences: false).count
+        return (1...max(1, count)).map { "\($0)" }.joined(separator: "\n")
+    }
+}
+
 // MARK: - Back Button
 
 struct CyberpunkBackButton: View {
@@ -549,6 +744,42 @@ struct CyberpunkBackButton: View {
                 RoundedRectangle(cornerRadius: 20)
                     .stroke(Color.red.opacity(0.4), lineWidth: 1)
             )
+        }
+    }
+}
+
+// MARK: - Keyboard Observer
+
+@MainActor
+class KeyboardObserver: ObservableObject {
+    @Published var keyboardHeight: CGFloat = 0
+    
+    init() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
+    }
+    
+    @objc nonisolated private func keyboardWillShow(_ notification: Notification) {
+        if let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+            Task { @MainActor in
+                self.keyboardHeight = frame.height
+            }
+        }
+    }
+    
+    @objc nonisolated private func keyboardWillHide(_ notification: Notification) {
+        Task { @MainActor in
+            self.keyboardHeight = 0
         }
     }
 }

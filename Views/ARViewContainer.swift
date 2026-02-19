@@ -203,43 +203,105 @@ struct ARViewContainer: UIViewRepresentable {
         // MARK: - Virtual Environment Setup
         
         func setupVirtualEnvironment(in arView: ARView) {
-            arView.environment.background = .color(.black)
+            setupLandWorld(in: arView)
+        }
+        
+        // MARK: - ️ Land World (Ground, Gravity, Sunlight)
+        
+        func setupLandWorld(in arView: ARView) {
+            // Sky gradient — dark blue-black
+            arView.environment.background = .color(UIColor(red: 0.02, green: 0.02, blue: 0.06, alpha: 1.0))
             
-            // Virtual Floor
-            let floorMesh = MeshResource.generatePlane(width: 20, depth: 20)
-            var floorMat = SimpleMaterial(color: .darkGray, isMetallic: false)
-            floorMat.roughness = 0.9
+            let anchor = AnchorEntity(world: .zero)
+            arView.scene.addAnchor(anchor)
+            
+            // === Ground Floor (Large, Grid-like) ===
+            let floorMesh = MeshResource.generatePlane(width: 50, depth: 50)
+            var floorMat = SimpleMaterial(color: UIColor(red: 0.12, green: 0.12, blue: 0.15, alpha: 1.0), isMetallic: true)
+            floorMat.roughness = 0.3
             let floorEntity = ModelEntity(mesh: floorMesh, materials: [floorMat])
             floorEntity.name = "VirtualFloor"
-            // THICKER FLOOR: increase thickness to 1.0 to prevent fast objects falling through
-            let floorShape = ShapeResource.generateBox(size: [20, 1.0, 20])
-            // Offset the collision component so the top surface is at y=0 (center at y=-0.5)
+            
+            // Thick collision floor to prevent objects falling through
+            let floorShape = ShapeResource.generateBox(size: [50, 1.0, 50])
             let floorCollision = CollisionComponent(shapes: [floorShape], mode: .default, filter: .default)
             floorEntity.components[CollisionComponent.self] = floorCollision
             floorEntity.components[PhysicsBodyComponent.self] = PhysicsBodyComponent(massProperties: .default, material: .default, mode: .static)
             
-            // We need a separate entity for collision if we want to offset it, OR we just accept the visual floor is at 0 and collision is centered at 0.
-            // Correct approach: Create a child entity for collision that is offset downwards.
-            
+            // Offset collision downward so top surface is at y=0
             let floorCollisionEntity = Entity()
             floorCollisionEntity.name = "FloorCollision"
-            floorCollisionEntity.position.y = -0.5 // Move down by half thickness
+            floorCollisionEntity.position.y = -0.5
             floorCollisionEntity.components[CollisionComponent.self] = floorCollision
             floorCollisionEntity.components[PhysicsBodyComponent.self] = PhysicsBodyComponent(massProperties: .default, material: .default, mode: .static)
             
-            let anchor = AnchorEntity(world: .zero)
             anchor.addChild(floorEntity)
-            anchor.addChild(floorCollisionEntity) // Add collision separately
-            arView.scene.addAnchor(anchor)
+            anchor.addChild(floorCollisionEntity)
             
-            // Lighting
-            let directionalLight = DirectionalLight()
-            directionalLight.light.color = .white
-            directionalLight.light.intensity = 1000
-            directionalLight.look(at: .zero, from: [5, 5, 5], relativeTo: nil)
-            anchor.addChild(directionalLight)
+            // === Grid Lines on Floor ===
+            // Create thin line entities for a subtle grid pattern
+            let gridColor = UIColor(red: 0.2, green: 0.25, blue: 0.35, alpha: 0.4)
+            let gridSpacing: Float = 1.0
+            let gridCount = 25 // Lines in each direction
             
-            // Camera Rig
+            for i in -gridCount...gridCount {
+                let offset = Float(i) * gridSpacing
+                
+                // X-axis lines
+                let xLine = ModelEntity(
+                    mesh: .generateBox(size: [50, 0.002, 0.005]),
+                    materials: [UnlitMaterial(color: gridColor)]
+                )
+                xLine.position = SIMD3<Float>(0, 0.001, offset)
+                xLine.name = "GridLine"
+                anchor.addChild(xLine)
+                
+                // Z-axis lines
+                let zLine = ModelEntity(
+                    mesh: .generateBox(size: [0.005, 0.002, 50]),
+                    materials: [UnlitMaterial(color: gridColor)]
+                )
+                zLine.position = SIMD3<Float>(offset, 0.001, 0)
+                zLine.name = "GridLine"
+                anchor.addChild(zLine)
+            }
+            
+            // === Distant Mountain Silhouettes ===
+            let mountainPositions: [(SIMD3<Float>, Float, Float)] = [
+                ([-20, 0, -25], 8, 4),
+                ([-10, 0, -28], 6, 3),
+                ([5, 0, -30], 10, 5),
+                ([18, 0, -26], 7, 3.5),
+                ([30, 0, -28], 9, 4.5),
+                ([-30, 0, -22], 5, 2.5),
+            ]
+            
+            for (pos, height, width) in mountainPositions {
+                let mountain = ModelEntity(
+                    mesh: .generateBox(size: [width, height, width * 0.8], cornerRadius: 0.5),
+                    materials: [SimpleMaterial(color: UIColor(red: 0.06, green: 0.06, blue: 0.1, alpha: 1.0), isMetallic: false)]
+                )
+                mountain.position = SIMD3<Float>(pos.x, height / 2, pos.z)
+                mountain.name = "Mountain"
+                anchor.addChild(mountain)
+            }
+            
+            // === Lighting (Sunlight) ===
+            let sunLight = DirectionalLight()
+            sunLight.light.color = UIColor(red: 1.0, green: 0.95, blue: 0.85, alpha: 1.0) // Warm sun
+            sunLight.light.intensity = 1200
+            sunLight.look(at: .zero, from: [8, 10, 5], relativeTo: nil)
+            anchor.addChild(sunLight)
+            
+            // Ambient fill light
+            let fillLight = PointLight()
+            fillLight.light.color = UIColor(red: 0.4, green: 0.5, blue: 0.7, alpha: 1.0) // Cool blue fill
+            fillLight.light.intensity = 400
+            fillLight.light.attenuationRadius = 50
+            fillLight.position = [-5, 8, 3]
+            anchor.addChild(fillLight)
+            
+            // === Camera Rig ===
             let rig = Entity()
             rig.position = [0, 0, 3]
             anchor.addChild(rig)
@@ -367,6 +429,7 @@ struct ARViewContainer: UIViewRepresentable {
             arView.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
                 self?.updateMovement(deltaTime: event.deltaTime)
                 self?.updateZoom(deltaTime: event.deltaTime)
+                self?.applyCustomGravity()
             }.store(in: &subscriptions)
         }
         
@@ -425,6 +488,42 @@ struct ARViewContainer: UIViewRepresentable {
             }
         }
         
+        // MARK: - Custom Gravity Override (per-frame)
+        
+        private func applyCustomGravity() {
+            guard let arView = arView else { return }
+            
+            // Parse gravity from current code snippet each frame
+            let targetGravity = CodeParser.parseGravity(from: gameManager.codeSnippet)
+            gameManager.customGravity = targetGravity
+            
+            // RealityKit default gravity is -9.8 m/s² (downward)
+            // We apply a compensating force: (9.8 - targetGravity) * mass upward
+            let gravityDiff = 9.8 - targetGravity
+            
+            if abs(gravityDiff) < 0.01 { return } // Default gravity, nothing to do
+            
+            // Find all dynamic UserObject entities and apply compensating force
+            arView.scene.anchors.forEach { anchor in
+                applyGravityToEntity(anchor, gravityDiff: gravityDiff)
+            }
+        }
+        
+        /// Recursively find UserObject entities and apply gravity compensation
+        private func applyGravityToEntity(_ entity: Entity, gravityDiff: Float) {
+            if let model = entity as? ModelEntity,
+               model.name == "UserObject",
+               let physics = model.components[PhysicsBodyComponent.self],
+               physics.mode == .dynamic {
+                let mass = physics.massProperties.mass
+                let compensatingForce = SIMD3<Float>(0, gravityDiff * mass, 0)
+                model.addForce(compensatingForce, relativeTo: nil)
+            }
+            
+            for child in entity.children {
+                applyGravityToEntity(child, gravityDiff: gravityDiff)
+            }
+        }
 
         
         // MARK: - Tap Handler
@@ -663,6 +762,76 @@ struct ARViewContainer: UIViewRepresentable {
             }
         }
         
+        // MARK: - Place Object with Physics (Level 6: Gravity)
+        
+        func handlePlacePhysicsObject(location: CGPoint, in arView: ARView, mass: Float) {
+            var worldTransform: simd_float4x4?
+            
+            if gameManager.isSimulationMode {
+                let hits = arView.hitTest(location)
+                if let hit = hits.first(where: { $0.entity.name == "VirtualFloor" }) {
+                    let position = hit.position
+                    worldTransform = simd_float4x4(
+                        [1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, 0],
+                        [position.x, position.y + 0.5, position.z, 1] // Spawn slightly above floor
+                    )
+                }
+            } else {
+                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .existingPlaneInfinite, .estimatedPlane]
+                for target in queries {
+                    if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
+                        var t = result.worldTransform
+                        t.columns.3.y += 0.5 // Spawn above surface
+                        worldTransform = t
+                        break
+                    }
+                }
+            }
+            
+            guard let transform = worldTransform else { return }
+            
+            let anchor = AnchorEntity(world: transform)
+            arView.scene.addAnchor(anchor)
+            
+            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
+            let shape = CodeParser.parseShape(from: gameManager.codeSnippet)
+            var mat = SimpleMaterial(color: color, isMetallic: true)
+            mat.roughness = 0.15
+            
+            let model: ModelEntity
+            if shape == "sphere" {
+                model = ModelEntity(mesh: .generateSphere(radius: 0.08), materials: [mat])
+            } else {
+                model = ModelEntity(mesh: .generateBox(size: [0.15, 0.15, 0.15], cornerRadius: 0.02), materials: [mat])
+            }
+            
+            model.name = "UserObject"
+            model.generateCollisionShapes(recursive: true)
+            
+            // Add DYNAMIC physics immediately so gravity affects it
+            let physics = PhysicsBodyComponent(
+                massProperties: .init(mass: mass),
+                material: .default,
+                mode: .dynamic
+            )
+            model.components[PhysicsBodyComponent.self] = physics
+            
+            anchor.addChild(model)
+            gameManager.placedObjectCount += 1
+            HapticsManager.shared.play(.medium)
+            
+            // Advance tutorial for Level 6
+            if gameManager.currentLessonIndex == 6 {
+                if gameManager.tutorialStep == 1 || gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        self.gameManager.advanceTutorial()
+                    }
+                }
+            }
+        }
+        
         // MARK: - Apply Physics (Level 2: Gravity)
         
         func handleApplyPhysics(location: CGPoint, in arView: ARView) {
@@ -847,17 +1016,14 @@ struct ARViewContainer: UIViewRepresentable {
             case 0:
                 gameManager.advanceTutorial()
             case 1:
-                // Place a sphere
-                handlePlaceObject(location: location, in: arView)
+                // Place a dynamic object — it falls with normal gravity (9.8)
+                handlePlacePhysicsObject(location: location, in: arView, mass: 1.0)
             case 3:
-                // Tap existing object to repaint
-                if let entity = arView.entity(at: location) as? ModelEntity,
-                   entity.name == "UserObject" {
-                    handleRepaintObject(entity: entity)
-                }
+                // Place another object — now gravity should be 0 (floats!)
+                handlePlacePhysicsObject(location: location, in: arView, mass: 1.0)
             case 4:
-                // Place new object with updated material
-                handlePlaceObject(location: location, in: arView)
+                // Place object with moon gravity (1.6) — falls slowly
+                handlePlacePhysicsObject(location: location, in: arView, mass: 1.0)
             default:
                 break
             }
