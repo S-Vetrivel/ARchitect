@@ -63,7 +63,7 @@ struct TutorialOverlayView: View {
                     HStack(spacing: 6) {
                         ForEach(1...totalSteps, id: \.self) { step in
                             Circle()
-                                .fill(step <= gameManager.tutorialStep ? Color.cyan : Color.white.opacity(0.2))
+                                .fill(step <= gameManager.tutorialStep ? Color.studioAccent : Color.white.opacity(0.2))
                                 .frame(width: step == gameManager.tutorialStep ? 10 : 6,
                                        height: step == gameManager.tutorialStep ? 10 : 6)
                                 .animation(.spring(), value: gameManager.tutorialStep)
@@ -73,13 +73,13 @@ struct TutorialOverlayView: View {
                     // Icon
                     Image(systemName: stepData.icon)
                         .font(.system(size: 36))
-                        .foregroundColor(.cyan)
+                        .foregroundColor(.studioAccent)
                         .symbolRenderingMode(.hierarchical)
                         .scaleEffect(pulseAnimation ? 1.1 : 1.0)
                     
                     // Title
                     Text(stepData.title)
-                        .font(.system(size: 18, weight: .bold, design: .monospaced))
+                        .font(.studioHeadline())
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                     
@@ -96,14 +96,14 @@ struct TutorialOverlayView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "lightbulb.fill")
                                 .font(.caption2)
-                                .foregroundColor(.yellow)
+                                .foregroundColor(.studioWarning)
                             Text(stepData.hint)
-                                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                                .foregroundColor(.yellow.opacity(0.8))
+                                .font(.studioCaption())
+                                .foregroundColor(.studioWarning.opacity(0.8))
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color.yellow.opacity(0.1))
+                        .background(Color.studioWarning.opacity(0.1))
                         .cornerRadius(8)
                     }
                     
@@ -113,13 +113,13 @@ struct TutorialOverlayView: View {
                             withAnimation { gameManager.advanceTutorial() }
                         }) {
                             Text("START TUTORIAL")
-                                .font(.system(size: 14, weight: .black, design: .monospaced))
-                                .foregroundColor(.black)
+                                .font(.studioHeadline())
+                                .foregroundColor(.white)
                                 .padding(.horizontal, 24)
                                 .padding(.vertical, 12)
-                                .background(Color.cyan)
+                                .background(Color.studioAccent)
                                 .cornerRadius(12)
-                                .shadow(color: .cyan.opacity(0.5), radius: 8)
+                                .shadow(color: .studioAccent.opacity(0.5), radius: 8)
                         }
                     }
                 }
@@ -130,21 +130,18 @@ struct TutorialOverlayView: View {
                         .fill(.ultraThinMaterial)
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.blue.opacity(0.15))
+                                .fill(Color.studioAccent.opacity(0.05))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.cyan.opacity(0.3), lineWidth: 1)
+                                .stroke(Color.studioAccent.opacity(0.3), lineWidth: 1)
                         )
                 )
-                .shadow(color: .cyan.opacity(0.15), radius: 20, y: 10)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(.spring(response: 0.5, dampingFraction: 0.8), value: gameManager.tutorialStep)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .frame(maxWidth: .infinity, maxHeight: .infinity) // Fill available space but don't force alignment
         .onAppear {
             withAnimation(.easeInOut(duration: 1.2).repeatForever()) {
                 pulseAnimation = true

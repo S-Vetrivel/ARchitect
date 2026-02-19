@@ -18,97 +18,110 @@ struct LessonView: View {
                 }
             }
         }
+        .onAppear {
+            VolumeManager.shared.start()
+        }
+        .onDisappear {
+            VolumeManager.shared.stop()
+        }
     }
     
     // MARK: - Landscape Layout
     
     @ViewBuilder
     func landscapeLayout(geo: GeometryProxy) -> some View {
-        HStack(spacing: 0) {
-            // Left: AR View + Tutorial Overlay
-            ZStack {
-                VStack {
-                    // Top Controls
-                    HStack(spacing: 12) {
-                        CyberpunkBackButton()
-                        
-                        // Mode Toggle (grouped with back button for cleaner UI)
-                        Button(action: {
-                            withAnimation { gameManager.toggleSimulationMode() }
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: gameManager.isSimulationMode ? "cube.transparent" : "camera.fill")
-                                    .font(.system(size: 12))
-                                Text(gameManager.isSimulationMode ? "SIMULATION" : "AR LIVE")
-                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                            }
-                            .foregroundColor(gameManager.isSimulationMode ? .orange : .cyan)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(.ultraThinMaterial)
-                            .background(gameManager.isSimulationMode ? Color.orange.opacity(0.1) : Color.cyan.opacity(0.1))
-                            .cornerRadius(20)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(gameManager.isSimulationMode ? Color.orange.opacity(0.3) : Color.cyan.opacity(0.3), lineWidth: 1)
-                            )
+        ZStack {
+            // 1. Top Controls (HUD) - Top Left / Center
+            VStack {
+                HStack(spacing: 12) {
+                    CyberpunkBackButton()
+                    
+                    // Mode Toggle
+                    Button(action: {
+                        withAnimation { gameManager.toggleSimulationMode() }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: gameManager.isSimulationMode ? "cube.transparent" : "camera.fill")
+                                .font(.system(size: 12))
+                            Text(gameManager.isSimulationMode ? "SIMULATION" : "AR LIVE")
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
                         }
-                        
+                        .foregroundColor(gameManager.isSimulationMode ? .orange : .cyan)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.ultraThinMaterial)
+                        .background(gameManager.isSimulationMode ? Color.orange.opacity(0.1) : Color.cyan.opacity(0.1))
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(gameManager.isSimulationMode ? Color.orange.opacity(0.3) : Color.cyan.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.top, 40)
+                .padding(.horizontal, 24)
+                
+                if gameManager.isTaskCompleted {
+                    MissionSuccessBadge()
+                        .padding(.top, 20)
+                        .transition(.scale.combined(with: .opacity))
+                }
+                
+                Spacer()
+            }
+            // ZIndex 2 ensures HUD is clickable
+            .zIndex(2)
+            
+            // 2. Tutorial Overlay - Top Left (floating below header)
+            if gameManager.currentLessonIndex == 1 {
+                VStack {
+                    Spacer().frame(height: 100)
+                    HStack {
+                        TutorialOverlayView()
+                            .frame(width: 380) // Fixed width card
+                            .padding(.leading, 30)
                         Spacer()
                     }
-                    .padding(.top, 40)
-                    .padding(.horizontal, 24)
-                    
-                    if gameManager.isTaskCompleted {
-                        MissionSuccessBadge()
-                            .padding(.bottom, 50)
-                            .transition(.scale.combined(with: .opacity))
-                    }
+                    Spacer()
                 }
-                .frame(maxHeight: .infinity, alignment: .top)
-                
-                // Lesson Overlay
-                if gameManager.currentLessonIndex == 1 {
-                    TutorialOverlayView()
-                } else {
-                    LessonOverlayView()
-                }
-                
-                // Controls (bottom area)
-                if gameManager.isSimulationMode {
-                    VStack {
-                        HStack(alignment: .bottom) {
-                            Spacer()
-                            
-                            // Zoom Buttons (Level 1: from Step 4+ / Levels 2+: always)
-                            if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 4 {
-                                VStack(spacing: 8) {
-                                    ZoomButton(label: "+", zoomValue: 1)
-                                    ZoomButton(label: "−", zoomValue: -1)
-                                }
-                                .padding(.trailing, 12)
-                                .transition(.scale.combined(with: .opacity))
-                            }
-                            
-                            // Joystick (Level 1: from Step 3+ / Levels 2+: always)
-                            if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 3 {
-                                JoystickView()
-                                    .padding(.trailing, 40)
-                                    .transition(.scale.combined(with: .opacity))
-                            }
-                        }
-                        .padding(.bottom, 40)
-                    }
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-                }
+                .zIndex(1)
+            } else {
+                LessonOverlayView()
+                    .zIndex(1)
             }
-            .frame(width: geo.size.width * 0.65)
             
-            // Right: Code Editor
+            // 3. Bottom Controls (Joystick) - Bottom Right
+            if gameManager.isSimulationMode {
+                VStack {
+                    Spacer()
+                    HStack(alignment: .bottom) {
+                        Spacer()
+                        
+                        // Joystick (Level 1: from Step 3+ / Levels 2+: always)
+                        if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 3 {
+                            JoystickView()
+                                .transition(.scale.combined(with: .opacity))
+                                .padding(.trailing, 40)
+                                .padding(.bottom, 40)
+                        }
+                    }
+                }
+                .zIndex(3)
+            }
+            
+            // 4. Code Editor - Floating Right Panel
             if gameManager.isCodeEditorAvailable {
-                codeEditorPanel(geo: geo)
-                    .frame(width: geo.size.width * 0.35)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                HStack {
+                    Spacer()
+                    codeEditorPanel(geo: geo)
+                        .frame(width: 350) // Floating panel width
+                        .padding(.trailing, 20)
+                        .padding(.vertical, 40)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                }
+                .zIndex(4)
             }
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.8), value: gameManager.tutorialStep)
@@ -119,6 +132,7 @@ struct LessonView: View {
     @ViewBuilder
     func portraitLayout(geo: GeometryProxy) -> some View {
         ZStack {
+            // 1. Controls Layer
             VStack(spacing: 0) {
                 // Top HUD
                 HStack(spacing: 12) {
@@ -145,71 +159,75 @@ struct LessonView: View {
                                 .stroke(gameManager.isSimulationMode ? Color.orange.opacity(0.3) : Color.cyan.opacity(0.3), lineWidth: 1)
                         )
                     }
-                    
                     Spacer()
                 }
                 .padding()
+                .padding(.top, 10)
+                
+                // Tutorial / Lesson Overlay - AT TOP
+                if gameManager.currentLessonIndex == 1 {
+                    TutorialOverlayView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal)
+                        .padding(.top, 10)
+                        .frame(height: 300, alignment: .top) // Allocate top space
+                } else {
+                    LessonOverlayView()
+                }
                 
                 Spacer()
                 
+                // Mission Badge
                 if gameManager.isTaskCompleted {
                     MissionSuccessBadge()
                         .padding(.bottom, 20)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
-            .frame(maxHeight: .infinity, alignment: .top)
+            .zIndex(1)
             
-            // Lesson Overlay
-            if gameManager.currentLessonIndex == 1 {
-                TutorialOverlayView()
-            } else {
-                LessonOverlayView()
-            }
-            
-            // Controls (bottom area)
+            // 2. Bottom Controls Layer
             if gameManager.isSimulationMode {
                 VStack {
+                    Spacer()
                     HStack(alignment: .bottom) {
                         Spacer()
                         
-                        if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 4 {
-                            VStack(spacing: 8) {
-                                ZoomButton(label: "+", zoomValue: 1)
-                                ZoomButton(label: "−", zoomValue: -1)
-                            }
-                            .padding(.trailing, 12)
-                            .transition(.scale.combined(with: .opacity))
-                        }
-                        
                         if gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 3 {
                             JoystickView()
-                                .padding(.trailing, 30)
                                 .transition(.scale.combined(with: .opacity))
+                                .padding(.trailing, 30)
+                                .padding(.bottom, 180)
                         }
                     }
-                    .padding(.bottom, 180)
                 }
-                .frame(maxHeight: .infinity, alignment: .bottom)
-                .transition(.scale.combined(with: .opacity))
+                .zIndex(2)
             }
             
-            // Code Editor Drawer
+            // 3. Code Drawer - Bottom Sheet
             if gameManager.isCodeEditorAvailable {
                 CodeDrawer(showCode: $showCode, codeSnippet: $gameManager.codeSnippet)
+                    .zIndex(3)
                     .transition(.move(edge: .bottom))
             }
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.8), value: gameManager.tutorialStep)
     }
     
-    // MARK: - Code Editor Panel (Landscape)
+    // MARK: - Code Editor Panel (Floating Glass)
     
     @ViewBuilder
     func codeEditorPanel(geo: GeometryProxy) -> some View {
         ZStack {
-            Color.black.opacity(0.9)
-                .ignoresSafeArea()
+            // Glass Background
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.ultraThinMaterial)
+                .overlay(Color.black.opacity(0.6))
+                .overlay(
+                     RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
             
             VStack(spacing: 20) {
                 // Header / Intro
@@ -222,7 +240,7 @@ struct LessonView: View {
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
-                .padding(.top, 40)
+                .padding(.top, 24)
                 
                 // Editor
                 ModernCodeEditor(text: $gameManager.codeSnippet, showCode: $showCode)
@@ -234,7 +252,7 @@ struct LessonView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "info.circle.fill")
                         .foregroundColor(.blue)
-                    Text("Try changing `.blue` to `.red`, `.green`, or `.orange`.")
+                    Text("Hint: Change `.blue` to `.red`")
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.8))
                     Spacer()
@@ -246,6 +264,7 @@ struct LessonView: View {
                 .padding(.bottom, 20)
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }
 
@@ -470,44 +489,7 @@ struct CodeDrawer: View {
     }
 }
 
-// MARK: - Zoom Button
 
-struct ZoomButton: View {
-    let label: String
-    let zoomValue: Float
-    @ObservedObject var gameManager = GameManager.shared
-    @State private var isPressed = false
-    
-    var body: some View {
-        Text(label)
-            .font(.system(size: 22, weight: .bold, design: .monospaced))
-            .foregroundColor(.white)
-            .frame(width: 44, height: 44)
-            .background(
-                Circle()
-                    .fill(Color.white.opacity(isPressed ? 0.3 : 0.15))
-                    .overlay(
-                        Circle()
-                            .stroke(Color.cyan.opacity(0.4), lineWidth: 1)
-                    )
-            )
-            .scaleEffect(isPressed ? 0.9 : 1.0)
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        if !isPressed {
-                            isPressed = true
-                            gameManager.zoomInput = zoomValue
-                        }
-                    }
-                    .onEnded { _ in
-                        isPressed = false
-                        gameManager.zoomInput = 0
-                    }
-            )
-            .animation(.easeInOut(duration: 0.1), value: isPressed)
-    }
-}
 
 // MARK: - Utilities
 
