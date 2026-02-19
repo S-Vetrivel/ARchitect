@@ -37,18 +37,10 @@ class GameManager: ObservableObject {
     @Published var placedObjectCount: Int = 0 // Track objects placed in current lesson
     
     // Computed Properties
-    var currentLevelInfo: LevelInfo {
-        return levelThresholds.last { totalXP >= $0.xpRequired } ?? levelThresholds[0]
-    }
+    // Rank system removed
     
-    var progressToNextLevel: Float {
-        let currentLevel = currentLevelInfo
-        guard let nextLevel = levelThresholds.first(where: { $0.level == currentLevel.level + 1 }) else { return 1.0 }
-        
-        let range = Float(nextLevel.xpRequired - currentLevel.xpRequired)
-        let progress = Float(totalXP - currentLevel.xpRequired)
-        return progress / range
-    }
+    // progressToNextLevel removed
+
     
     var isARActive: Bool {
         if case .lesson(_) = appState { return true }

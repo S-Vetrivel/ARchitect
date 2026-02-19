@@ -2,29 +2,9 @@ import Foundation
 import SwiftUI
 
 // MARK: - XP & Leveling
-struct LevelInfo {
-    let level: Int
-    let title: String
-    let xpRequired: Int
-}
+// Rank system removed as per user request.
+// Keeping totalXP for internal tracking/badges if needed.
 
-let levelThresholds: [LevelInfo] = [
-    LevelInfo(level: 1, title: "Intern", xpRequired: 0),
-    LevelInfo(level: 2, title: "Draftsman", xpRequired: 100),
-    LevelInfo(level: 3, title: "Surveyor", xpRequired: 300),
-    LevelInfo(level: 4, title: "Engineer", xpRequired: 600),
-    LevelInfo(level: 5, title: "Architect", xpRequired: 1000),
-    LevelInfo(level: 6, title: "Master Builder", xpRequired: 1500),
-    LevelInfo(level: 7, title: "AR Specialist", xpRequired: 2100),
-    LevelInfo(level: 8, title: "Code Ninja", xpRequired: 2800),
-    LevelInfo(level: 9, title: "Reality Hacker", xpRequired: 3600),
-    LevelInfo(level: 10, title: "Physics Pro", xpRequired: 4500),
-    LevelInfo(level: 11, title: "Sharpshooter", xpRequired: 5500),
-    LevelInfo(level: 12, title: "Master Architect", xpRequired: 6600),
-    LevelInfo(level: 13, title: "Creative Director", xpRequired: 7800),
-    LevelInfo(level: 14, title: "Grand Master", xpRequired: 9100),
-    LevelInfo(level: 15, title: "Certified ARchitect", xpRequired: 10500)
-]
 
 // MARK: - Badges
 struct Badge: Identifiable, Codable, Equatable {
