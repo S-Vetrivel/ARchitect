@@ -19,7 +19,7 @@ struct ContentView: View {
                         DragGesture(minimumDistance: 0, coordinateSpace: .global)
                             .onChanged { value in
                                 // Only process if in Simulation Mode and Lesson allows it
-                                guard gameManager.isSimulationMode && (gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 3) else { return }
+                                guard gameManager.isSimulationMode else { return }
                                 
                                 if !gameManager.isJoystickActive {
                                     // 1. Detect Hold to Activate

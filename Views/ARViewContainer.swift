@@ -348,9 +348,6 @@ struct ARViewContainer: UIViewRepresentable {
         @objc func handlePan(_ sender: UIPanGestureRecognizer) {
             guard gameManager.isSimulationMode, let rig = cameraRig, let camera = virtualCamera else { return }
             
-            // Only allow looking around from step 2 onward (Level 1) or always (Levels 2+)
-            guard gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 2 else { return }
-            
             let translation = sender.translation(in: sender.view)
             
             let yawDelta = Float(translation.x) * 0.005
@@ -362,26 +359,12 @@ struct ARViewContainer: UIViewRepresentable {
             camera.orientation = simd_quatf(angle: cameraPitch, axis: [1, 0, 0])
             
             sender.setTranslation(.zero, in: sender.view)
-            
-            // Tutorial: Complete Step 2 after looking around
-            if gameManager.tutorialStep == 2 && !hasLookedAround {
-                let totalDelta = abs(yawDelta) + abs(pitchDelta)
-                if totalDelta > 0.001 {
-                    hasLookedAround = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                        if self.gameManager.tutorialStep == 2 {
-                            self.gameManager.advanceTutorial()
-                        }
-                    }
-                }
-            }
         }
         
         // MARK: - Zoom (Pinch)
         
         @objc func handlePinch(_ sender: UIPinchGestureRecognizer) {
             guard gameManager.isSimulationMode, let camera = virtualCamera else { return }
-            guard gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 4 else { return }
             
             if sender.state == .changed {
                 let scale = Float(sender.scale)
@@ -389,16 +372,6 @@ struct ARViewContainer: UIViewRepresentable {
                 newFOV = max(20, min(newFOV, 100))
                 camera.camera.fieldOfViewInDegrees = newFOV
                 sender.scale = 1.0
-                
-                // Tutorial: Complete Step 4
-                if gameManager.tutorialStep == 4 && !hasZoomed {
-                    hasZoomed = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                        if self.gameManager.tutorialStep == 4 {
-                            self.gameManager.advanceTutorial()
-                        }
-                    }
-                }
             }
         }
         
@@ -406,23 +379,12 @@ struct ARViewContainer: UIViewRepresentable {
         
         @objc func handleScroll(_ sender: UIPanGestureRecognizer) {
             guard gameManager.isSimulationMode, let camera = virtualCamera else { return }
-            guard gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 4 else { return }
             
             let scrollY = Float(sender.translation(in: sender.view).y)
             var newFOV = camera.camera.fieldOfViewInDegrees + scrollY * 0.1
             newFOV = max(20, min(newFOV, 100))
             camera.camera.fieldOfViewInDegrees = newFOV
             sender.setTranslation(.zero, in: sender.view)
-            
-            // Tutorial: Complete Step 4
-            if gameManager.tutorialStep == 4 && !hasZoomed {
-                hasZoomed = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                    if self.gameManager.tutorialStep == 4 {
-                        self.gameManager.advanceTutorial()
-                    }
-                }
-            }
         }
         
         // MARK: - Subscriptions (Frame Update)
@@ -431,11 +393,27 @@ struct ARViewContainer: UIViewRepresentable {
             guard let arView = arView else { return }
             
             arView.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
-                self?.updateMovement(deltaTime: event.deltaTime)
-                self?.updateZoom(deltaTime: event.deltaTime)
-                self?.applyCustomGravity()
-                self?.updateOrbits(deltaTime: event.deltaTime)
+                guard let self = self else { return }
+                self.updateMovement(deltaTime: event.deltaTime)
+                self.updateZoom(deltaTime: event.deltaTime)
+                self.applyCustomGravity()
+                self.updateOrbits(deltaTime: event.deltaTime)
+                
+                // Evaluate Game Logic / Win Conditions continuously
+                if let arView = self.arView {
+                    self.gameManager.evaluateCurrentGoal(context: arView)
+                }
             }.store(in: &subscriptions)
+            
+            gameManager.$triggerConsoleExecution
+                .dropFirst()
+                .filter { $0 }
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in
+                    self?.evaluateConsoleExecution()
+                    self?.gameManager.triggerConsoleExecution = false
+                }
+                .store(in: &subscriptions)
         }
         
         // MARK: - Solar System Animation (Orbits)
@@ -446,7 +424,7 @@ struct ARViewContainer: UIViewRepresentable {
             // 1. Update Orbits
             let orbitQuery = arView.scene.performQuery(EntityQuery(where: .has(OrbitComponent.self)))
             orbitQuery.forEach { entity in
-                if var orbit = entity.components[OrbitComponent.self] as? OrbitComponent {
+                if var orbit = entity.components[OrbitComponent.self] {
                     // Update angle
                     orbit.currentAngle += orbit.speed * Float(deltaTime)
                     if orbit.currentAngle > .pi * 2 { orbit.currentAngle -= .pi * 2 }
@@ -465,7 +443,7 @@ struct ARViewContainer: UIViewRepresentable {
             // 2. Update Rotations (Self-Spin)
             let rotationQuery = arView.scene.performQuery(EntityQuery(where: .has(RotationComponent.self)))
             rotationQuery.forEach { entity in
-                if let rot = entity.components[RotationComponent.self] as? RotationComponent {
+                if let rot = entity.components[RotationComponent.self] {
                     let rotationAmount = rot.speed * Float(deltaTime)
                     entity.orientation *= simd_quatf(angle: rotationAmount, axis: [0, 1, 0])
                 }
@@ -476,7 +454,6 @@ struct ARViewContainer: UIViewRepresentable {
         
         private func updateZoom(deltaTime: Double) {
             guard gameManager.isSimulationMode, let camera = virtualCamera else { return }
-            guard gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 4 else { return }
             
             let input = gameManager.zoomInput
             if input == 0 { return }
@@ -486,25 +463,12 @@ struct ARViewContainer: UIViewRepresentable {
             var newFOV = camera.camera.fieldOfViewInDegrees - (input * zoomSpeed)
             newFOV = max(20, min(newFOV, 100))
             camera.camera.fieldOfViewInDegrees = newFOV
-            
-            // Tutorial: Complete Step 4
-            if gameManager.tutorialStep == 4 && !hasZoomed {
-                hasZoomed = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                    if self.gameManager.tutorialStep == 4 {
-                        self.gameManager.advanceTutorial()
-                    }
-                }
-            }
         }
         
         // MARK: - Walk / Strafe (Joystick)
         
         private func updateMovement(deltaTime: Double) {
             guard gameManager.isSimulationMode, let rig = cameraRig else { return }
-            
-            // Only allow walking from step 3 onward (Level 1) or always (Levels 2+)
-            guard gameManager.currentLessonIndex > 1 || gameManager.tutorialStep >= 3 else { return }
             
             let input = gameManager.joystickInput
             if input == .zero { return }
@@ -517,14 +481,6 @@ struct ARViewContainer: UIViewRepresentable {
             
             let movement = (forward * input.y + right * input.x) * speed
             rig.position += movement
-            
-            // Tutorial: Track walk distance for Step 3
-            if gameManager.tutorialStep == 3 {
-                let distFromStart = simd_distance(rig.position, startPosition)
-                if distFromStart > 1.0 {
-                    gameManager.advanceTutorial()
-                }
-            }
         }
         
         // MARK: - Custom Gravity Override (per-frame)
@@ -565,1257 +521,389 @@ struct ARViewContainer: UIViewRepresentable {
         }
 
         
-        // MARK: - Tap Handler
+        // MARK: - Generic Tap Handler (Data-Driven by GoalType)
         
         @objc func handleTap(_ sender: UITapGestureRecognizer) {
             guard let arView = arView else { return }
             let location = sender.location(in: arView)
             
-            let lessonIndex = gameManager.currentLessonIndex
-            let step = gameManager.tutorialStep
-            
-            // Route by lesson
-            switch lessonIndex {
-            case 1, 2, 3, 4, 5:
-                handleSolarSystemTap(step: step, location: location, in: arView)
-            case 6:
-                handleLevel6Tap(step: step, location: location, in: arView)
-            case 7:
-                handleLevel7Tap(step: step, location: location, in: arView)
-            case 8:
-                handleLevel8Tap(step: step, location: location, in: arView)
-            case 9:
-                handleLevel9Tap(step: step, location: location, in: arView)
-            case 10...17:
-                handlePhysicsMasteryTap(step: step, location: location, in: arView)
-            case 18...25:
-                handleShootingLevelTap(step: step, location: location, in: arView)
-            case 26...33:
-                handleBuildingLevelTap(step: step, location: location, in: arView)
-            case 34...41:
-                handleCreativeLevelTap(step: step, location: location, in: arView)
-            case 42...49:
-                handleChallengeLevelTap(step: step, location: location, in: arView)
-            case 50:
-                handleLevel10Tap(step: step, location: location, in: arView)
-            default:
-                handleLevel1Tap(step: step, location: location, in: arView)
-            }
-        }
-        
-        // MARK: - Level 1: Tutorial Tap
-        
-        // MARK: - Solar System Handlers (Levels 1-5)
-        
-        func handleSolarSystemTap(step: Int, location: CGPoint, in arView: ARView) {
-            let lesson = gameManager.currentLessonIndex
-            
-            // Generic advance for "Intro" steps (usually step 0)
-            if step == 0 {
+            // Advance for step 0 (Start Lesson)
+            if gameManager.tutorialStep == 0 {
                 gameManager.advanceTutorial()
                 return
             }
             
-            // Raycast to find placement position
-            var worldPos: SIMD3<Float>?
+            guard let currentLesson = gameManager.currentLesson,
+                  gameManager.tutorialStep < currentLesson.steps.count else { return }
             
-            if gameManager.isSimulationMode {
-                let hits = arView.hitTest(location)
-                if let hit = hits.first(where: { $0.entity.name == "VirtualFloor" }) {
-                    worldPos = hit.position
-                }
-            } else {
-                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .estimatedPlane]
-                for target in queries {
-                    if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
-                        worldPos = SIMD3<Float>(result.worldTransform.columns.3.x, result.worldTransform.columns.3.y + 0.5, result.worldTransform.columns.3.z)
-                        break
-                    }
-                }
-            }
+            let currentGoal = currentLesson.steps[gameManager.tutorialStep].goal
             
-            // Level 1: Starbirth
-            if lesson == 1 {
-                if step == 1 {
-                    // Create Sun
-                    guard let pos = worldPos else { return }
-                    createCelestialBody(at: pos, name: "Sun", radius: 0.25, color: .yellow, isStar: true, in: arView)
-                    gameManager.advanceTutorial()
-                } else if step == 2 {
-                    // Change Color
-                    applyPropertyChange(name: "Sun", in: arView) { entity in
-                        let color = CodeParser.parseColor(from: self.gameManager.codeSnippet)
-                        if let model = entity as? ModelEntity {
-                            model.model?.materials = [SimpleMaterial(color: color, isMetallic: false)]
-                        }
-                    }
-                }
-            }
-            
-            // Level 2: Blue Planet
-            if lesson == 2 {
-                if step == 1 {
-                    // Find Sun and place Earth relative to it?
-                    // For simplicity, just place Earth nearby or use standard placement
-                    guard let pos = worldPos else { return }
-                    createCelestialBody(at: pos, name: "Earth", radius: 0.08, color: .blue, in: arView)
-                    gameManager.advanceTutorial()
-                } else if step == 2 {
-                    // Change Position (Relative to parent/Sun)
-                    // In this simple version, we might just look for "Earth" and move it
-                    applyPropertyChange(name: "Earth", in: arView) { entity in
-                        // Parse x position from code (e.g. "x: 0.8")
-                        let x = CodeParser.parseScaleX(from: self.gameManager.codeSnippet, defaultValue: 0.8)
-                        entity.position = SIMD3<Float>(x, 0, 0)
-                    }
-                }
-            }
-            
-            // Level 3: Orbital Mechanics
-            if lesson == 3 {
-                 if step == 1 {
-                    // Add Orbit Component
-                    applyPropertyChange(name: "Earth", in: arView) { entity in
-                        let r = CodeParser.parseOrbitRadius(from: self.gameManager.codeSnippet, defaultValue: 0.8)
-                        let s = CodeParser.parseOrbitSpeed(from: self.gameManager.codeSnippet, defaultValue: 0.5)
-                        entity.components[OrbitComponent.self] = OrbitComponent(radius: r, speed: s)
-                    }
-                     gameManager.advanceTutorial()
-                } else if step == 2 {
-                    // Update Speed
-                    applyPropertyChange(name: "Earth", in: arView) { entity in
-                        let s = CodeParser.parseOrbitSpeed(from: self.gameManager.codeSnippet, defaultValue: 2.0)
-                        var orbit = entity.components[OrbitComponent.self] ?? OrbitComponent()
-                        orbit.speed = s
-                        entity.components[OrbitComponent.self] = orbit
-                    }
-                }
-            }
-            
-            // Level 4: Moon
-            if lesson == 4 {
-                if step == 1 {
-                    // Find Earth, create Moon as CHILD
-                    if let earth = findEntity(named: "Earth", in: arView) {
-                        let r = CodeParser.parseOrbitRadius(from: gameManager.codeSnippet, defaultValue: 0.2)
-                        let s = CodeParser.parseOrbitSpeed(from: gameManager.codeSnippet, defaultValue: 3.0)
-                        let radius = CodeParser.parseRadius(from: gameManager.codeSnippet, defaultValue: 0.05)
-                        
-                        let moon = ModelEntity(mesh: .generateSphere(radius: radius), materials: [SimpleMaterial(color: .gray, isMetallic: false)])
-                        moon.name = "Moon"
-                        moon.position = [r, 0, 0] // Start pos
-                        moon.components[OrbitComponent.self] = OrbitComponent(radius: r, speed: s)
-                        earth.addChild(moon)
+            // Generic Action based on GoalType
+            switch currentGoal {
+            case .none:
+                // Do nothing on tap, UI handles continue button
+                break
+                
+            case .any:
+                // Any tap advances the tutorial step
+                gameManager.advanceTutorial()
+                
+            case .placeEntity(let name):
+                if name == "Sun" {
+                    if let worldPos = getTapWorldPosition(location: location, in: arView) {
+                        let mesh = MeshResource.generateSphere(radius: 0.1)
+                        let mat = SimpleMaterial(color: .gray, isMetallic: false)
+                        let entity = ModelEntity(mesh: mesh, materials: [mat])
+                        entity.name = "Sun"
+                        entity.position = SIMD3<Float>(0, 0.1, 0) // Rest exactly on the floor relative to anchor
+                        let anchor = AnchorEntity(world: worldPos)
+                        anchor.addChild(entity)
+                        arView.scene.addAnchor(anchor)
+                        HapticsManager.shared.play(.medium)
                         gameManager.advanceTutorial()
                     }
-                } else if step == 2 {
-                    // Adjust Orbit
-                     applyPropertyChange(name: "Moon", in: arView) { entity in
-                        let r = CodeParser.parseOrbitRadius(from: self.gameManager.codeSnippet, defaultValue: 0.3)
-                        var orbit = entity.components[OrbitComponent.self] ?? OrbitComponent()
-                        orbit.radius = r
-                        entity.components[OrbitComponent.self] = orbit
+                } else if name == "Earth" {
+                    if let worldPos = getTapWorldPosition(location: location, in: arView) {
+                        let mesh = MeshResource.generateSphere(radius: 0.08)
+                        let mat = SimpleMaterial(color: .blue, isMetallic: false)
+                        let entity = ModelEntity(mesh: mesh, materials: [mat])
+                        entity.name = "Earth"
+                        entity.position = SIMD3<Float>(0, 0.08, 0)
+                        let anchor = AnchorEntity(world: worldPos)
+                        anchor.addChild(entity)
+                        arView.scene.addAnchor(anchor)
+                        HapticsManager.shared.play(.medium)
+                        gameManager.advanceTutorial()
                     }
                 }
-            }
-            
-            // Level 5: Asteroid Belt
-            if lesson == 5 {
-                if step == 1 || step == 2 {
-                    // Create Belt
-                    // Find Sun (or center)
-                     guard let sun = findEntity(named: "Sun", in: arView) ?? arView.scene.anchors.first?.children.first else { return }
-                    
-                    let count = CodeParser.parseCount(from: gameManager.codeSnippet, defaultValue: 10)
-                    let orbitR = CodeParser.parseOrbitRadius(from: gameManager.codeSnippet, defaultValue: 1.5)
-                    
-                    // Clear old asteroids
-                    sun.children.filter { $0.name == "Asteroid" }.forEach { $0.removeFromParent() }
-                    
-                    for i in 0..<count {
-                        let angle = (Float(i) / Float(count)) * .pi * 2
-                        let offset = Float.random(in: -0.2...0.2)
-                        let r = orbitR + offset
-                        
-                        let asteroid = ModelEntity(mesh: .generateSphere(radius: Float.random(in: 0.02...0.04)), materials: [SimpleMaterial(color: .gray, isMetallic: false)])
-                        asteroid.name = "Asteroid"
-                        asteroid.position = [cos(angle) * r, 0, sin(angle) * r]
-                        
-                        var orbit = OrbitComponent(radius: r, speed: Float.random(in: 0.2...0.4))
-                        orbit.currentAngle = angle
-                        asteroid.components[OrbitComponent.self] = orbit
-                        
-                        sun.addChild(asteroid)
-                    }
-                    if step == 2 {
-                        // CPU Burn check?
-                        // Just advance
-                    }
-                    gameManager.advanceTutorial()
-                }
+                
+            case .modifyProperty(_, _, _):
+                // Handled via evaluateConsoleExecution when user runs code
+                break
+                
+            case .modifyPosition(_,_):
+                // Handled via evaluateConsoleExecution when user runs code
+                break
+                
+            case .modifyOrbit(_, _, _), .placeSatellite(_, _, _, _), .generateBelt(_, _, _), .modifyGravity(_), .applyForce(_, _), .modifyPhysics(_, _, _, _), .buildOutpost(_):
+                // Handled via evaluateConsoleExecution when user runs code
+                break
+                
+            case .any, .none:
+                break
             }
         }
         
-        // Helper: Create/Find
-        private func createCelestialBody(at pos: SIMD3<Float>, name: String, radius: Float, color: UIColor, isStar: Bool = false, in arView: ARView) {
+        // MARK: - Helper: Generic Spawner (GoalType.placeCelestialBody)
+        
+        private func spawnCosmicEntity(at position: SIMD3<Float>, in arView: ARView) {
+            let anchor = AnchorEntity(world: position)
+            arView.scene.addAnchor(anchor)
+            
+            // Parse common parameters
+            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
+            let radius = CodeParser.parseRadius(from: gameManager.codeSnippet, defaultValue: 0.1)
+            let mass = CodeParser.parseMass(from: gameManager.codeSnippet, defaultMass: 1.0)
+            let isMetallic = CodeParser.parseMetallic(from: gameManager.codeSnippet)
+            
+            let shape = CodeParser.parseShape(from: gameManager.codeSnippet)
+            let isStar = (shape == "star" || color == .yellow || color == .orange)
+            
+            // Visuals
             let mesh = MeshResource.generateSphere(radius: radius)
-            let material = SimpleMaterial(color: color, isMetallic: false) // Unlit for star?
-            let entity = ModelEntity(mesh: mesh, materials: [material])
-            entity.name = name
+            var mat = SimpleMaterial(color: color, isMetallic: isMetallic)
+            if isStar {
+                // Stars glow, no metallic reflection
+                mat = SimpleMaterial(color: color, isMetallic: false)
+            }
+            let entity = ModelEntity(mesh: mesh, materials: [mat])
+            entity.name = "CosmicEntity"
+            entity.position.y = radius // Rest on the floor
             
             if isStar {
-                 // Add Light
                 let light = PointLight()
                 light.light.intensity = 2000
                 light.light.attenuationRadius = 5.0
                 entity.addChild(light)
             }
             
-            let anchor = AnchorEntity(world: pos)
+            // Physics
+            entity.generateCollisionShapes(recursive: true)
+            let physics = PhysicsBodyComponent(massProperties: .init(mass: mass), material: .default, mode: .dynamic)
+            entity.components[PhysicsBodyComponent.self] = physics
+            
+            // Orbit (if applicable)
+            if let _ = gameManager.codeSnippet.range(of: "orbit") {
+                let orbitSpeed = CodeParser.parseOrbitSpeed(from: gameManager.codeSnippet)
+                let orbitRadius = CodeParser.parseOrbitRadius(from: gameManager.codeSnippet)
+                entity.components[OrbitComponent.self] = OrbitComponent(radius: orbitRadius, speed: orbitSpeed)
+            }
+            
             anchor.addChild(entity)
-            arView.scene.addAnchor(anchor)
-        }
-        
-        private func findEntity(named name: String, in arView: ARView) -> Entity? {
-            // Search all anchors
-            for anchor in arView.scene.anchors {
-                if let entity = anchor.findEntity(named: name) {
-                    return entity
-                }
-            }
-            return nil
-        }
-        
-        private func applyPropertyChange(name: String, in arView: ARView, change: (Entity) -> Void) {
-            if let entity = findEntity(named: name, in: arView) {
-                change(entity)
-                
-                // Animation feedback
-                let originalScale = entity.scale
-                entity.scale *= 1.2
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    entity.scale = originalScale
-                }
-                HapticsManager.shared.play(.light)
-                gameManager.advanceTutorial()
-            }
-        }
-        
-        // MARK: - Legacy Levels (Temporarily Disabled/Skipped)
-        
-        func handleLevel1Tap(step: Int, location: CGPoint, in arView: ARView) {
-            // ... Old code ...
-        }
-        
-        func handleLevel2Tap(step: Int, location: CGPoint, in arView: ARView) {
-            // ... Old code ...
-        }
-
-        
-        // MARK: - Level 3: Bounce & Collide Tap
-        
-        func handleLevel3Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                // Place a bouncy sphere with physics
-                handlePlaceBounceObject(location: location, in: arView)
-            case 3, 4:
-                // Place more spheres with modified restitution
-                handlePlaceBounceObject(location: location, in: arView)
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Level 4: Forces & Impulse Tap
-        
-        func handleLevel4Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                // Place the object to launch
-                handlePlaceObject(location: location, in: arView)
-            case 3, 4:
-                // Tap an object to apply force
-                if let entity = arView.entity(at: location) as? ModelEntity,
-                   entity.name == "UserObject" {
-                    handleApplyImpulse(entity: entity)
-                } else {
-                    // Tap floor to place new object
-                    handlePlaceObject(location: location, in: arView)
-                }
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Place Object (generic)
-        
-        func handlePlaceObject(location: CGPoint, in arView: ARView) {
-            var worldTransform: simd_float4x4?
-            
-            if gameManager.isSimulationMode {
-                let hits = arView.hitTest(location)
-                if let hit = hits.first(where: { $0.entity.name == "VirtualFloor" }) {
-                    let position = hit.position
-                    worldTransform = simd_float4x4(
-                        [1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [position.x, position.y, position.z, 1]
-                    )
-                }
-            } else {
-                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .existingPlaneInfinite, .estimatedPlane]
-                for target in queries {
-                    if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
-                        worldTransform = result.worldTransform
-                        break
-                    }
-                }
-            }
-            
-            guard let transform = worldTransform else { return }
-            
-            let anchor = AnchorEntity(world: transform)
-            arView.scene.addAnchor(anchor)
-            
-            // AR FIX: Create an invisible physics floor at this location to prevent falling to infinity
-            if !gameManager.isSimulationMode {
-                let floorSize: Float = 50.0 // Large enough coverage
-                let floorThickness: Float = 1.0
-                let arFloor = ModelEntity(
-                    mesh: .generatePlane(width: floorSize, depth: floorSize),
-                    materials: [OcclusionMaterial()] 
-                )
-                // Collision box offset downwards
-                let floorShape = ShapeResource.generateBox(size: [floorSize, floorThickness, floorSize])
-                let collisionEntity = Entity()
-                collisionEntity.position.y = -floorThickness / 2
-                collisionEntity.components[CollisionComponent.self] = CollisionComponent(shapes: [floorShape], mode: .default, filter: .default)
-                collisionEntity.components[PhysicsBodyComponent.self] = PhysicsBodyComponent(massProperties: .default, material: .default, mode: .static)
-                
-                arFloor.addChild(collisionEntity)
-                
-                // We anchor it slightly below the hit point to avoid visual Z-fighting if mapped, 
-                // but for physics we want it exactly at the hit level.
-                arFloor.position.y = -0.001 
-                anchor.addChild(arFloor)
-            }
-            
-            let shape = CodeParser.parseShape(from: gameManager.codeSnippet)
-            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
-            var mat = SimpleMaterial(color: color, isMetallic: true)
-            mat.roughness = 0.15
-            
-            let model: ModelEntity
-            
-            if shape == "sphere" {
-                let radius: Float = 0.08
-                let mesh = MeshResource.generateSphere(radius: radius)
-                model = ModelEntity(mesh: mesh, materials: [mat])
-                model.position.y = radius
-            } else {
-                let width = CodeParser.parseWidth(from: gameManager.codeSnippet, defaultWidth: 0.15)
-                let height = CodeParser.parseHeight(from: gameManager.codeSnippet, defaultHeight: 0.05)
-                let length = CodeParser.parseDepth(from: gameManager.codeSnippet, defaultDepth: 0.15)
-                let chamfer = CodeParser.parseChamfer(from: gameManager.codeSnippet, defaultChamfer: 0.02)
-                let mesh = MeshResource.generateBox(size: [width, height, length], cornerRadius: chamfer)
-                model = ModelEntity(mesh: mesh, materials: [mat])
-                model.position.y = height / 2
-            }
-            
-            model.name = "UserObject"
-            model.generateCollisionShapes(recursive: true)
-            anchor.addChild(model)
-            
             gameManager.placedObjectCount += 1
             HapticsManager.shared.play(.medium)
-            
-            // Level 1 Tutorial: Complete Step 5
-            if gameManager.currentLessonIndex == 1 && gameManager.tutorialStep == 5 {
-                gameManager.advanceTutorial()
-            }
-            // Level 2: Complete Step 1 (place a box)
-            if gameManager.currentLessonIndex == 2 && gameManager.tutorialStep == 1 {
-                gameManager.advanceTutorial()
-            }
-            // Level 4: Complete Step 1 (place an object)
-            if gameManager.currentLessonIndex == 4 && gameManager.tutorialStep == 1 {
-                gameManager.advanceTutorial()
-            }
-            // Level 6: Complete Step 1 (place a sphere) or Step 4 (place with new material)
-            if gameManager.currentLessonIndex == 6 {
-                if gameManager.tutorialStep == 1 || gameManager.tutorialStep == 4 {
-                    gameManager.advanceTutorial()
-                }
-            }
         }
         
-        // MARK: - Place Object with Physics (Level 6: Gravity)
+        // MARK: - Evaluate Console
         
-        func handlePlacePhysicsObject(location: CGPoint, in arView: ARView, mass: Float) {
-            var worldTransform: simd_float4x4?
+        func evaluateConsoleExecution() {
+            guard let arView = arView,
+                  let currentLesson = gameManager.currentLesson,
+                  gameManager.tutorialStep < currentLesson.steps.count else { return }
+                  
+            let currentGoal = currentLesson.steps[gameManager.tutorialStep].goal
             
-            if gameManager.isSimulationMode {
-                let hits = arView.hitTest(location)
-                if let hit = hits.first(where: { $0.entity.name == "VirtualFloor" }) {
-                    let position = hit.position
-                    worldTransform = simd_float4x4(
-                        [1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [position.x, position.y + 0.5, position.z, 1] // Spawn slightly above floor
-                    )
-                }
-            } else {
-                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .existingPlaneInfinite, .estimatedPlane]
-                for target in queries {
-                    if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
-                        var t = result.worldTransform
-                        t.columns.3.y += 0.5 // Spawn above surface
-                        worldTransform = t
-                        break
+            if case .modifyProperty(let target, _, let minRadius) = currentGoal {
+                let code = gameManager.codeSnippet
+                let color = CodeParser.parseColor(from: code)
+                let radius = CodeParser.parseRadius(from: code)
+                
+                // Color parser maps "yellow" string to .yellow UIColor.
+                // It's a simplistic check for this specific lesson
+                if color == .yellow && radius >= minRadius {
+                    // Find the entity "Sun"
+                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
+                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                        
+                        // Change material to Unlit yellow for Emissive look
+                        entity.model?.materials = [UnlitMaterial(color: .yellow)]
+                        
+                        // Scale animation and adjust Y position to rest on the floor
+                        let scaleFactor = radius / 0.1 // Since initial radius was 0.1
+                        var transform = entity.transform
+                        transform.scale = SIMD3<Float>(repeating: scaleFactor)
+                        transform.translation.y = radius // Update Y to match new radius
+                        entity.move(to: transform, relativeTo: entity.parent, duration: 1.0, timingFunction: .easeInOut)
+                        
+                        // Add star illumination
+                        let light = PointLight()
+                        light.light.color = .yellow
+                        light.light.intensity = 5000
+                        light.light.attenuationRadius = 10.0
+                        entity.addChild(light)
+                        
+                        HapticsManager.shared.play(.heavy)
+                        
+                        // Give time for animation before advancing
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            self.gameManager.advanceTutorial()
+                        }
                     }
                 }
-            }
-            
-            guard let transform = worldTransform else { return }
-            
-            let anchor = AnchorEntity(world: transform)
-            arView.scene.addAnchor(anchor)
-            
-            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
-            let shape = CodeParser.parseShape(from: gameManager.codeSnippet)
-            var mat = SimpleMaterial(color: color, isMetallic: true)
-            mat.roughness = 0.15
-            
-            let model: ModelEntity
-            if shape == "sphere" {
-                model = ModelEntity(mesh: .generateSphere(radius: 0.08), materials: [mat])
-            } else {
-                model = ModelEntity(mesh: .generateBox(size: [0.15, 0.15, 0.15], cornerRadius: 0.02), materials: [mat])
-            }
-            
-            model.name = "UserObject"
-            model.generateCollisionShapes(recursive: true)
-            
-            // Add DYNAMIC physics immediately so gravity affects it
-            let physics = PhysicsBodyComponent(
-                massProperties: .init(mass: mass),
-                material: .default,
-                mode: .dynamic
-            )
-            model.components[PhysicsBodyComponent.self] = physics
-            
-            anchor.addChild(model)
-            gameManager.placedObjectCount += 1
-            HapticsManager.shared.play(.medium)
-            
-            // Advance tutorial for Level 6
-            if gameManager.currentLessonIndex == 6 {
-                if gameManager.tutorialStep == 1 || gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            } else if case .modifyPosition(let target, let targetX) = currentGoal {
+                let code = gameManager.codeSnippet
+                let posX = CodeParser.parsePositionX(from: code)
+                
+                if abs(posX - targetX) < 0.01 {
+                    // Find the target entity
+                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
+                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                        
+                        var transform = entity.transform
+                        transform.translation = SIMD3<Float>(posX, entity.position.y, entity.position.z)
+                        entity.move(to: transform, relativeTo: entity.parent, duration: 1.0, timingFunction: .easeInOut)
+                        
+                        HapticsManager.shared.play(.heavy)
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            self.gameManager.advanceTutorial()
+                        }
+                    }
+                }
+            } else if case .modifyOrbit(let target, let targetRadius, let targetSpeed) = currentGoal {
+                let code = gameManager.codeSnippet
+                let radius = CodeParser.parseOrbitRadius(from: code)
+                let speed = CodeParser.parseOrbitSpeed(from: code)
+                
+                if abs(radius - targetRadius) < 0.01 && abs(speed - targetSpeed) < 0.01 {
+                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
+                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                        
+                        if var orbitComponent = entity.components[OrbitComponent.self] {
+                            orbitComponent.radius = radius
+                            orbitComponent.speed = speed
+                            entity.components[OrbitComponent.self] = orbitComponent
+                        } else {
+                            let orbit = OrbitComponent(radius: radius, speed: speed)
+                            entity.components.set(orbit)
+                        }
+                        
+                        HapticsManager.shared.play(.light)
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            self.gameManager.advanceTutorial()
+                        }
+                    }
+                }
+            } else if case .placeSatellite(let parent, let name, let targetRadius, let targetSpeed) = currentGoal {
+                let code = gameManager.codeSnippet
+                let radius = CodeParser.parseOrbitRadius(from: code)
+                let speed = CodeParser.parseOrbitSpeed(from: code)
+                
+                if abs(radius - targetRadius) < 0.01 && abs(speed - targetSpeed) < 0.01 {
+                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == parent }) }),
+                       let parentEntity = anchor.children.first(where: { $0.name == parent }) as? ModelEntity {
+                        
+                        let mesh = MeshResource.generateSphere(radius: 0.05)
+                        let mat = SimpleMaterial(color: .gray, isMetallic: false)
+                        let moonEntity = ModelEntity(mesh: mesh, materials: [mat])
+                        moonEntity.name = name
+                        moonEntity.position = SIMD3<Float>(0, 0, 0) // Start at center of parent
+                        
+                        let orbit = OrbitComponent(radius: radius, speed: speed)
+                        moonEntity.components.set(orbit)
+                        
+                        parentEntity.addChild(moonEntity)
+                        
+                        HapticsManager.shared.play(.medium)
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            self.gameManager.advanceTutorial()
+                        }
+                    }
+                }
+            } else if case .generateBelt(let target, let minCount, let targetRadius) = currentGoal {
+                let code = gameManager.codeSnippet
+                let count = CodeParser.parseCount(from: code)
+                
+                if count >= minCount {
+                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
+                       let parentEntity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                        
+                        for _ in 0..<count {
+                            let randomScale = Float.random(in: 0.02...0.06)
+                            let mesh = MeshResource.generateSphere(radius: randomScale)
+                            
+                            // Randomize material between gray and brown
+                            let colors: [UIColor] = [.gray, .brown, .darkGray, .lightGray]
+                            let mat = SimpleMaterial(color: colors.randomElement()!, isMetallic: false)
+                            
+                            let asteroidEntity = ModelEntity(mesh: mesh, materials: [mat])
+                            asteroidEntity.name = "Asteroid"
+                            
+                            // Slight variation in radius
+                            let variance = Float.random(in: -0.15...0.15)
+                            let finalRadius = targetRadius + variance
+                            
+                            // Random orbit speed
+                            let speed = Float.random(in: 0.5...1.5)
+                            
+                            var orbit = OrbitComponent(radius: finalRadius, speed: speed)
+                            orbit.currentAngle = Float.random(in: 0...(2 * .pi))
+                            asteroidEntity.components.set(orbit)
+                            
+                            // Stagger Y position slightly for a 3D belt effect
+                            asteroidEntity.position.y = Float.random(in: -0.05...0.05)
+                            
+                            parentEntity.addChild(asteroidEntity)
+                        }
+                        
+                        HapticsManager.shared.play(.heavy)
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            self.gameManager.advanceTutorial()
+                        }
+                    }
+                }
+            } else if case .modifyGravity(let targetGravity) = currentGoal {
+                let code = gameManager.codeSnippet
+                if let gravity = CodeParser.parseFloat(from: code, keyword: "gravity"), abs(gravity - targetGravity) < 0.01 {
+                    gameManager.customGravity = gravity
+                    HapticsManager.shared.play(.heavy)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        self.gameManager.advanceTutorial()
+                    }
+                }
+            } else if case .applyForce(let target, let requiredZ) = currentGoal {
+                let code = gameManager.codeSnippet
+                let forceZ = CodeParser.parseFloat(from: code, keyword: "forceZ") ?? 0.0
+                
+                if abs(forceZ - requiredZ) < 0.01 {
+                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
+                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                        
+                        let force = SIMD3<Float>(0, 0, forceZ)
+                        entity.applyLinearImpulse(force, relativeTo: nil)
+                        
+                        HapticsManager.shared.play(.heavy)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            self.gameManager.advanceTutorial()
+                        }
+                    }
+                }
+            } else if case .modifyPhysics(let target, let targetFriction, let targetMass, let targetRestitution) = currentGoal {
+                let code = gameManager.codeSnippet
+                let friction = CodeParser.parseFloat(from: code, keyword: "friction")
+                let mass = CodeParser.parseFloat(from: code, keyword: "mass")
+                let restitution = CodeParser.parseFloat(from: code, keyword: "restitution")
+                
+                var success = true
+                if let tf = targetFriction, abs((friction ?? -1) - tf) > 0.01 { success = false }
+                if let tm = targetMass, abs((mass ?? -1) - tm) > 0.01 { success = false }
+                if let tr = targetRestitution, abs((restitution ?? -1) - tr) > 0.01 { success = false }
+                
+                if success {
+                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
+                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                        
+                        let safeFriction = friction ?? 0.5
+                        let safeRestitution = restitution ?? 0.0
+                        let safeMass = mass ?? 1.0
+                        
+                        let material = PhysicsMaterialResource.generate(friction: safeFriction, restitution: safeRestitution)
+                        let physics = PhysicsBodyComponent(massProperties: .init(mass: safeMass), material: material, mode: .dynamic)
+                        entity.components.set(physics)
+                        entity.generateCollisionShapes(recursive: true)
+                        
+                        HapticsManager.shared.play(.medium)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            self.gameManager.advanceTutorial()
+                        }
+                    }
+                }
+            } else if case .buildOutpost(let requiredParts) = currentGoal {
+                var outpostParts = 0
+                for anchor in arView.scene.anchors {
+                    for entity in anchor.children {
+                        if entity.name == "Outpost Part" || entity.name.contains("ylinder") || entity.name.contains("ox") {
+                            outpostParts += 1
+                        }
+                    }
+                }
+                
+                if outpostParts >= requiredParts {
+                    HapticsManager.shared.play(.heavy)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                         self.gameManager.advanceTutorial()
                     }
                 }
             }
         }
         
-        // MARK: - Apply Physics (Level 2: Gravity)
+        // MARK: - Generic Utilities
         
-        func handleApplyPhysics(location: CGPoint, in arView: ARView) {
-            guard let entity = arView.entity(at: location) as? ModelEntity,
-                  entity.name == "UserObject" else { return }
-            
-            let mass = CodeParser.parseMass(from: gameManager.codeSnippet)
-            
-            let physics = PhysicsBodyComponent(
-                massProperties: .init(mass: mass),
-                material: .default,
-                mode: .dynamic
-            )
-            entity.components[PhysicsBodyComponent.self] = physics
-            
-            // Visual feedback — flash
-            let originalColor = CodeParser.parseColor(from: gameManager.codeSnippet)
-            entity.model?.materials = [SimpleMaterial(color: .white, isMetallic: true)]
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                entity.model?.materials = [SimpleMaterial(color: originalColor, isMetallic: true)]
-            }
-            
-            HapticsManager.shared.play(.heavy)
-            
-            // Advance tutorial step
-            if gameManager.currentLessonIndex == 2 {
-                if gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 {
-                    gameManager.advanceTutorial()
-                }
-            }
-        }
-        
-        // MARK: - Place Bounce Object (Level 3)
-        
-        func handlePlaceBounceObject(location: CGPoint, in arView: ARView) {
-            var worldTransform: simd_float4x4?
-            
+        private func getTapWorldPosition(location: CGPoint, in arView: ARView) -> SIMD3<Float>? {
             if gameManager.isSimulationMode {
                 let hits = arView.hitTest(location)
                 if let hit = hits.first(where: { $0.entity.name == "VirtualFloor" }) {
-                    let position = hit.position
-                    worldTransform = simd_float4x4(
-                        [1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [position.x, position.y, position.z, 1]
-                    )
+                    return hit.position
                 }
             } else {
-                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .existingPlaneInfinite, .estimatedPlane]
+                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .estimatedPlane]
                 for target in queries {
                     if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
-                        worldTransform = result.worldTransform
-                        break
+                        return SIMD3<Float>(result.worldTransform.columns.3.x, result.worldTransform.columns.3.y + 0.5, result.worldTransform.columns.3.z)
                     }
                 }
             }
-            
-            guard let transform = worldTransform else { return }
-            
-            let anchor = AnchorEntity(world: transform)
-            arView.scene.addAnchor(anchor)
-            
-            // AR FIX: Create an invisible physics floor at this location
-            if !gameManager.isSimulationMode {
-                let floorSize: Float = 50.0
-                let floorThickness: Float = 1.0
-                let arFloor = ModelEntity(
-                    mesh: .generatePlane(width: floorSize, depth: floorSize),
-                    materials: [OcclusionMaterial()]
-                )
-                
-                let floorShape = ShapeResource.generateBox(size: [floorSize, floorThickness, floorSize])
-                let collisionEntity = Entity()
-                collisionEntity.position.y = -floorThickness / 2
-                collisionEntity.components[CollisionComponent.self] = CollisionComponent(shapes: [floorShape], mode: .default, filter: .default)
-                collisionEntity.components[PhysicsBodyComponent.self] = PhysicsBodyComponent(massProperties: .default, material: .default, mode: .static)
-                
-                arFloor.addChild(collisionEntity)
-                arFloor.position.y = -0.001
-                anchor.addChild(arFloor)
-            }
-            
-            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
-            let restitution = CodeParser.parseRestitution(from: gameManager.codeSnippet)
-            let mass = CodeParser.parseMass(from: gameManager.codeSnippet)
-            
-            // Create sphere
-            let radius: Float = 0.08
-            let mesh = MeshResource.generateSphere(radius: radius)
-            var mat = SimpleMaterial(color: color, isMetallic: true)
-            mat.roughness = 0.2
-            let sphere = ModelEntity(mesh: mesh, materials: [mat])
-            sphere.name = "UserObject"
-            sphere.position.y = 1.5 // Drop from height
-            sphere.generateCollisionShapes(recursive: true)
-            
-            // Physics with custom restitution
-            let physicsMaterial = PhysicsMaterialResource.generate(
-                staticFriction: 0.5,
-                dynamicFriction: 0.5,
-                restitution: restitution
-            )
-            let physics = PhysicsBodyComponent(
-                massProperties: .init(mass: mass),
-                material: physicsMaterial,
-                mode: .dynamic
-            )
-            sphere.components[PhysicsBodyComponent.self] = physics
-            
-            anchor.addChild(sphere)
-            
-            gameManager.placedObjectCount += 1
-            HapticsManager.shared.play(.medium)
-            
-            // Advance tutorial
-            if gameManager.currentLessonIndex == 3 {
-                if gameManager.tutorialStep == 1 || gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 {
-                    gameManager.advanceTutorial()
-                }
-            }
+            return nil
         }
         
-        // MARK: - Apply Impulse Force (Level 4)
-        
-        func handleApplyImpulse(entity: ModelEntity) {
-            let mass = CodeParser.parseMass(from: gameManager.codeSnippet)
-            let force = CodeParser.parseForce(from: gameManager.codeSnippet)
-            
-            // Ensure entity has physics
-            if entity.components[PhysicsBodyComponent.self] == nil {
-                entity.generateCollisionShapes(recursive: true)
-                let physics = PhysicsBodyComponent(
-                    massProperties: .init(mass: mass),
-                    material: .default,
-                    mode: .dynamic
-                )
-                entity.components[PhysicsBodyComponent.self] = physics
-            }
-            
-            // Apply impulse
-            entity.applyLinearImpulse(force, relativeTo: nil)
-            
-            // Visual flash
-            let originalColor = CodeParser.parseColor(from: gameManager.codeSnippet)
-            entity.model?.materials = [SimpleMaterial(color: .yellow, isMetallic: true)]
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                entity.model?.materials = [SimpleMaterial(color: originalColor, isMetallic: true)]
-            }
-            
-            HapticsManager.shared.play(.heavy)
-            
-            // Advance tutorial
-            if gameManager.currentLessonIndex == 4 {
-                if gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 {
-                    gameManager.advanceTutorial()
-                }
-            }
-        }
-        
-        // MARK: - Level 5: Scaling & Transform Tap
-        
-        func handleLevel5Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                // Place a normal box
-                handlePlaceScaledObject(location: location, in: arView)
-            case 3, 4:
-                // Place scaled objects
-                handlePlaceScaledObject(location: location, in: arView)
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Level 6: Color Lab Tap
-        
-        func handleLevel6Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                // Place a dynamic object — it falls with normal gravity (9.8)
-                handlePlacePhysicsObject(location: location, in: arView, mass: 1.0)
-            case 3:
-                // Place another object — now gravity should be 0 (floats!)
-                handlePlacePhysicsObject(location: location, in: arView, mass: 1.0)
-            case 4:
-                // Place object with moon gravity (1.6) — falls slowly
-                handlePlacePhysicsObject(location: location, in: arView, mass: 1.0)
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Level 7: Shape Factory Tap
-        
-        func handleLevel7Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1, 3, 4, 5:
-                // Place various shapes
-                handlePlaceShapeObject(location: location, in: arView)
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Level 8: Target Practice Tap
-        
-        func handleLevel8Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                // Place a target on the floor
-                handlePlaceTarget(location: location, in: arView)
-            case 3, 4:
-                // Shoot projectile from camera
-                handleShootProjectile(location: location, in: arView)
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Level 9: Stack & Topple Tap
-        
-        func handleLevel9Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1, 4:
-                // Build a tower
-                handlePlaceStack(location: location, in: arView)
-            case 3:
-                // Shoot to topple
-                handleShootProjectile(location: location, in: arView)
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Physics Mastery (10-17) Tap
-        
-        func handlePhysicsMasteryTap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                handlePlaceBounceObject(location: location, in: arView)
-                gameManager.advanceTutorial()
-            case 3:
-                if let entity = arView.entity(at: location) as? ModelEntity, entity.name == "UserObject" {
-                    let force = CodeParser.parseForce(from: gameManager.codeSnippet)
-                    entity.addForce(force, relativeTo: nil)
-                    HapticsManager.shared.play(.medium)
-                    gameManager.advanceTutorial()
-                } else {
-                    handlePlaceBounceObject(location: location, in: arView)
-                }
-            case 4:
-                if let entity = arView.entity(at: location) as? ModelEntity, entity.name == "UserObject" {
-                    let force = CodeParser.parseForce(from: gameManager.codeSnippet)
-                    entity.addForce(force, relativeTo: nil)
-                    HapticsManager.shared.play(.medium)
-                    gameManager.advanceTutorial()
-                } else {
-                    handlePlaceBounceObject(location: location, in: arView)
-                    gameManager.advanceTutorial()
-                }
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Shooting Range (18-25) Tap
-        
-        func handleShootingLevelTap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                handlePlaceTarget(location: location, in: arView)
-                gameManager.advanceTutorial()
-            case 3, 4:
-                handleShootProjectile(location: location, in: arView)
-                gameManager.advanceTutorial()
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Architecture (26-33) Tap
-        
-        func handleBuildingLevelTap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                handlePlaceStack(location: location, in: arView)
-                gameManager.advanceTutorial()
-            case 3:
-                if let entity = arView.entity(at: location) as? ModelEntity, entity.name == "UserObject" {
-                    handleShootProjectile(location: location, in: arView)
-                } else {
-                    handlePlaceStack(location: location, in: arView)
-                }
-                gameManager.advanceTutorial()
-            case 4:
-                if let entity = arView.entity(at: location) as? ModelEntity, entity.name == "UserObject" {
-                    handleShootProjectile(location: location, in: arView)
-                } else {
-                    handlePlaceStack(location: location, in: arView)
-                }
-                gameManager.advanceTutorial()
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Creative Studio (34-41) Tap
-        
-        func handleCreativeLevelTap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                handlePlaceScaledObject(location: location, in: arView)
-                gameManager.advanceTutorial()
-            case 3:
-                if let entity = arView.entity(at: location) as? ModelEntity, entity.name == "UserObject" {
-                    handleRepaintObject(entity: entity)
-                } else {
-                    handlePlaceScaledObject(location: location, in: arView)
-                }
-                gameManager.advanceTutorial()
-            case 4:
-                handlePlaceScaledObject(location: location, in: arView)
-                gameManager.advanceTutorial()
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Master Challenges (42-49) Tap
-        
-        func handleChallengeLevelTap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                // Build or place depending on lesson
-                let lesson = gameManager.currentLessonIndex
-                if lesson == 46 { // Target Marathon
-                    handlePlaceTarget(location: location, in: arView)
-                } else if [43, 47, 48].contains(lesson) { // Demolition, Tower Defense, Grand
-                    handlePlaceStack(location: location, in: arView)
-                } else {
-                    handlePlaceScaledObject(location: location, in: arView)
-                }
-                gameManager.advanceTutorial()
-            case 3:
-                let lesson = gameManager.currentLessonIndex
-                if [43, 46, 47, 49].contains(lesson) {
-                    handleShootProjectile(location: location, in: arView)
-                } else if let entity = arView.entity(at: location) as? ModelEntity, entity.name == "UserObject" {
-                    let force = CodeParser.parseForce(from: gameManager.codeSnippet)
-                    entity.addForce(force, relativeTo: nil)
-                    HapticsManager.shared.play(.medium)
-                } else {
-                    handlePlaceScaledObject(location: location, in: arView)
-                }
-                gameManager.advanceTutorial()
-            case 4:
-                let lesson = gameManager.currentLessonIndex
-                if [43, 47, 49].contains(lesson) {
-                    if let entity = arView.entity(at: location) as? ModelEntity, entity.name == "UserObject" {
-                        handleShootProjectile(location: location, in: arView)
-                    } else {
-                        handlePlaceStack(location: location, in: arView)
-                    }
-                } else {
-                    handlePlaceScaledObject(location: location, in: arView)
-                }
-                gameManager.advanceTutorial()
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Level 50: Free Build (Sandbox) Tap
-        
-        func handleLevel10Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                // Free build: tap object = physics, tap floor = place, tap air = shoot
-                if let entity = arView.entity(at: location) as? ModelEntity,
-                   entity.name == "UserObject" {
-                    // Apply physics to existing object
-                    handleApplyPhysics(location: location, in: arView)
-                } else {
-                    // Check if tapping floor or air
-                    let hitFloor = hitTestFloor(location: location, in: arView)
-                    if hitFloor {
-                        handlePlaceScaledObject(location: location, in: arView)
-                    } else {
-                        handleShootProjectile(location: location, in: arView)
-                    }
-                }
-                // Track placed objects for the challenge
-                if gameManager.placedObjectCount >= 5 && !gameManager.isTaskCompleted {
-                    gameManager.completeTask()
-                }
-            default:
-                break
-            }
-        }
-        
-        // MARK: - Helper: Hit Test Floor
-        
-        func hitTestFloor(location: CGPoint, in arView: ARView) -> Bool {
-            if gameManager.isSimulationMode {
-                let hits = arView.hitTest(location)
-                return hits.contains(where: { $0.entity.name == "VirtualFloor" })
-            } else {
-                let results = arView.raycast(from: location, allowing: .existingPlaneGeometry, alignment: .horizontal)
-                return !results.isEmpty
-            }
-        }
-        
-        // MARK: - Place Scaled Object (Level 5)
-        
-        func handlePlaceScaledObject(location: CGPoint, in arView: ARView) {
-            var worldTransform: simd_float4x4?
-            
-            if gameManager.isSimulationMode {
-                let hits = arView.hitTest(location)
-                if let hit = hits.first(where: { $0.entity.name == "VirtualFloor" }) {
-                    let position = hit.position
-                    worldTransform = simd_float4x4(
-                        [1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [position.x, position.y, position.z, 1]
-                    )
-                }
-            } else {
-                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .existingPlaneInfinite, .estimatedPlane]
-                for target in queries {
-                    if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
-                        worldTransform = result.worldTransform
-                        break
-                    }
-                }
-            }
-            
-            guard let transform = worldTransform else { return }
-            
-            let anchor = AnchorEntity(world: transform)
-            arView.scene.addAnchor(anchor)
-            
-            let shape = CodeParser.parseShape(from: gameManager.codeSnippet)
-            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
-            let isMetallic = CodeParser.parseMetallic(from: gameManager.codeSnippet)
-            let scale = CodeParser.parseScale(from: gameManager.codeSnippet)
-            var mat = SimpleMaterial(color: color, isMetallic: isMetallic)
-            mat.roughness = isMetallic ? 0.15 : 0.7
-            
-            let model: ModelEntity
-            
-            switch shape {
-            case "sphere":
-                let radius: Float = 0.08
-                model = ModelEntity(mesh: MeshResource.generateSphere(radius: radius), materials: [mat])
-                model.position.y = radius
-            case "cylinder":
-                // Approximate cylinder with a rounded box (generateCylinder requires iOS 18+)
-                model = ModelEntity(mesh: .generateBox(size: [0.12, 0.2, 0.12], cornerRadius: 0.06), materials: [mat])
-                model.position.y = 0.1
-            case "cone":
-                // Approximate cone with a tapered box (generateCone requires iOS 18+)
-                model = ModelEntity(mesh: .generateBox(size: [0.16, 0.2, 0.16], cornerRadius: 0.06), materials: [mat])
-                model.scale = SIMD3<Float>(1.0, 1.0, 0.5)
-                model.position.y = 0.1
-            default:
-                let w: Float = 0.15, h: Float = 0.05, l: Float = 0.15
-                model = ModelEntity(mesh: .generateBox(size: [w, h, l], cornerRadius: 0.02), materials: [mat])
-                model.position.y = h / 2
-            }
-            
-            model.name = "UserObject"
-            model.scale = scale
-            model.generateCollisionShapes(recursive: true)
-            anchor.addChild(model)
-            
-            gameManager.placedObjectCount += 1
-            HapticsManager.shared.play(.medium)
-            
-            // Advance tutorial for Level 5
-            if gameManager.currentLessonIndex == 5 {
-                if gameManager.tutorialStep == 1 || gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 {
-                    gameManager.advanceTutorial()
-                }
-            }
-            // Level 7: Shape Factory
-            if gameManager.currentLessonIndex == 7 {
-                if gameManager.tutorialStep == 1 || gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 || gameManager.tutorialStep == 5 {
-                    gameManager.advanceTutorial()
-                }
-            }
-        }
-        
-        // MARK: - Repaint Object (Level 6)
-        
-        func handleRepaintObject(entity: ModelEntity) {
-            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
-            let isMetallic = CodeParser.parseMetallic(from: gameManager.codeSnippet)
-            var mat = SimpleMaterial(color: color, isMetallic: isMetallic)
-            mat.roughness = isMetallic ? 0.15 : 0.7
-            
-            // Flash white first
-            entity.model?.materials = [SimpleMaterial(color: .white, isMetallic: true)]
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                entity.model?.materials = [mat]
-            }
-            
-            HapticsManager.shared.play(.light)
-            
-            if gameManager.currentLessonIndex == 6 {
-                if gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 {
-                    gameManager.advanceTutorial()
-                }
-            }
-        }
-        
-        // MARK: - Place Shape Object (Level 7)
-        
-        func handlePlaceShapeObject(location: CGPoint, in arView: ARView) {
-            // Reuses handlePlaceScaledObject which already handles all shapes
-            handlePlaceScaledObject(location: location, in: arView)
-        }
-        
-        // MARK: - Place Target (Level 8)
-        
-        func handlePlaceTarget(location: CGPoint, in arView: ARView) {
-            var worldTransform: simd_float4x4?
-            
-            if gameManager.isSimulationMode {
-                let hits = arView.hitTest(location)
-                if let hit = hits.first(where: { $0.entity.name == "VirtualFloor" }) {
-                    let position = hit.position
-                    worldTransform = simd_float4x4(
-                        [1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [position.x, position.y, position.z, 1]
-                    )
-                }
-            } else {
-                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .existingPlaneInfinite, .estimatedPlane]
-                for target in queries {
-                    if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
-                        worldTransform = result.worldTransform
-                        break
-                    }
-                }
-            }
-            
-            guard let transform = worldTransform else { return }
-            
-            let anchor = AnchorEntity(world: transform)
-            arView.scene.addAnchor(anchor)
-            
-            // Create target using flat boxes (generateCylinder requires iOS 18+)
-            let outerRing = ModelEntity(
-                mesh: .generateBox(size: [0.3, 0.01, 0.3], cornerRadius: 0.005),
-                materials: [SimpleMaterial(color: .red, isMetallic: true)]
-            )
-            outerRing.position.y = 0.005
-            outerRing.name = "Target"
-            outerRing.generateCollisionShapes(recursive: true)
-            
-            let innerRing = ModelEntity(
-                mesh: .generateBox(size: [0.16, 0.015, 0.16], cornerRadius: 0.005),
-                materials: [SimpleMaterial(color: .white, isMetallic: true)]
-            )
-            innerRing.position.y = 0.0075
-            innerRing.name = "Target"
-            
-            let bullseye = ModelEntity(
-                mesh: .generateBox(size: [0.06, 0.02, 0.06], cornerRadius: 0.005),
-                materials: [SimpleMaterial(color: .red, isMetallic: true)]
-            )
-            bullseye.position.y = 0.01
-            bullseye.name = "Target"
-            bullseye.generateCollisionShapes(recursive: true)
-            
-            anchor.addChild(outerRing)
-            anchor.addChild(innerRing)
-            anchor.addChild(bullseye)
-            
-            HapticsManager.shared.play(.medium)
-            
-            if gameManager.currentLessonIndex == 8 && gameManager.tutorialStep == 1 {
-                gameManager.advanceTutorial()
-            }
-        }
-        
-        // MARK: - Shoot Projectile (Level 8, 9, 10)
-        
-        func handleShootProjectile(location: CGPoint, in arView: ARView) {
-            let speed = CodeParser.parseSpeed(from: gameManager.codeSnippet)
-            let radius = CodeParser.parseRadius(from: gameManager.codeSnippet, defaultValue: 0.03)
-            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
-            let mass = CodeParser.parseMass(from: gameManager.codeSnippet, defaultMass: 0.5)
-            
-            // Create projectile
-            var mat = SimpleMaterial(color: color, isMetallic: true)
-            mat.roughness = 0.1
-            let sphere = ModelEntity(
-                mesh: .generateSphere(radius: radius),
-                materials: [mat]
-            )
-            sphere.name = "Projectile"
-            sphere.generateCollisionShapes(recursive: true)
-            
-            // Physics
-            let physics = PhysicsBodyComponent(
-                massProperties: .init(mass: mass),
-                material: .default,
-                mode: .dynamic
-            )
-            sphere.components[PhysicsBodyComponent.self] = physics
-            
-            // Position at camera
-            let cameraPos: SIMD3<Float>
-            let direction: SIMD3<Float>
-            
-            if gameManager.isSimulationMode {
-                // Use virtual camera position
-                if let rig = cameraRig {
-                    cameraPos = rig.position(relativeTo: nil) + SIMD3<Float>(0, 0.2, 0)
-                    let rigTransform = rig.transformMatrix(relativeTo: nil)
-                    direction = normalize(SIMD3<Float>(-rigTransform.columns.2.x, -rigTransform.columns.2.y, -rigTransform.columns.2.z))
-                } else {
-                    return
-                }
-            } else {
-                // Use AR camera
-                guard let frame = arView.session.currentFrame else { return }
-                let camTransform = frame.camera.transform
-                cameraPos = SIMD3<Float>(camTransform.columns.3.x, camTransform.columns.3.y, camTransform.columns.3.z)
-                direction = normalize(SIMD3<Float>(-camTransform.columns.2.x, -camTransform.columns.2.y, -camTransform.columns.2.z))
-            }
-            
-            let anchor = AnchorEntity(world: cameraPos)
-            anchor.addChild(sphere)
-            arView.scene.addAnchor(anchor)
-            
-            // Apply impulse in camera direction
-            let impulse = direction * speed
-            sphere.applyLinearImpulse(impulse, relativeTo: nil)
-            
-            HapticsManager.shared.play(.heavy)
-            
-            // Auto-remove projectile after 5 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                anchor.removeFromParent()
-            }
-            
-            // Advance tutorial
-            let lessonIdx = gameManager.currentLessonIndex
-            if lessonIdx == 8 {
-                if gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 {
-                    gameManager.advanceTutorial()
-                }
-            }
-            if lessonIdx == 9 {
-                if gameManager.tutorialStep == 3 || gameManager.tutorialStep == 4 {
-                    gameManager.advanceTutorial()
-                }
-            }
-        }
-        
-        // MARK: - Place Stack (Level 9)
-        
-        func handlePlaceStack(location: CGPoint, in arView: ARView) {
-            var worldTransform: simd_float4x4?
-            
-            if gameManager.isSimulationMode {
-                let hits = arView.hitTest(location)
-                if let hit = hits.first(where: { $0.entity.name == "VirtualFloor" }) {
-                    let position = hit.position
-                    worldTransform = simd_float4x4(
-                        [1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [position.x, position.y, position.z, 1]
-                    )
-                }
-            } else {
-                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .existingPlaneInfinite, .estimatedPlane]
-                for target in queries {
-                    if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
-                        worldTransform = result.worldTransform
-                        break
-                    }
-                }
-            }
-            
-            guard let transform = worldTransform else { return }
-            
-            let anchor = AnchorEntity(world: transform)
-            arView.scene.addAnchor(anchor)
-            
-            let count = CodeParser.parseCount(from: gameManager.codeSnippet)
-            let mass = CodeParser.parseMass(from: gameManager.codeSnippet, defaultMass: 0.5)
-            let restitution = CodeParser.parseRestitution(from: gameManager.codeSnippet, defaultRestitution: 0.2)
-            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
-            
-            let blockSize: Float = 0.08
-            let gap: Float = 0.002
-            
-            let physicsMaterial = PhysicsMaterialResource.generate(
-                staticFriction: 0.8,
-                dynamicFriction: 0.8,
-                restitution: restitution
-            )
-            
-            // Stagger colors for visual variety
-            let colors: [UIColor] = [color, .orange, .yellow, .cyan, .green, .purple, .red, .magenta, .white, .blue]
-            
-            for i in 0..<count {
-                let blockColor = colors[i % colors.count]
-                var mat = SimpleMaterial(color: blockColor, isMetallic: true)
-                mat.roughness = 0.2
-                let block = ModelEntity(
-                    mesh: .generateBox(size: [blockSize, blockSize, blockSize], cornerRadius: 0.005),
-                    materials: [mat]
-                )
-                block.name = "UserObject"
-                block.position.y = Float(i) * (blockSize + gap) + blockSize / 2
-                block.generateCollisionShapes(recursive: true)
-                
-                let physics = PhysicsBodyComponent(
-                    massProperties: .init(mass: mass),
-                    material: physicsMaterial,
-                    mode: .dynamic
-                )
-                block.components[PhysicsBodyComponent.self] = physics
-                
-                anchor.addChild(block)
-            }
-            
-            gameManager.placedObjectCount += count
-            HapticsManager.shared.play(.heavy)
-            
-            if gameManager.currentLessonIndex == 9 {
-                if gameManager.tutorialStep == 1 || gameManager.tutorialStep == 4 {
-                    gameManager.advanceTutorial()
-                }
-            }
-        }
-        
-        // MARK: - Apply Code (Level 1 Step 6+)
-        
-        func handleCodeApply(location: CGPoint, in arView: ARView) {
-            if let entity = arView.entity(at: location) as? ModelEntity,
-               entity.name == "UserObject" {
-                let color = CodeParser.parseColor(from: gameManager.codeSnippet)
-                let mat = SimpleMaterial(color: color, isMetallic: true)
-                entity.model?.materials = [mat]
-                
-                // Bounce animation
-                let originalTransform = entity.transform
-                var bounced = originalTransform
-                bounced.scale = [1.3, 1.3, 1.3]
-                entity.move(to: bounced, relativeTo: entity.parent, duration: 0.15, timingFunction: .easeInOut)
+        private func flashEntity(_ entity: ModelEntity) {
+            if let originalMaterial = entity.model?.materials.first {
+                entity.model?.materials = [SimpleMaterial(color: .white, isMetallic: true)]
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    entity.move(to: originalTransform, relativeTo: entity.parent, duration: 0.15, timingFunction: .easeInOut)
-                }
-                
-                HapticsManager.shared.play(.light)
-                
-                if gameManager.tutorialStep == 6 {
-                    gameManager.advanceTutorial()
+                    entity.model?.materials = [originalMaterial]
                 }
             }
         }

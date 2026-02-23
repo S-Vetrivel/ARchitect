@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Generic lesson overlay for Levels 2+ (replaces TutorialOverlayView's hardcoded steps)
-struct LessonOverlayView: View {
+/// Generic Mission HUD displaying current objective
+struct MissionHUDView: View {
     @ObservedObject var gameManager = GameManager.shared
     @State private var pulseAnimation = false
     
@@ -109,18 +109,14 @@ struct LessonOverlayView: View {
                 .padding(24)
                 .frame(maxWidth: 360)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.black.opacity(0.85)) // Dark Cosmic Panel
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.blue.opacity(0.15))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.cyan.opacity(0.3), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color.cyan.opacity(0.6), lineWidth: 1.5) // Glowing border
                         )
                 )
-                .shadow(color: .cyan.opacity(0.15), radius: 20, y: 10)
+                .shadow(color: .cyan.opacity(0.3), radius: 15, y: 5)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
                 .transition(.move(edge: .bottom).combined(with: .opacity))

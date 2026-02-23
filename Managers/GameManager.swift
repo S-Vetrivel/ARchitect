@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import ARKit
+import RealityKit
 
 enum AppState: Equatable {
     case welcome
@@ -40,6 +41,9 @@ class GameManager: ObservableObject {
     // Joystick State (Global for gesture/visual sync)
     @Published var isJoystickActive: Bool = false
     @Published var joystickOrigin: CGPoint = .zero
+    
+    // Console Execution State Bridge
+    @Published var triggerConsoleExecution: Bool = false
     
     // Computed Properties
     
@@ -157,32 +161,22 @@ class GameManager: ObservableObject {
     }
     
     // Evaluate if the current AR scene satisfies the current step's goal
-    func evaluateCurrentGoal(context: Any /* Replace with actual ARContext when defined */) {
-        guard let lesson = currentLesson, tutorialStep < lesson.steps.count else { return }
+    func evaluateCurrentGoal(context: Any) {
+        guard let arView = context as? ARView,
+              let lesson = currentLesson,
+              tutorialStep < lesson.steps.count else { return }
+        
+        // Don't evaluate if we are already transitioning or task is completed
+        guard !isTaskCompleted else { return }
         
         let currentGoal = lesson.steps[tutorialStep].goal
         switch currentGoal {
-        case .none:
-            // Wait for explicit UI tap (Next button)
+        case .none, .any:
+            // Handled explicitly by UI continuation or Tap gestures
             break
-        case .placeCelestialBody(_):
-            // Check if a celestial body with the target mass exists in context
-            // if successful: advanceTutorial()
-            break
-        case .achieveOrbit(_):
-            // Check if a planet has achieved the target orbital speed
-            // if successful: advanceTutorial()
-            break
-        case .destructObstacle:
-            // Check if the obstacle has been destroyed in the context
-            // if successful: advanceTutorial()
-            break
-        case .deflectAsteroid:
-            // Check if the asteroid was deflected gracefully
-            // if successful: advanceTutorial()
-            break
-        case .any:
-            // Wait for any general interaction
+            
+        case .placeEntity, .modifyProperty, .modifyPosition, .modifyOrbit, .placeSatellite, .generateBelt, .modifyGravity, .applyForce, .modifyPhysics, .buildOutpost:
+            // Handled by handleTap or evaluateConsoleExecution in ARViewContainer
             break
         }
     }

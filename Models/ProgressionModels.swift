@@ -9,10 +9,16 @@ import SwiftUI
 // MARK: - Goals
 enum GoalType: Equatable {
     case none
-    case placeCelestialBody(mass: Float)
-    case achieveOrbit(targetSpeed: Float)
-    case destructObstacle
-    case deflectAsteroid
+    case placeEntity(name: String)
+    case modifyProperty(target: String, requiredColor: String, minRadius: Float)
+    case modifyPosition(target: String, targetX: Float)
+    case modifyOrbit(target: String, targetRadius: Float, targetSpeed: Float)
+    case placeSatellite(parent: String, name: String, targetRadius: Float, targetSpeed: Float)
+    case generateBelt(target: String, minCount: Int, targetRadius: Float)
+    case modifyGravity(targetGravity: Float)
+    case applyForce(target: String, requiredZ: Float)
+    case modifyPhysics(target: String, targetFriction: Float?, targetMass: Float?, targetRestitution: Float?)
+    case buildOutpost(requiredParts: Int)
     case any
 }
 

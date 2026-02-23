@@ -171,24 +171,10 @@ struct LessonView: View {
             // ZIndex 2 ensures HUD is clickable
             .zIndex(2)
             
-            // 2. Tutorial Overlay - Top Left (floating below header)
+            // 2. Mission HUD - Bottom Center
             if !isEditing {
-                if gameManager.currentLessonIndex == 1 {
-                    VStack {
-                        Spacer().frame(height: 100)
-                        HStack {
-                            TutorialOverlayView()
-                                .frame(width: 380) // Fixed width card
-                                .padding(.leading, 30)
-                            Spacer()
-                        }
-                        Spacer()
-                    }
+                MissionHUDView()
                     .zIndex(1)
-                } else {
-                    LessonOverlayView()
-                        .zIndex(1)
-                }
             }
             
             // 3. Joystick Visuals (Overlay)
@@ -249,20 +235,6 @@ struct LessonView: View {
                 .padding()
                 .padding(.top, 10)
                 
-                // Tutorial / Lesson Overlay - AT TOP
-                // Tutorial / Lesson Overlay - AT TOP
-                if !isEditing {
-                    if gameManager.currentLessonIndex == 1 {
-                        TutorialOverlayView()
-                            .frame(maxWidth: .infinity)
-                            .padding(.horizontal)
-                            .padding(.top, 10)
-                            .frame(height: 300, alignment: .top) // Allocate top space
-                    } else {
-                        LessonOverlayView()
-                    }
-                }
-                
                 Spacer()
                 
                 // Mission Badge
@@ -273,6 +245,12 @@ struct LessonView: View {
                 }
             }
             .zIndex(1)
+            
+            // 2. Mission HUD
+            if !isEditing {
+                MissionHUDView()
+                    .zIndex(2)
+            }
             
             // 2. Joystick Visuals (Overlay)
             JoystickVisuals()
@@ -332,19 +310,24 @@ struct LessonView: View {
                     .padding(.bottom)
                 
                 // Code Hint Box
-                HStack(spacing: 12) {
-                    Image(systemName: "info.circle.fill")
-                        .foregroundColor(.blue)
-                    Text("Hint: Change `.blue` to `.red`")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
-                    Spacer()
+                let stepIndex = min(gameManager.tutorialStep, gameManager.currentLesson?.steps.count ?? 1) - 1
+                let hintText = stepIndex >= 0 ? (gameManager.currentLesson?.steps[stepIndex].hint ?? "") : ""
+                
+                if !hintText.isEmpty {
+                    HStack(spacing: 12) {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundColor(.blue)
+                        Text("Hint: \(hintText)")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.8))
+                        Spacer()
+                    }
+                    .padding()
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+                    .padding(.bottom, 20)
                 }
-                .padding()
-                .background(Color.white.opacity(0.08))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                .padding(.bottom, 20)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 20))
@@ -366,9 +349,12 @@ struct ModernCodeEditor: View {
             // Toolbar / Header
             HStack {
                 HStack(spacing: 6) {
-                    Circle().fill(Color.red).frame(width: 10, height: 10)
-                    Circle().fill(Color.yellow).frame(width: 10, height: 10)
-                    Circle().fill(Color.green).frame(width: 10, height: 10)
+                    Image(systemName: "terminal.fill")
+                        .foregroundColor(.cyan)
+                        .font(.system(size: 14))
+                    Text("TELEMETRY CONSOLE")
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundColor(.cyan)
                 }
                 .onTapGesture {
                     withAnimation { showCode = false }
@@ -376,39 +362,33 @@ struct ModernCodeEditor: View {
                 
                 Spacer()
                 
-                Text("main.swift")
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(.gray)
-                
-                Spacer()
-                
                 Button(action: {
-                    // Simulate "Run" action
-                    HapticsManager.shared.play(.medium)
-                    isFocused = false // Dismiss keyboard
+                    HapticsManager.shared.notify(.success)
+                    GameManager.shared.triggerConsoleExecution = true
+                    isFocused = false // Dismiss keyboard cleanly
                 }) {
                     HStack(spacing: 4) {
-                        Image(systemName: "play.fill")
+                        Image(systemName: "bolt.fill")
                             .font(.system(size: 10))
-                        Text("RUN")
-                            .font(.system(size: 11, weight: .bold))
+                        Text("EXECUTE PROTOCOL")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
                     }
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.green)
-                    .foregroundColor(.white)
+                    .padding(.vertical, 6)
+                    .background(Color.cyan.opacity(0.8))
+                    .foregroundColor(.black)
                     .cornerRadius(4)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(Color(red: 0.15, green: 0.15, blue: 0.17))
+            .background(Color.black.opacity(0.85)) // Dark Cosmic Panel
             
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(Color.cyan.opacity(0.5)) // Neon Divider
             
             // Editor Area
             ZStack(alignment: .topLeading) {
-                Color(red: 0.11, green: 0.11, blue: 0.13) // Dark Background
+                Color.black.opacity(0.85) // Dark Background
                 
                 HStack(alignment: .top, spacing: 0) {
                     // Line Numbers
@@ -443,9 +423,9 @@ struct ModernCodeEditor: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                .stroke(Color.cyan.opacity(0.6), lineWidth: 1.5) // Glowing Border
         )
-        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+        .shadow(color: .cyan.opacity(0.3), radius: 10, x: 0, y: 5)
         .onChange(of: isFocused) { focused in
             onFocusChange?(focused)
         }
@@ -540,6 +520,7 @@ struct MissionSuccessBadge: View {
 }
 
 struct CodeDrawer: View {
+    @ObservedObject var gameManager = GameManager.shared
     @Binding var showCode: Bool
     @Binding var codeSnippet: String
     var onFocusChange: ((Bool) -> Void)? = nil
@@ -585,22 +566,27 @@ struct CodeDrawer: View {
                     
                     VStack(spacing: 0) {
                         // Hint bar
-                        HStack(spacing: 6) {
-                            Image(systemName: "lightbulb.fill")
-                                .font(.caption2)
-                                .foregroundColor(.yellow)
-                            Text("Hint: Change .blue to .red")
-                                .font(.caption)
-                                .foregroundColor(.yellow.opacity(0.8))
-                            Spacer()
-                            Button(action: { withAnimation { showCode = false } }) {
-                                Image(systemName: "chevron.down.circle.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.white.opacity(0.5))
+                        let stepIndex = min(gameManager.tutorialStep, gameManager.currentLesson?.steps.count ?? 1) - 1
+                        let hintText = stepIndex >= 0 ? (gameManager.currentLesson?.steps[stepIndex].hint ?? "") : ""
+                        
+                        if !hintText.isEmpty {
+                            HStack(spacing: 6) {
+                                Image(systemName: "lightbulb.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(.yellow)
+                                Text("Hint: \(hintText)")
+                                    .font(.caption)
+                                    .foregroundColor(.yellow.opacity(0.8))
+                                Spacer()
+                                Button(action: { withAnimation { showCode = false } }) {
+                                    Image(systemName: "chevron.down.circle.fill")
+                                        .font(.title2)
+                                        .foregroundColor(.white.opacity(0.5))
+                                }
                             }
+                            .padding()
+                            .background(Color.yellow.opacity(0.05))
                         }
-                        .padding()
-                        .background(Color.yellow.opacity(0.05))
                         
                         CodeEditorPreview(text: codeSnippet) {
                             withAnimation {
@@ -647,36 +633,35 @@ struct CodeEditorPreview: View {
             // Static Toolbar
             HStack {
                 HStack(spacing: 6) {
-                    Circle().fill(Color.red).frame(width: 10, height: 10)
-                    Circle().fill(Color.yellow).frame(width: 10, height: 10)
-                    Circle().fill(Color.green).frame(width: 10, height: 10)
+                    Image(systemName: "terminal.fill")
+                        .foregroundColor(.cyan)
+                        .font(.system(size: 14))
+                    Text("TELEMETRY CONSOLE")
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundColor(.cyan)
                 }
-                Spacer()
-                Text("main.swift")
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(.gray)
                 Spacer()
                 HStack(spacing: 4) {
-                    Image(systemName: "play.fill")
+                    Image(systemName: "bolt.fill")
                         .font(.system(size: 10))
-                    Text("RUN")
-                        .font(.system(size: 11, weight: .bold))
+                    Text("EXECUTE")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
                 }
                 .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Color.green.opacity(0.5))
-                .foregroundColor(.white.opacity(0.8))
+                .padding(.vertical, 6)
+                .background(Color.cyan.opacity(0.5))
+                .foregroundColor(.black.opacity(0.8))
                 .cornerRadius(4)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(Color(red: 0.15, green: 0.15, blue: 0.17))
+            .background(Color.black.opacity(0.85))
             
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(Color.cyan.opacity(0.5))
             
             // Static Content
             ZStack(alignment: .topLeading) {
-                Color(red: 0.11, green: 0.11, blue: 0.13)
+                Color.black.opacity(0.85)
                 
                 HStack(alignment: .top, spacing: 0) {
                     Text(lineNumbers)
@@ -700,9 +685,9 @@ struct CodeEditorPreview: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                .stroke(Color.cyan.opacity(0.6), lineWidth: 1.5)
         )
-        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+        .shadow(color: .cyan.opacity(0.3), radius: 10, x: 0, y: 5)
         .contentShape(Rectangle())
         .onTapGesture {
             HapticsManager.shared.play(.light)

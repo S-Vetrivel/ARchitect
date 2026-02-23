@@ -49,28 +49,20 @@ class LessonManager {
             
             Task:
             - ☀️ Create a **Sphere**
-            - 📏 Radius: **0.25** (Large)
+            - 📏 Radius: **0.5** (Large)
             - 🎨 Color: **.yellow** (G-Type)
             """,
             codeSnippet: """
-            // MISSION 01: IGNITION
-            // Goal: Create the Sun
-            
-            // 1. Define Geometry (Shape)
-            // radius: 0.25 (25cm)
-            let mesh = MeshResource.generateSphere(radius: 0.25)
-            
-            // 2. Define Material (Surface)
-            // color: .yellow (Sun)
-            let material = SimpleMaterial(color: .yellow, isMetallic: false)
+            let radius: Float = 0.1
+            let starColor: Color = .gray
             """,
             challenges: [Challenge(id: "ignition", description: "Ignite the Sun", targetCount: 1, xpReward: 100)],
             steps: [
-                LessonStep(icon: "sun.max.fill", title: "Stellar Nursery", instruction: "Space is cold and empty.\nWe need a heat source.\nTap 'Run Code' to ignite.", hint: "Tap the Play button", goal: .none),
-                LessonStep(icon: "arrow.up.left.and.arrow.down.right", title: "Optimization", instruction: "The star is stable.\nBut it can be brighter.\nChange `.yellow` to `.orange`.", hint: "Edit code to .orange", showCodeEditor: true, goal: .placeCelestialBody(mass: 1000.0)),
-                LessonStep(icon: "checkmark.circle.fill", title: "System Online", instruction: "Fusion sustained.\nHelium production nominal.\nReady for planets.", hint: "", goal: .any)
+                LessonStep(icon: "power", title: "System Initialized...", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "hand.tap.fill", title: "Tap anywhere to spawn a protostar core.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Sun")),
+                LessonStep(icon: "terminal.fill", title: "Open console. Change color to .yellow and radius to 0.5.", instruction: "", hint: "Edit code", showCodeEditor: true, goal: .modifyProperty(target: "Sun", requiredColor: "yellow", minRadius: 0.4))
             ],
-            codeEditorStartStep: 1
+            codeEditorStartStep: 2
         ),
         
         // MARK: - Level 2: Goldilocks Zone
@@ -90,22 +82,17 @@ class LessonManager {
             - 🎨 Color: **.blue**
             """,
             codeSnippet: """
-            // MISSION 02: LIFE SUPPORT
-            // Goal: Place Earth in the Goldilocks Zone
-            
-            // Position relative to Sun (Center)
-            // x: 0.0 -> Inside the Sun (Bad)
-            // x: 0.8 -> Habitable Zone (Good)
-            
-            entity.position = SIMD3<Float>(0.8, 0.0, 0.0)
+            let positionX: Float = 0.0
+            let positionY: Float = 0.0
+            let positionZ: Float = 0.0
             """,
             challenges: [Challenge(id: "goldilocks", description: "Place Earth", targetCount: 1, xpReward: 150)],
             steps: [
-                LessonStep(icon: "globe.americas.fill", title: "Orbital Injection", instruction: "The Sun is too hot.\nWe need distance.\nSet x position to 0.8.", hint: "x: 0.8", goal: .placeCelestialBody(mass: 1.0)),
-                LessonStep(icon: "thermometer.sun.fill", title: "Temperature Check", instruction: "Scanner indicates water is liquid.\nGreat work.\nTry `x: 1.2` for a colder orbit.", hint: "Increase distance", showCodeEditor: true, goal: .none),
-                LessonStep(icon: "checkmark.circle.fill", title: "Orbit Established", instruction: "Biosphere stable.\nAwaiting evolution.", hint: "", goal: .any)
+                LessonStep(icon: "power", title: "The Star is stable. We need a habitable planet...", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "hand.tap.fill", title: "Tap near the Star to spawn a planetary mass.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Earth")),
+                LessonStep(icon: "terminal.fill", title: "Warning: Planet is too close to the Star! Open console and set positionX to 0.8.", instruction: "", hint: "Edit code", showCodeEditor: true, goal: .modifyPosition(target: "Earth", targetX: 0.8))
             ],
-            codeEditorStartStep: 1
+            codeEditorStartStep: 2
         ),
         
         // MARK: - Level 3: Orbital Mechanics
@@ -124,20 +111,15 @@ class LessonManager {
             - ⏱️ Set **Orbit Speed** (1.0 = 1 radian/sec)
             """,
             codeSnippet: """
-            // MISSION 03: MOMENTUM
-            // Goal: Orbit the Sun
-            
-            // radius: Match your position (0.8)
-            // speed: Speed of revolution
-            
-            orbitRadius: 0.8
-            orbitSpeed: 0.5
+            let orbitRadius: Float = 0.0
+            let orbitSpeed: Float = 0.0
             """,
             challenges: [Challenge(id: "orbit_stabilized", description: "Stabilize Orbit", targetCount: 1, xpReward: 200)],
             steps: [
-                LessonStep(icon: "arrow.2.circlepath", title: "Gravity Well", instruction: "Planet is stationary.\nInitiate orbital engines.\nSet radius to 0.8.", hint: "orbitRadius: 0.8", goal: .achieveOrbit(targetSpeed: 0.5)),
-                LessonStep(icon: "hare.fill", title: "Velocity Adjust", instruction: "Orbit is stable.\nLet's speed up time.\nChange `orbitSpeed` to `2.0`.", hint: "Double the speed", showCodeEditor: true, goal: .achieveOrbit(targetSpeed: 2.0)),
-                LessonStep(icon: "checkmark.circle.fill", title: "System Clock", instruction: "Years are passing in seconds.\nTime is relative.", hint: "", goal: .any)
+                LessonStep(icon: "exclamationmark.triangle.fill", title: "Warning: Planet is stationary. Gravity will pull it into the Star...", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "terminal.fill", title: "Open the console and inject momentum. Set orbitRadius to 0.8 and orbitSpeed to 0.5.", instruction: "", hint: "Edit code", showCodeEditor: true, goal: .modifyOrbit(target: "Earth", targetRadius: 0.8, targetSpeed: 0.5)),
+                LessonStep(icon: "hare.fill", title: "Orbit is stable but slow. Increase orbitSpeed to 2.0.", instruction: "", hint: "Speed it up", showCodeEditor: true, goal: .modifyOrbit(target: "Earth", targetRadius: 0.8, targetSpeed: 2.0)),
+                LessonStep(icon: "checkmark.circle.fill", title: "System Clock Active. Years are passing in seconds.", instruction: "Time is relative.", hint: "", goal: .any)
             ],
             codeEditorStartStep: 1
         ),
@@ -160,22 +142,15 @@ class LessonManager {
             - 🏎️ Orbit Speed: **3.0** (Fast)
             """,
             codeSnippet: """
-            // MISSION 04: SATELLITE
-            // Goal: Create the Moon
-            
-            // This orbits the EARTH, not the Sun.
-            // So radius should be small (0.2).
-            
-            orbitRadius: 0.2
-            orbitSpeed: 3.0
-            color: .gray
-            radius: 0.05
+            let orbitRadius: Float = 0.0
+            let orbitSpeed: Float = 0.0
+            let radius: Float = 0.05
             """,
             challenges: [Challenge(id: "lunar_orbit", description: "Deploy Moon", targetCount: 1, xpReward: 250)],
             steps: [
-                LessonStep(icon: "moon.fill", title: "Natural Satellite", instruction: "Earth is lonely.\nLet's give it a friend.\nInject a moon into orbit.", hint: "Run the code", goal: .achieveOrbit(targetSpeed: 3.0)),
-                LessonStep(icon: "arrow.triangle.2.circlepath", title: "Tidal Lock", instruction: "Watch the path.\nA spiral within a circle.\nTry `orbitRadius: 0.3`.", hint: "Expand the orbit", showCodeEditor: true, goal: .any),
-                LessonStep(icon: "checkmark.circle.fill", title: "Tides Active", instruction: "Tidal forces stabilized.\nSurfing is now possible.", hint: "", goal: .any)
+                LessonStep(icon: "moon.fill", title: "Earth is lonely. Initiate Lunar Injection.", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "terminal.fill", title: "Open console. Set orbitRadius to 0.2 and orbitSpeed to 3.0.", instruction: "", hint: "Run the code", showCodeEditor: true, goal: .placeSatellite(parent: "Earth", name: "Moon", targetRadius: 0.2, targetSpeed: 3.0)),
+                LessonStep(icon: "checkmark.circle.fill", title: "Tidal forces stabilized. Surfing is now possible.", instruction: "", hint: "", goal: .any)
             ],
             codeEditorStartStep: 1
         ),
@@ -192,106 +167,83 @@ class LessonManager {
             We will use a loop to create a debris field.
             
             Task:
-            - 🪨 Create **10** Asteroids
+            - 🪨 Create **20** Asteroids
             - 🎨 Randomize colors (Gray/Brown)
             - 📏 Randomize sizes
             """,
             codeSnippet: """
-            // MISSION 05: DEBRIS FIELD
-            // Goal: Create Asteroid Belt
-            
-            count: 10
-            orbitRadius: 1.5
-            color: .gray
+            let count: Int = 0
+            let orbitRadius: Float = 1.5
             """,
-            challenges: [Challenge(id: "asteroid_belt", description: "Create Belt", targetCount: 10, xpReward: 300)],
+            challenges: [Challenge(id: "asteroid_belt", description: "Create Belt", targetCount: 20, xpReward: 300)],
             steps: [
-                LessonStep(icon: "sparkles", title: "Kessler Syndrome", instruction: "We need a barrier between inner and outer planets.\nGenerate the belt.", hint: "Run the code", goal: .placeCelestialBody(mass: 0.5)),
-                LessonStep(icon: "plus.circle.fill", title: "Density Critical", instruction: "10 rocks is sparse.\nIncrease `count` to `20`.\nWatch the CPU burn!", hint: "count: 20", showCodeEditor: true, goal: .none),
-                LessonStep(icon: "checkmark.circle.fill", title: "Sector Secured", instruction: "Navigation is hazardous.\nPerfect defense system.", hint: "", goal: .any)
+                LessonStep(icon: "sparkles", title: "We need a barrier. Initiate debris field.", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "loop", title: "Open console. Change count to 20 to generate the belt.", instruction: "", hint: "count: 20", showCodeEditor: true, goal: .generateBelt(target: "Sun", minCount: 20, targetRadius: 1.5)),
+                LessonStep(icon: "checkmark.circle.fill", title: "Navigation is hazardous. Perfect defense system.", instruction: "", hint: "", goal: .any)
             ],
             codeEditorStartStep: 1
         ),
         
-        // MARK: - Level 6: Gravity Engine
+        // MARK: - Level 6: Singularity
         Lesson(
             id: 6,
-            title: "Gravity Engine",
-            instruction: "Master the force of gravity itself.",
+            title: "Singularity",
+            instruction: "Controlling the fundamental forces of the universe.",
             conceptExplanation: """
             **Gravity Engine**
             
             Every world has gravity pulling objects down.
-            Earth = **9.8** m/s². Moon = **1.6** m/s².
+            Earth = **9.8** m/s². Deep space has none.
             
             Task:
-            - 🌍 Default gravity is **9.8** (objects fall normally)
-            - 🌙 Set to **1.6** for Moon gravity (slow fall)
-            - 🛸 Set to **0.0** for Anti-Gravity (objects float!)
+            - 🌍 Default gravity is **9.8**
+            - 🛸 Set to **0.0** for Anti-Gravity
             """,
             codeSnippet: """
-            // MISSION 06: GRAVITY ENGINE
-            // Change gravity to control how objects fall!
-            // gravity: 9.8  (Earth — normal)
-            // gravity: 1.6  (Moon — slow fall)
-            // gravity: 0.0  (Space — float!)
-            
-            gravity: 9.8
-            color: .cyan
-            shape: sphere
+            let gravity: Float = 9.8
             """,
-            challenges: [Challenge(id: "gravity_control", description: "Master Gravity", targetCount: 1, xpReward: 200)],
+            challenges: [Challenge(id: "gravity_mastery", description: "Zero Gravity", targetCount: 1, xpReward: 150)],
             steps: [
-                LessonStep(icon: "arrow.down.to.line.alt", title: "Gravity Lab", instruction: "Welcome to the Gravity Engine.\nObjects fall at 9.8 m/s² by default.\nTap to begin.", hint: "Change gravity in code", goal: .none),
-                LessonStep(icon: "cube.fill", title: "Step 1: Normal Drop", instruction: "Place an object above the floor.\nIt falls at Earth gravity (9.8).\nWatch it drop!", hint: "Tap the floor", goal: .placeCelestialBody(mass: 1.0)),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Zero-G", instruction: "Open Code.\nChange `gravity: 9.8` to\n`gravity: 0.0`\nThis disables gravity!", hint: "0.0 = float in space", showCodeEditor: true, goal: .none),
-                LessonStep(icon: "cloud.fill", title: "Step 3: Anti-Gravity!", instruction: "Place another object.\nIt floats in mid-air! 🛸\nNo gravity = no falling.", hint: "Look! It floats!", showCodeEditor: true, goal: .any),
-                LessonStep(icon: "moon.fill", title: "Step 4: Moon Walk", instruction: "Try `gravity: 1.6`\nPlace an object.\nIt falls slowly — Moon gravity!", hint: "1.6 = lunar gravity", showCodeEditor: true, goal: .any),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Gravity engine mastered!\n9.8=Earth, 1.6=Moon, 0=Space.\nYou control the universe!", hint: "", goal: .any)
+                LessonStep(icon: "arrow.down.to.line.alt", title: "Place a Test Probe.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Test Probe")),
+                LessonStep(icon: "exclamationmark.triangle.fill", title: "Warning: Deep space has no gravity. Open console and set gravity to 0.0.", instruction: "", hint: "gravity: 0.0", showCodeEditor: true, goal: .modifyGravity(targetGravity: 0.0)),
+                LessonStep(icon: "checkmark.circle.fill", title: "Gravity deactivated. The probe floats gracefully...", instruction: "", hint: "", goal: .any)
             ],
             codeEditorStartStep: 2
         ),
         
-        // MARK: - Level 7: Thruster Engage
+        // MARK: - Level 7: Warp Drive
         Lesson(
             id: 7,
-            title: "Thruster Engage",
-            instruction: "Launch a probe into deep space.",
+            title: "Warp Drive",
+            instruction: "Moving objects through a vacuum using thrust.",
             conceptExplanation: """
-            **Launch Detection**
+            **Linear Impulses**
             
-            We need to send a probe to the Outer Rim.
+            We need to send a ship to the Outer Rim.
             Gravity is not enough. We need **Thrust**.
             
             Task:
-            - 💨 Apply **Force Z: -10.0**
-            - 🚀 Launch **Forward** (Negative Z is forward in AR)
+            - 💨 Apply **Force Z: -15.0**
+            - 🚀 Launch **Forward** (Negative Z is forward in ARKit)
             """,
             codeSnippet: """
-            // MISSION 07: DEEP SPACE
-            // Goal: Launch Forward
-            // forceZ: 0.0 (Drifting)
-            // forceZ: -10.0 (Warp Speed)
-            
-            let force = SIMD3<Float>(0.0, 1.0, 0.0) // THIS PUSHES UP. FIX IT.
-            entity.addForce(force, relativeTo: nil)
+            let forceY: Float = 5.0
+            let forceZ: Float = 0.0
             """,
-            challenges: [Challenge(id: "thruster_launch", description: "Launch Deep Space Probe", targetCount: 1, xpReward: 200)],
+            challenges: [Challenge(id: "warp_drive", description: "Launch Ship", targetCount: 1, xpReward: 200)],
             steps: [
-                LessonStep(icon: "flame.fill", title: "Launch Pad", instruction: "Probe ready for departure.\nEngine check required.\nTap to begin.", hint: "Negative Z = Forward", goal: .none),
-                LessonStep(icon: "arrow.up", title: "Step 1: Test Fire", instruction: "Place probe.\nNotice it hops UP (Y-axis).\nWe need it to go FORWARD.", hint: "Tap floor", goal: .any),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Vector Alignment", instruction: "Open Code.\nChange `forceY: 1.0` to `0.0`\nSet `forceZ` to `-10.0`", hint: "-10.0 is forward", showCodeEditor: true, goal: .none),
-                LessonStep(icon: "rocket.fill", title: "Step 3: Engage", instruction: "Place probe.\nWatch it launch into the void!\nWave goodbye! 👋", hint: "There it goes...", showCodeEditor: true, goal: .achieveOrbit(targetSpeed: 10.0)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Probe trajectory confirmed.\nETA to Outer Rim: 400 years.", hint: "", goal: .any)
+                LessonStep(icon: "airplane", title: "Place a Starship.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Starship")),
+                LessonStep(icon: "flame.fill", title: "Console shows upward thrust (forceY). Change forceY to 0.0, and forceZ to -15.0.", instruction: "", hint: "forceZ: -15.0", showCodeEditor: true, goal: .applyForce(target: "Starship", requiredZ: -15.0)),
+                LessonStep(icon: "checkmark.circle.fill", title: "Warp engaged. Trajectory confirmed.", instruction: "", hint: "", goal: .any)
             ],
             codeEditorStartStep: 2
         ),
         
-        // MARK: - Level 8: Void Glider
+        // MARK: - Level 8: Vacuum Drift
         Lesson(
             id: 8,
-            title: "Void Glider",
-            instruction: "Simulate a frictionless vacuum.",
+            title: "Vacuum Drift",
+            instruction: "Understanding inertia in space.",
             conceptExplanation: """
             **Vacuum Physics**
             
@@ -300,35 +252,25 @@ class LessonManager {
             
             Task:
             - 🧊 Set **Friction** to **0.0**
-            - ⛸️ Push object and watch it **glide forever**
+            - ⛸️ Watch it **glide forever**
             """,
             codeSnippet: """
-            // MISSION 08: VACUUM DRIFT
-            // Goal: Perpetual Motion
-            // friction: 1.0 (High Drag)
-            // friction: 0.0 (No Drag)
-            
-            var material = PhysicsMaterialResource.generate(
-                friction: 1.0, // TOO HIGH
-                restitution: 0.0
-            )
+            let friction: Float = 1.0
             """,
-            challenges: [Challenge(id: "frictionless_glide", description: "Create Frictionless Object", targetCount: 1, xpReward: 200)],
+            challenges: [Challenge(id: "frictionless_space", description: "Zero Friction", targetCount: 1, xpReward: 150)],
             steps: [
-                LessonStep(icon: "wind.snow", title: "Drag Detected", instruction: "Space hull is slowing down.\nSomething is dragging on it.\nTap to fix.", hint: "Friction slows things down", goal: .none),
-                LessonStep(icon: "stop.fill", title: "Step 1: Friction Test", instruction: "Place the hull. Push it.\nIt stops quickly due to friction.", hint: "Tap floor", goal: .any),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Remove Drag", instruction: "Open Code.\nSet `friction` to `0.0`\nThis simulates a vacuum.", hint: "0.0 = ice mode", showCodeEditor: true, goal: .none),
-                LessonStep(icon: "arrow.right", title: "Step 3: Eternal Glide", instruction: "Place hull. Tap to push.\nIt will slide forever until it hits a wall.", hint: "Weeeee!", showCodeEditor: true, goal: .any),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Friction systems offline.\nHull efficiency at 100%.", hint: "", goal: .any)
+                LessonStep(icon: "cube.box", title: "Place a Supply Crate.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Crate")),
+                LessonStep(icon: "stop.fill", title: "It stopped quickly due to friction. Change friction to 0.0 to simulate a vacuum.", instruction: "", hint: "friction: 0.0", showCodeEditor: true, goal: .modifyPhysics(target: "Crate", targetFriction: 0.0, targetMass: nil, targetRestitution: nil)),
+                LessonStep(icon: "checkmark.circle.fill", title: "Friction systems offline. Eternal glide achieved.", instruction: "", hint: "", goal: .any)
             ],
             codeEditorStartStep: 2
         ),
         
-        // MARK: - Level 9: Asteroid Impact
+        // MARK: - Level 9: Kinetic Strike
         Lesson(
             id: 9,
-            title: "Asteroid Impact",
-            instruction: "Use mass to obliterate obstacles.",
+            title: "Kinetic Strike",
+            instruction: "Using heavy mass to clear blockades.",
             conceptExplanation: """
             **Kinetic Impact**
             
@@ -340,26 +282,16 @@ class LessonManager {
             - 💥 **Smash** through lighter objects
             """,
             codeSnippet: """
-            // MISSION 09: DEBRIS CLEARANCE
-            // Goal: Smash Obstacles
-            // Mass 1.0 = Weak Impact
-            // Mass 50.0 = Heavy Impact
-            
-            let physics = PhysicsBodyComponent(
-                massProperties: .init(mass: 1.0), // TOO LIGHT
-                material: .default,
-                mode: .dynamic
-            )
+            let mass: Float = 1.0
             """,
-            challenges: [Challenge(id: "asteroid_smash", description: "Clear Debris Field", targetCount: 1, xpReward: 250)],
+            challenges: [Challenge(id: "mass_impact", description: "Heavy Impact", targetCount: 1, xpReward: 200)],
             steps: [
-                LessonStep(icon: "exclamationmark.triangle.fill", title: "Path Blocked", instruction: "Satellite debris ahead.\nStandard lasers ineffective.\nKinetic ram required.", hint: "Heavy objects push light ones", goal: .none),
-                LessonStep(icon: "circle.dotted", title: "Step 1: Weak Impact", instruction: "Drop a standard rock (Mass 1.0).\nIt bounces off the debris.", hint: "Tap floor", goal: .placeCelestialBody(mass: 1.0)),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Increase Density", instruction: "Open Code.\nSet `mass` to `50.0`\nMake it a dense iron asteroid.", hint: "50x heavier!", showCodeEditor: true, goal: .none),
-                LessonStep(icon: "burst.fill", title: "Step 3: Impact!", instruction: "Drop the asteroid.\nWatch it crush the debris!\nPath cleared.", hint: "Boom!", showCodeEditor: true, goal: .placeCelestialBody(mass: 50.0)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Debris field neutralized.\nRoute confirmed.", hint: "", goal: .any)
+                LessonStep(icon: "sparkles", title: "Space Debris detected ahead.", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "circle.dotted", title: "Spawn a standard Meteor core.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Meteor")),
+                LessonStep(icon: "burst.fill", title: "Standard mass is too light. Increase mass to 50.0.", instruction: "", hint: "mass: 50.0", showCodeEditor: true, goal: .modifyPhysics(target: "Meteor", targetFriction: nil, targetMass: 50.0, targetRestitution: nil)),
+                LessonStep(icon: "checkmark.circle.fill", title: "Impact successful. Path cleared.", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 3
         ),
         
         // MARK: - Level 10: Deflector Shields
@@ -378,25 +310,80 @@ class LessonManager {
             - 💫 **Bounce** threats away without damage
             """,
             codeSnippet: """
-            // MISSION 10: SHIELD UP
-            // Goal: Perfect Reflection
-            // Restitution 0.0 = Absorb (Damage)
-            // Restitution 1.0 = Reflect (Safe)
-            
-            var material = PhysicsMaterialResource.generate(
-                friction: 0.5,
-                restitution: 0.1 // SHIELDS DOWN!
-            )
+            let restitution: Float = 0.1
             """,
-            challenges: [Challenge(id: "shield_reflect", description: "Reflect Meteor", targetCount: 1, xpReward: 300)],
+            challenges: [Challenge(id: "perfect_bounce", description: "100% Bounciness", targetCount: 1, xpReward: 250)],
             steps: [
-                LessonStep(icon: "shield.slash.fill", title: "Shields Critical", instruction: "Incoming meteors detected.\nShields are at 10% capacity.\nImpact imminent.", hint: "Restitution is reflection", goal: .none),
-                LessonStep(icon: "arrow.down", title: "Step 1: Hull Breach", instruction: "Place the shield.\nDrop a test meteor.\nIt hits hard and stops. Damage taken.", hint: "Tap floor", goal: .any),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Max Power", instruction: "Open Code.\nSet `restitution` to `1.0`\nMaximum bounce capability.", hint: "1.0 = 100% reflection", showCodeEditor: true, goal: .none),
-                LessonStep(icon: "shield.fill", title: "Step 3: Reflect!", instruction: "Place shield.\nDrop meteor.\nIt bounces off harmlessly!", hint: "Boing!", showCodeEditor: true, goal: .deflectAsteroid),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Shields holding at 100%.\nSector secured.\nWelcome to Starfleet.", hint: "", goal: .any)
+                LessonStep(icon: "shield.slash.fill", title: "Place a Shield Generator.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Shield")),
+                LessonStep(icon: "arrow.down", title: "Test asteroid absorbed damage. Change restitution to 1.0 for 100% reflection.", instruction: "", hint: "restitution: 1.0", showCodeEditor: true, goal: .modifyPhysics(target: "Shield", targetFriction: nil, targetMass: nil, targetRestitution: 1.0)),
+                LessonStep(icon: "checkmark.circle.fill", title: "Asteroid deflected harmlessly. Sector secured.", instruction: "", hint: "", goal: .any)
             ],
             codeEditorStartStep: 2
+        ),
+        
+        // MARK: - Level 11: Orbital Outpost
+        Lesson(
+            id: 11,
+            title: "Orbital Outpost",
+            instruction: "Building a space station out of primitives.",
+            conceptExplanation: """
+            **Shape Composition**
+            
+            Complex structures are built from simple shapes.
+            Let's build a modular space station.
+            
+            Task:
+            - 🛠️ Use `shape: cylinder` or `box`
+            - 📐 Scale them to form a core and solar panels
+            - 🏗️ Place 3 primitive shapes together
+            """,
+            codeSnippet: """
+            let shape: String = "cylinder"
+            let scaleX: Float = 1.0
+            let scaleY: Float = 3.0
+            let scaleZ: Float = 1.0
+            """,
+            challenges: [Challenge(id: "modular_build", description: "Build Station", targetCount: 1, xpReward: 300)],
+            steps: [
+                LessonStep(icon: "building.2.fill", title: "Construct the central cylinder core.", instruction: "", hint: "Shape: cylinder", showCodeEditor: true, goal: .buildOutpost(requiredParts: 1)),
+                LessonStep(icon: "squareshape.fill", title: "Add two flat boxes for solar panels.", instruction: "", hint: "Scale flat", showCodeEditor: true, goal: .buildOutpost(requiredParts: 3)),
+                LessonStep(icon: "checkmark.circle.fill", title: "Outpost Construction Complete.", instruction: "", hint: "", goal: .any)
+            ],
+            codeEditorStartStep: 1
+        ),
+        
+        // MARK: - Level 12: Universe Sandbox
+        Lesson(
+            id: 12,
+            title: "Universe Sandbox",
+            instruction: "Total freedom.",
+            conceptExplanation: """
+            **Creative Mode**
+            
+            All systems unlocked.
+            Build solar systems, outposts, or smash entire fleets.
+            
+            You have mastered the ARchitect Engine.
+            """,
+            codeSnippet: """
+            // Unlocked Engine Parameters
+            let shape: String = "sphere"
+            let color: Color = .cyan
+            let scaleX: Float = 1.0
+            
+            let mass: Float = 1.0
+            let friction: Float = 0.5
+            let restitution: Float = 0.5
+            let gravity: Float = 9.8
+            
+            let forceZ: Float = 0.0
+            let orbitRadius: Float = 0.0
+            """,
+            challenges: [Challenge(id: "sandbox_master", description: "Creative Mode Unlocked", targetCount: 1, xpReward: 500)],
+            steps: [
+                LessonStep(icon: "infinity", title: "Welcome to the Sandbox. Build anything.", instruction: "", hint: "Have fun", showCodeEditor: true, goal: .any)
+            ],
+            codeEditorStartStep: 1
         )
     ]
     
