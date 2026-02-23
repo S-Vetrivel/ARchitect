@@ -55,9 +55,6 @@ class GameManager: ObservableObject {
     
     /// Total steps for the current lesson
     var currentStepCount: Int {
-        if currentLessonIndex == 1 {
-            return 7 // Level 1 uses hardcoded tutorial steps
-        }
         return currentLesson?.steps.count ?? 0
     }
 
@@ -69,10 +66,7 @@ class GameManager: ObservableObject {
     
     /// Whether the current step should show the code editor
     var shouldShowCodeEditor: Bool {
-        guard currentLessonIndex > 1, let lesson = currentLesson else {
-            // Level 1 uses hardcoded logic (step >= 6)
-            return currentLessonIndex == 1 && tutorialStep >= 6
-        }
+        guard let lesson = currentLesson else { return false }
         if tutorialStep < lesson.steps.count {
             return lesson.steps[tutorialStep].showCodeEditor
         }
@@ -145,29 +139,51 @@ class GameManager: ObservableObject {
             // Award badges based on lesson
             switch currentLessonIndex {
             case 1: unlockBadge(id: "first_steps")
-            case 2: unlockBadge(id: "physics_beginner")
-            case 3: unlockBadge(id: "bounce_master")
-            case 4: unlockBadge(id: "force_wielder")
-            case 5: unlockBadge(id: "scale_artist")
-            case 6: unlockBadge(id: "color_wizard")
-            case 7: unlockBadge(id: "shape_master")
-            case 8: unlockBadge(id: "sharpshooter")
-            case 9: unlockBadge(id: "demolition_expert")
-            case 17: unlockBadge(id: "physics_master")
-            case 25: unlockBadge(id: "marksman")
-            case 33: unlockBadge(id: "master_builder")
-            case 41: unlockBadge(id: "creative_genius")
-            case 49: unlockBadge(id: "grand_master")
-            case 50: unlockBadge(id: "free_builder")
+            case 2: unlockBadge(id: "star_forge")
+            case 3: unlockBadge(id: "orbital_architect")
+            case 5: unlockBadge(id: "kessler_syndrome")
+            case 6: unlockBadge(id: "gravity_master")
+            case 10: unlockBadge(id: "shield_tactician")
             default: break
             }
             
-            // Check if all 50 levels are complete
-            let allLessonIds = [1,2,3,4,5,6,7,8,9] + Array(10...50)
+            // Check if all 10 levels are complete
+            let allLessonIds = Array(1...10)
             let allComplete = allLessonIds.allSatisfy { isLessonCompleted(id: $0) }
             if allComplete {
                 unlockBadge(id: "completionist")
             }
+        }
+    }
+    
+    // Evaluate if the current AR scene satisfies the current step's goal
+    func evaluateCurrentGoal(context: Any /* Replace with actual ARContext when defined */) {
+        guard let lesson = currentLesson, tutorialStep < lesson.steps.count else { return }
+        
+        let currentGoal = lesson.steps[tutorialStep].goal
+        switch currentGoal {
+        case .none:
+            // Wait for explicit UI tap (Next button)
+            break
+        case .placeCelestialBody(_):
+            // Check if a celestial body with the target mass exists in context
+            // if successful: advanceTutorial()
+            break
+        case .achieveOrbit(_):
+            // Check if a planet has achieved the target orbital speed
+            // if successful: advanceTutorial()
+            break
+        case .destructObstacle:
+            // Check if the obstacle has been destroyed in the context
+            // if successful: advanceTutorial()
+            break
+        case .deflectAsteroid:
+            // Check if the asteroid was deflected gracefully
+            // if successful: advanceTutorial()
+            break
+        case .any:
+            // Wait for any general interaction
+            break
         }
     }
     

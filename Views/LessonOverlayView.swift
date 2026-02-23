@@ -91,7 +91,7 @@ struct LessonOverlayView: View {
                                 .cornerRadius(12)
                                 .shadow(color: .cyan.opacity(0.5), radius: 8)
                         }
-                    } else if !step.autoAdvance {
+                    } else if step.goal == .none {
                         // Manual advance button for non-auto steps
                         Button(action: {
                             withAnimation { gameManager.advanceTutorial() }
