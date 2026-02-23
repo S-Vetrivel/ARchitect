@@ -166,6 +166,23 @@ struct CodeParser {
         return parseFloat(from: code, pattern: pattern) ?? defaultGravity
     }
     
+    // MARK: - Solar System Parsers (Levels 1-5)
+    
+    static func parseOrbitRadius(from code: String, defaultValue: Float = 0.5) -> Float {
+        let pattern = "orbitRadius:\\s*([0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultValue
+    }
+    
+    static func parseOrbitSpeed(from code: String, defaultValue: Float = 1.0) -> Float {
+        let pattern = "orbitSpeed:\\s*(-?[0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultValue
+    }
+    
+    static func parseRotationSpeed(from code: String, defaultValue: Float = 1.0) -> Float {
+        let pattern = "rotationSpeed:\\s*(-?[0-9]*\\.?[0-9]+)"
+        return parseFloat(from: code, pattern: pattern) ?? defaultValue
+    }
+    
     // Helper
     private static func parseFloat(from code: String, pattern: String) -> Float? {
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return nil }

@@ -54,6 +54,10 @@ struct ARViewContainer: UIViewRepresentable {
             arView.addSubview(coachingOverlay)
         }
         
+        // Register Solar System Components
+        OrbitComponent.registerComponent()
+        RotationComponent.registerComponent()
+        
         return arView
     }
     
@@ -430,7 +434,42 @@ struct ARViewContainer: UIViewRepresentable {
                 self?.updateMovement(deltaTime: event.deltaTime)
                 self?.updateZoom(deltaTime: event.deltaTime)
                 self?.applyCustomGravity()
+                self?.updateOrbits(deltaTime: event.deltaTime)
             }.store(in: &subscriptions)
+        }
+        
+        // MARK: - Solar System Animation (Orbits)
+        
+        private func updateOrbits(deltaTime: Double) {
+            guard let arView = arView else { return }
+            
+            // 1. Update Orbits
+            let orbitQuery = arView.scene.performQuery(EntityQuery(where: .has(OrbitComponent.self)))
+            orbitQuery.forEach { entity in
+                if var orbit = entity.components[OrbitComponent.self] as? OrbitComponent {
+                    // Update angle
+                    orbit.currentAngle += orbit.speed * Float(deltaTime)
+                    if orbit.currentAngle > .pi * 2 { orbit.currentAngle -= .pi * 2 }
+                    
+                    // Calculate new position
+                    let x = cos(orbit.currentAngle) * orbit.radius
+                    let z = sin(orbit.currentAngle) * orbit.radius
+                    
+                    entity.position = SIMD3<Float>(x + orbit.center.x, entity.position.y, z + orbit.center.z)
+                    
+                    // Save back component
+                    entity.components[OrbitComponent.self] = orbit
+                }
+            }
+            
+            // 2. Update Rotations (Self-Spin)
+            let rotationQuery = arView.scene.performQuery(EntityQuery(where: .has(RotationComponent.self)))
+            rotationQuery.forEach { entity in
+                if let rot = entity.components[RotationComponent.self] as? RotationComponent {
+                    let rotationAmount = rot.speed * Float(deltaTime)
+                    entity.orientation *= simd_quatf(angle: rotationAmount, axis: [0, 1, 0])
+                }
+            }
         }
         
         // MARK: - Button Zoom (per-frame)
@@ -537,16 +576,8 @@ struct ARViewContainer: UIViewRepresentable {
             
             // Route by lesson
             switch lessonIndex {
-            case 1:
-                handleLevel1Tap(step: step, location: location, in: arView)
-            case 2:
-                handleLevel2Tap(step: step, location: location, in: arView)
-            case 3:
-                handleLevel3Tap(step: step, location: location, in: arView)
-            case 4:
-                handleLevel4Tap(step: step, location: location, in: arView)
-            case 5:
-                handleLevel5Tap(step: step, location: location, in: arView)
+            case 1, 2, 3, 4, 5:
+                handleSolarSystemTap(step: step, location: location, in: arView)
             case 6:
                 handleLevel6Tap(step: step, location: location, in: arView)
             case 7:
@@ -574,50 +605,212 @@ struct ARViewContainer: UIViewRepresentable {
         
         // MARK: - Level 1: Tutorial Tap
         
-        func handleLevel1Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0, 1:
+        // MARK: - Solar System Handlers (Levels 1-5)
+        
+        func handleSolarSystemTap(step: Int, location: CGPoint, in arView: ARView) {
+            let lesson = gameManager.currentLessonIndex
+            
+            // Generic advance for "Intro" steps (usually step 0)
+            if step == 0 {
                 gameManager.advanceTutorial()
-            case 5:
-                handlePlaceObject(location: location, in: arView)
-            case 6:
-                handleCodeApply(location: location, in: arView)
-            default:
-                if step > 5 {
-                    if let entity = arView.entity(at: location) as? ModelEntity,
-                       entity.name != "VirtualFloor" {
-                        handleCodeApply(location: location, in: arView)
-                    } else {
-                        handlePlaceObject(location: location, in: arView)
+                return
+            }
+            
+            // Raycast to find placement position
+            var worldPos: SIMD3<Float>?
+            
+            if gameManager.isSimulationMode {
+                let hits = arView.hitTest(location)
+                if let hit = hits.first(where: { $0.entity.name == "VirtualFloor" }) {
+                    worldPos = hit.position
+                }
+            } else {
+                let queries: [ARRaycastQuery.Target] = [.existingPlaneGeometry, .estimatedPlane]
+                for target in queries {
+                    if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
+                        worldPos = SIMD3<Float>(result.worldTransform.columns.3.x, result.worldTransform.columns.3.y + 0.5, result.worldTransform.columns.3.z)
+                        break
                     }
                 }
             }
-        }
-        
-        // MARK: - Level 2: Gravity & Mass Tap
-        
-        func handleLevel2Tap(step: Int, location: CGPoint, in arView: ARView) {
-            switch step {
-            case 0:
-                gameManager.advanceTutorial()
-            case 1:
-                // Place a static box
-                handlePlaceObject(location: location, in: arView)
-            case 3:
-                // Tap an existing object to apply physics (gravity)
-                handleApplyPhysics(location: location, in: arView)
-            case 4:
-                // Place another object with new mass, then apply physics
-                if let entity = arView.entity(at: location) as? ModelEntity,
-                   entity.name == "UserObject" && entity.components[PhysicsBodyComponent.self] == nil {
-                    handleApplyPhysics(location: location, in: arView)
-                } else {
-                    handlePlaceObject(location: location, in: arView)
+            
+            // Level 1: Starbirth
+            if lesson == 1 {
+                if step == 1 {
+                    // Create Sun
+                    guard let pos = worldPos else { return }
+                    createCelestialBody(at: pos, name: "Sun", radius: 0.25, color: .yellow, isStar: true, in: arView)
+                    gameManager.advanceTutorial()
+                } else if step == 2 {
+                    // Change Color
+                    applyPropertyChange(name: "Sun", in: arView) { entity in
+                        let color = CodeParser.parseColor(from: self.gameManager.codeSnippet)
+                        if let model = entity as? ModelEntity {
+                            model.model?.materials = [SimpleMaterial(color: color, isMetallic: false)]
+                        }
+                    }
                 }
-            default:
-                break
+            }
+            
+            // Level 2: Blue Planet
+            if lesson == 2 {
+                if step == 1 {
+                    // Find Sun and place Earth relative to it?
+                    // For simplicity, just place Earth nearby or use standard placement
+                    guard let pos = worldPos else { return }
+                    createCelestialBody(at: pos, name: "Earth", radius: 0.08, color: .blue, in: arView)
+                    gameManager.advanceTutorial()
+                } else if step == 2 {
+                    // Change Position (Relative to parent/Sun)
+                    // In this simple version, we might just look for "Earth" and move it
+                    applyPropertyChange(name: "Earth", in: arView) { entity in
+                        // Parse x position from code (e.g. "x: 0.8")
+                        let x = CodeParser.parseScaleX(from: self.gameManager.codeSnippet, defaultValue: 0.8)
+                        entity.position = SIMD3<Float>(x, 0, 0)
+                    }
+                }
+            }
+            
+            // Level 3: Orbital Mechanics
+            if lesson == 3 {
+                 if step == 1 {
+                    // Add Orbit Component
+                    applyPropertyChange(name: "Earth", in: arView) { entity in
+                        let r = CodeParser.parseOrbitRadius(from: self.gameManager.codeSnippet, defaultValue: 0.8)
+                        let s = CodeParser.parseOrbitSpeed(from: self.gameManager.codeSnippet, defaultValue: 0.5)
+                        entity.components[OrbitComponent.self] = OrbitComponent(radius: r, speed: s)
+                    }
+                     gameManager.advanceTutorial()
+                } else if step == 2 {
+                    // Update Speed
+                    applyPropertyChange(name: "Earth", in: arView) { entity in
+                        let s = CodeParser.parseOrbitSpeed(from: self.gameManager.codeSnippet, defaultValue: 2.0)
+                        var orbit = entity.components[OrbitComponent.self] ?? OrbitComponent()
+                        orbit.speed = s
+                        entity.components[OrbitComponent.self] = orbit
+                    }
+                }
+            }
+            
+            // Level 4: Moon
+            if lesson == 4 {
+                if step == 1 {
+                    // Find Earth, create Moon as CHILD
+                    if let earth = findEntity(named: "Earth", in: arView) {
+                        let r = CodeParser.parseOrbitRadius(from: gameManager.codeSnippet, defaultValue: 0.2)
+                        let s = CodeParser.parseOrbitSpeed(from: gameManager.codeSnippet, defaultValue: 3.0)
+                        let radius = CodeParser.parseRadius(from: gameManager.codeSnippet, defaultValue: 0.05)
+                        
+                        let moon = ModelEntity(mesh: .generateSphere(radius: radius), materials: [SimpleMaterial(color: .gray, isMetallic: false)])
+                        moon.name = "Moon"
+                        moon.position = [r, 0, 0] // Start pos
+                        moon.components[OrbitComponent.self] = OrbitComponent(radius: r, speed: s)
+                        earth.addChild(moon)
+                        gameManager.advanceTutorial()
+                    }
+                } else if step == 2 {
+                    // Adjust Orbit
+                     applyPropertyChange(name: "Moon", in: arView) { entity in
+                        let r = CodeParser.parseOrbitRadius(from: self.gameManager.codeSnippet, defaultValue: 0.3)
+                        var orbit = entity.components[OrbitComponent.self] ?? OrbitComponent()
+                        orbit.radius = r
+                        entity.components[OrbitComponent.self] = orbit
+                    }
+                }
+            }
+            
+            // Level 5: Asteroid Belt
+            if lesson == 5 {
+                if step == 1 || step == 2 {
+                    // Create Belt
+                    // Find Sun (or center)
+                     guard let sun = findEntity(named: "Sun", in: arView) ?? arView.scene.anchors.first?.children.first else { return }
+                    
+                    let count = CodeParser.parseCount(from: gameManager.codeSnippet, defaultValue: 10)
+                    let orbitR = CodeParser.parseOrbitRadius(from: gameManager.codeSnippet, defaultValue: 1.5)
+                    
+                    // Clear old asteroids
+                    sun.children.filter { $0.name == "Asteroid" }.forEach { $0.removeFromParent() }
+                    
+                    for i in 0..<count {
+                        let angle = (Float(i) / Float(count)) * .pi * 2
+                        let offset = Float.random(in: -0.2...0.2)
+                        let r = orbitR + offset
+                        
+                        let asteroid = ModelEntity(mesh: .generateSphere(radius: Float.random(in: 0.02...0.04)), materials: [SimpleMaterial(color: .gray, isMetallic: false)])
+                        asteroid.name = "Asteroid"
+                        asteroid.position = [cos(angle) * r, 0, sin(angle) * r]
+                        
+                        var orbit = OrbitComponent(radius: r, speed: Float.random(in: 0.2...0.4))
+                        orbit.currentAngle = angle
+                        asteroid.components[OrbitComponent.self] = orbit
+                        
+                        sun.addChild(asteroid)
+                    }
+                    if step == 2 {
+                        // CPU Burn check?
+                        // Just advance
+                    }
+                    gameManager.advanceTutorial()
+                }
             }
         }
+        
+        // Helper: Create/Find
+        private func createCelestialBody(at pos: SIMD3<Float>, name: String, radius: Float, color: UIColor, isStar: Bool = false, in arView: ARView) {
+            let mesh = MeshResource.generateSphere(radius: radius)
+            let material = SimpleMaterial(color: color, isMetallic: false) // Unlit for star?
+            let entity = ModelEntity(mesh: mesh, materials: [material])
+            entity.name = name
+            
+            if isStar {
+                 // Add Light
+                let light = PointLight()
+                light.light.intensity = 2000
+                light.light.attenuationRadius = 5.0
+                entity.addChild(light)
+            }
+            
+            let anchor = AnchorEntity(world: pos)
+            anchor.addChild(entity)
+            arView.scene.addAnchor(anchor)
+        }
+        
+        private func findEntity(named name: String, in arView: ARView) -> Entity? {
+            // Search all anchors
+            for anchor in arView.scene.anchors {
+                if let entity = anchor.findEntity(named: name) {
+                    return entity
+                }
+            }
+            return nil
+        }
+        
+        private func applyPropertyChange(name: String, in arView: ARView, change: (Entity) -> Void) {
+            if let entity = findEntity(named: name, in: arView) {
+                change(entity)
+                
+                // Animation feedback
+                let originalScale = entity.scale
+                entity.scale *= 1.2
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    entity.scale = originalScale
+                }
+                HapticsManager.shared.play(.light)
+                gameManager.advanceTutorial()
+            }
+        }
+        
+        // MARK: - Legacy Levels (Temporarily Disabled/Skipped)
+        
+        func handleLevel1Tap(step: Int, location: CGPoint, in arView: ARView) {
+            // ... Old code ...
+        }
+        
+        func handleLevel2Tap(step: Int, location: CGPoint, in arView: ARView) {
+            // ... Old code ...
+        }
+
         
         // MARK: - Level 3: Bounce & Collide Tap
         

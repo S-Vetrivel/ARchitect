@@ -37,175 +37,184 @@ class LessonManager {
         
         // MARK: - Cosmic Architect: Building the Universe (1-5)
         
-        // Level 1: The Void (Hello World)
+        // MARK: - Solar System Genesis (1-5)
+        
+        // Level 1: Starbirth (The Sun)
         Lesson(
             id: 1,
-            title: "The Void",
-            instruction: "Initialize a basic sphere in empty space.",
+            title: "Starbirth",
+            instruction: "Initialize a G-Type Main Sequence Star.",
             conceptExplanation: """
-            **Creation Engine Online**
+            **System Initialization**
             
-            Welcome to the Void, Architect.
-            Your first task is to manifest a basic celestial body.
+            Welcome, Architect.
+            We are in the Stellar Nursery.
+            Your first task is to ignite a Star.
             
-            You'll learn:
-            - 🪐 How to initialize a **Sphere**
-            - 📍 How to place it in 3D space
+            Task:
+            - ☀️ Create a **Sphere**
+            - 📏 Radius: **0.25** (Large)
+            - 🎨 Color: **.yellow** (G-Type)
             """,
             codeSnippet: """
-            // MISSION 01: GENESIS
-            // Goal: Create a Planet (Sphere)
-            // Warning: Start small.
-            // radius: 0.1 (10cm)
-            // color: .blue
+            // MISSION 01: IGNITION
+            // Goal: Create the Sun
             
-            let mesh = MeshResource.generateSphere(radius: 0.1)
-            let material = SimpleMaterial(color: .blue, isMetallic: false)
+            // 1. Define Geometry (Shape)
+            // radius: 0.25 (25cm)
+            let mesh = MeshResource.generateSphere(radius: 0.25)
+            
+            // 2. Define Material (Surface)
+            // color: .yellow (Sun)
+            let material = SimpleMaterial(color: .yellow, isMetallic: false)
             """,
-            challenges: [Challenge(id: "genesis", description: "Create a Planet", targetCount: 1, xpReward: 100)],
-            steps: [], // Level 1 uses TutorialOverlayView
-            codeEditorStartStep: 6
+            challenges: [Challenge(id: "ignition", description: "Ignite the Sun", targetCount: 1, xpReward: 100)],
+             steps: [
+                LessonStep(icon: "sun.max.fill", title: "Stellar Nursery", instruction: "Space is cold and empty.\nWe need a heat source.\nTap 'Run Code' to ignite.", hint: "Tap the Play button"),
+                LessonStep(icon: "arrow.up.left.and.arrow.down.right", title: "Optimization", instruction: "The star is stable.\nBut it can be brighter.\nChange `.yellow` to `.orange`.", hint: "Edit code to .orange", showCodeEditor: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "System Online", instruction: "Fusion sustained.\nHelium production nominal.\nReady for planets.", hint: "", autoAdvance: true)
+            ],
+            codeEditorStartStep: 1
         ),
         
-        // Level 2: Planetary Scale (Scale 10.0)
+        // Level 2: The Blue Planet (Positioning)
         Lesson(
             id: 2,
-            title: "Planetary Scale",
-            instruction: "Scale a planet to Gas Giant proportions.",
+            title: "Goldilocks Zone",
+            instruction: "Place a habitable planet at a safe distance.",
             conceptExplanation: """
-            **Gas Giant Protocol**
+            **Habitable Zone Calculation**
             
-            The current planet is too small to sustain an atmosphere.
-            We need a Gas Giant like Jupiter.
+            We need a planet capable of supporting life.
+            It must optionally position itself away from the Sun.
             
             Task:
-            - 📏 Increase **Scale** to 10.0
-            - 🧱 Mass will increase exponentially
+            - 🌍 Create Earth
+            - 📍 Position: **x: 0.8** (80cm away)
+            - 🎨 Color: **.blue**
             """,
             codeSnippet: """
-            // MISSION 02: GIGANTISM
-            // Goal: Scale to Gas Giant size
-            // Current Scale: 1.0 (Earth-sized)
-            // Target Scale: 10.0 (Jupiter-sized)
+            // MISSION 02: LIFE SUPPORT
+            // Goal: Place Earth in the Goldilocks Zone
             
-            entity.scale = SIMD3<Float>(1.0, 1.0, 1.0) // CHANGE THIS!
+            // Position relative to Sun (Center)
+            // x: 0.0 -> Inside the Sun (Bad)
+            // x: 0.8 -> Habitable Zone (Good)
+            
+            entity.position = SIMD3<Float>(0.8, 0.0, 0.0)
             """,
-            challenges: [Challenge(id: "gas_giant", description: "Create a Gas Giant", targetCount: 1, xpReward: 150)],
+            challenges: [Challenge(id: "goldilocks", description: "Place Earth", targetCount: 1, xpReward: 150)],
             steps: [
-                LessonStep(icon: "circle.circle.fill", title: "Scale Mismatch", instruction: "This planet is too small.\nWe need a Gas Giant.\nTap to assess.", hint: "Scale 1.0 is too small"),
-                LessonStep(icon: "arrow.up.left.and.arrow.down.right", title: "Step 1: Place Prototype", instruction: "Place a standard planet.\nObserve its insufficient size.", hint: "Tap floor to place", autoAdvance: true),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Access Mainframe", instruction: "Open the code editor.\nChange `1.0` to `10.0`\non ALL axes (x, y, z).", hint: "scale = SIMD3(10, 10, 10)", showCodeEditor: true),
-                LessonStep(icon: "globe.asia.australia.fill", title: "Step 3: Manifest Giant", instruction: "Place the new planet.\nWitness the scale difference!", hint: "It will be huge!", showCodeEditor: true, autoAdvance: true),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Planetary scale achieved.\nGravity well stabilizing.", hint: "")
+                LessonStep(icon: "globe.americas.fill", title: "Orbital Injection", instruction: "The Sun is too hot.\nWe need distance.\nSet x position to 0.8.", hint: "x: 0.8"),
+                LessonStep(icon: "thermometer.sun.fill", title: "Temperature Check", instruction: "Scanner indicates water is liquid.\nGreat work.\nTry `x: 1.2` for a colder orbit.", hint: "Increase distance", showCodeEditor: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Orbit Established", instruction: "Biosphere stable.\nAwaiting evolution.", hint: "", autoAdvance: true)
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 1
         ),
         
-        // Level 3: Atmospheric Colors (Mars Red)
+        // Level 3: Orbital Mechanics (Animation)
         Lesson(
             id: 3,
-            title: "Red Planet",
-            instruction: "Terraform the planet to Mars-like conditions.",
+            title: "Orbital Mechanics",
+            instruction: "Set the planet in motion around the Star.",
             conceptExplanation: """
-            **Atmospheric Re-entry**
+            **Kepler's Laws**
             
-            We are approaching Sector 4 (Mars).
-            The current planet is stuck in Ocean Mode (Blue).
+            A static planet will fall into the star.
+            We need **Orbital Velocity**.
             
             Task:
-            - 🎨 Change atmospheric color to **.red**
-            - 🌡️ Iron Oxide detection expected
+            - 🔄 Set **Orbit Radius** to match position (0.8)
+            - ⏱️ Set **Orbit Speed** (1.0 = 1 radian/sec)
             """,
             codeSnippet: """
-            // MISSION 03: RED DUST
-            // Goal: Terraform to Mars
-            // Current Atmosphere: .blue
-            // Target Atmosphere: .red
+            // MISSION 03: MOMENTUM
+            // Goal: Orbit the Sun
             
-            var material = SimpleMaterial(color: .blue, isMetallic: false) // FIX THIS
+            // radius: Match your position (0.8)
+            // speed: Speed of revolution
+            
+            orbitRadius: 0.8
+            orbitSpeed: 0.5
             """,
-            challenges: [Challenge(id: "mars_terraform", description: "Create Mars", targetCount: 1, xpReward: 150)],
+            challenges: [Challenge(id: "orbit_stabilized", description: "Stabilize Orbit", targetCount: 1, xpReward: 200)],
             steps: [
-                LessonStep(icon: "paintpalette.fill", title: "Wrong Sector", instruction: "This planet matches Earth data.\nWe need Mars data.\nTap to Initialize.", hint: "Color mismatch detected"),
-                LessonStep(icon: "circle.fill", title: "Step 1: Scan Planet", instruction: "Place the current planet.\nConfirm it is Blue.", hint: "Tap floor", autoAdvance: true),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Recalibrate", instruction: "Open Inspector.\nChange `.blue` to `.red`\nto match Martian soil.", hint: "color: .red", showCodeEditor: true),
-                LessonStep(icon: "globe.americas.fill", title: "Step 3: Terraform", instruction: "Place the new planet.\nWelcome to Mars, Architect.", hint: "Red Planet achieved", showCodeEditor: true, autoAdvance: true),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Atmosphere stabilized.\nIron oxide levels nominal.", hint: "")
+                LessonStep(icon: "arrow.2.circlepath", title: "Gravity Well", instruction: "Planet is stationary.\nInitiate orbital engines.\nSet radius to 0.8.", hint: "orbitRadius: 0.8"),
+                LessonStep(icon: "hare.fill", title: "Velocity Adjust", instruction: "Orbit is stable.\nLet's speed up time.\nChange `orbitSpeed` to `2.0`.", hint: "Double the speed", showCodeEditor: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "System Clock", instruction: "Years are passing in seconds.\nTime is relative.", hint: "", autoAdvance: true)
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 1
         ),
         
-        // Level 4: Rocky vs Gas (Metallic)
+        // Level 4: The Moon (Hierarchy)
         Lesson(
             id: 4,
-            title: "Asteroid Mining",
-            instruction: "Identify metallic asteroids vs matte moons.",
+            title: "Lunar Injection",
+            instruction: "Create a Moon orbiting the Earth.",
             conceptExplanation: """
-            **Material Scanner**
+            **Satellite Deployment**
             
-            We need to distinguish between valuable **Metals**
-            and common **Rock**.
+            Planets can have their own satellites.
+            This moon will orbit Earth, while Earth orbits the Sun.
+            This is a **Hierarchical Orbit**.
             
             Task:
-            - ✨ Create a **Shiny Asteroid** (Metallic: True)
-            - 🌑 Create a **Matte Moon** (Metallic: False)
+            - 🌑 Create Moon (Small, Gray)
+            - 🔄 Orbit Radius: **0.2** (Close to Earth)
+            - 🏎️ Orbit Speed: **3.0** (Fast)
             """,
             codeSnippet: """
-            // MISSION 04: ORE SCAN
-            // Goal: Create Metallic Asteroid
-            // isMetallic: false (Rock/Moon)
-            // isMetallic: true (Metal/Treasure)
+            // MISSION 04: SATELLITE
+            // Goal: Create the Moon
             
-            var material = SimpleMaterial(
-                color: .gray,
-                isMetallic: false // CHANGE TO TRUE
-            )
+            // This orbits the EARTH, not the Sun.
+            // So radius should be small (0.2).
+            
+            orbitRadius: 0.2
+            orbitSpeed: 3.0
+            color: .gray
+            radius: 0.05
             """,
-            challenges: [Challenge(id: "metallic_asteroid", description: "Create Metallic Object", targetCount: 1, xpReward: 150)],
+            challenges: [Challenge(id: "lunar_orbit", description: "Deploy Moon", targetCount: 1, xpReward: 250)],
             steps: [
-                LessonStep(icon: "sparkles", title: "Ore Detection", instruction: "Scanner picking up silicate (Rock).\nWe need Metal.\nTap to calibrate.", hint: "Metallic surfaces reflect light"),
-                LessonStep(icon: "circle.fill", title: "Step 1: Analyze Rock", instruction: "Place a standard moon.\nNotice the matte, dull finish.", hint: "Tap floor", autoAdvance: true),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Refine Ore", instruction: "Open Code.\nSet `isMetallic: true`\nTurn rock into iron.", hint: "true = shiny", showCodeEditor: true),
-                LessonStep(icon: "star.fill", title: "Step 3: Forge", instruction: "Place the new asteroid.\nIt should shine in the starlight!", hint: "Look for the shine", showCodeEditor: true, autoAdvance: true),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Rich metal deposits found.\nMining drones deployed.", hint: "")
+                LessonStep(icon: "moon.fill", title: "Natural Satellite", instruction: "Earth is lonely.\nLet's give it a friend.\nInject a moon into orbit.", hint: "Run the code"),
+                LessonStep(icon: "arrow.triangle.2.circlepath", title: "Tidal Lock", instruction: "Watch the path.\nA spiral within a circle.\nTry `orbitRadius: 0.3`.", hint: "Expand the orbit", showCodeEditor: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Tides Active", instruction: "Tidal forces stabilized.\nSurfing is now possible.", hint: "", autoAdvance: true)
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 1
         ),
         
-        // Level 5: Planetary Rings (Shapes)
+        // Level 5: Asteroid Belt (Procedural Generation)
         Lesson(
             id: 5,
-            title: "Saturn's Rings",
-            instruction: "Construct orbital rings using flattened cylinders.",
+            title: "The Belt",
+            instruction: "Generate a field of debris.",
             conceptExplanation: """
-            **Orbital Architecture**
+            **Procedural Generation**
             
-            Saturn is missing its signature rings.
-            We need to fabricate a debris field.
+            We need thousands of rocks, not just one.
+            We will use a loop to create a debris field.
             
             Task:
-            - 🔵 Use **Cylinder** shape
-            - 📉 Flatten it: **ScaleY: 0.1**
-            - 🌌 Expand it: **ScaleX/Z: 5.0**
+            - 🪨 Create **10** Asteroids
+            - 🎨 Randomize colors (Gray/Brown)
+            - 📏 Randomize sizes
             """,
             codeSnippet: """
-            // MISSION 05: RING BUILDER
-            // Goal: Create Saturn's Rings
-            // Shape: Cylinder
-            // ScaleY: 0.1 (Flat)
+            // MISSION 05: DEBRIS FIELD
+            // Goal: Create Asteroid Belt
             
-            let mesh = MeshResource.generateCylinder(height: 0.2, radius: 0.5)
-            entity.scale = SIMD3<Float>(1.0, 1.0, 1.0) // FLATTEN THIS!
+            count: 10
+            orbitRadius: 1.5
+            color: .gray
             """,
-            challenges: [Challenge(id: "saturn_ring", description: "Create Orbital Ring", targetCount: 1, xpReward: 200)],
+            challenges: [Challenge(id: "asteroid_belt", description: "Create Belt", targetCount: 10, xpReward: 300)],
             steps: [
-                LessonStep(icon: "smallcircle.filled.circle", title: "Ring System Offline", instruction: "Planet is naked.\nInitiating Ring Construction Protocol.\nTap to begin.", hint: "Rings are just flat cylinders"),
-                LessonStep(icon: "cylinder.fill", title: "Step 1: Raw Material", instruction: "Place a standard cylinder.\nIt looks like a can, not a ring.", hint: "Tap floor", autoAdvance: true),
-                LessonStep(icon: "chevron.left.forwardslash.chevron.right", title: "Step 2: Flatten", instruction: "Open Code.\nSet `scaleY` to `0.1` (Thin)\nSet `scaleX/Z` to `3.0` (Wide)", hint: "Y is height, X/Z is width", showCodeEditor: true),
-                LessonStep(icon: "record.circle.fill", title: "Step 3: Deploy Ring", instruction: "Place the flattened cylinder.\nA perfect orbital disc!", hint: "Saturn would be proud", showCodeEditor: true, autoAdvance: true),
-                LessonStep(icon: "checkmark.circle.fill", title: "Mission Accomplished", instruction: "Ring system stable.\nScenic rating increased to 100%.", hint: "")
+                LessonStep(icon: "sparkles", title: "Kessler Syndrome", instruction: "We need a barrier between inner and outer planets.\nGenerate the belt.", hint: "Run the code"),
+                LessonStep(icon: "plus.circle.fill", title: "Density Critical", instruction: "10 rocks is sparse.\nIncrease `count` to `20`.\nWatch the CPU burn!", hint: "count: 20", showCodeEditor: true),
+                LessonStep(icon: "checkmark.circle.fill", title: "Sector Secured", instruction: "Navigation is hazardous.\nPerfect defense system.", hint: "", autoAdvance: true)
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 1
         ),
         
         // MARK: - Starfleet Academy: Physics & Space (6-10)

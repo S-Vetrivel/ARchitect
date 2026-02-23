@@ -14,6 +14,20 @@ struct LevelMapView: View {
             // Deep black space
             Color.black.ignoresSafeArea()
             
+            // Holo-Grid Background
+            GeometryReader { geo in
+                GridBackground()
+                    .opacity(0.15)
+                    .mask(
+                        LinearGradient(
+                            colors: [.clear, .white, .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            }
+            .ignoresSafeArea()
+            
             // Subtle nebula wisps
             RadialGradient(
                 colors: [Color(red: 0.04, green: 0.0, blue: 0.1).opacity(0.4), .clear],
@@ -57,7 +71,7 @@ struct LevelMapView: View {
                     current: $selectedPage,
                     getLessonState: { getLessonState(id: $0) }
                 )
-                .padding(.bottom, isLandscape ? 4 : 10)
+                .padding(.bottom, isLandscape ? 4 : 20)
                 
                 // Paging carousel
                 TabView(selection: $selectedPage) {
@@ -158,20 +172,32 @@ struct NebulaLevelNode: View {
         state == .locked ? Color(white: 0.15) : palette.ring
     }
     
-    var circleSize: CGFloat { isLandscape ? 150 : 180 }
-    var ringSize: CGFloat { isLandscape ? 190 : 230 }
+    var circleSize: CGFloat { isLandscape ? 150 : 200 }
+    var ringSize: CGFloat { isLandscape ? 190 : 260 }
     
     var body: some View {
-        VStack(spacing: isLandscape ? 16 : 28) {
+        VStack(spacing: isLandscape ? 16 : 40) {
             // Star system label
-            HStack(spacing: 6) {
-                Rectangle().fill(activeColor.opacity(0.3)).frame(width: 20, height: 1)
+            HStack(spacing: 8) {
+                UnevenRoundedRectangle(cornerRadii: .init(topLeading: 2, bottomLeading: 2, bottomTrailing: 0, topTrailing: 0))
+                    .fill(activeColor.opacity(0.6))
+                    .frame(width: 4, height: 16)
+                
                 Text("SYSTEM \(String(format: "%02d", lesson.id))")
-                    .font(.system(size: isLandscape ? 10 : 12, weight: .bold, design: .monospaced))
-                    .foregroundColor(activeColor.opacity(0.8))
-                    .tracking(3)
-                Rectangle().fill(activeColor.opacity(0.3)).frame(width: 20, height: 1)
+                    .font(.custom("CourierNewPS-BoldMT", size: isLandscape ? 12 : 14))
+                    .foregroundColor(activeColor)
+                    .tracking(4)
+                
+                UnevenRoundedRectangle(cornerRadii: .init(topLeading: 0, bottomLeading: 0, bottomTrailing: 2, topTrailing: 2))
+                    .fill(activeColor.opacity(0.6))
+                    .frame(width: 4, height: 16)
             }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .strokeBorder(activeColor.opacity(0.3), lineWidth: 1)
+            )
             
             // The Star
             Button(action: {
@@ -181,51 +207,50 @@ struct NebulaLevelNode: View {
                 }
             }) {
                 ZStack {
-                    // Outer pulse ring
+                    // Outer pulse ring (HUD Target)
                     if state != .locked {
                         Circle()
-                            .stroke(activeColor.opacity(0.08), lineWidth: 1)
-                            .frame(width: ringSize + 30, height: ringSize + 30)
-                            .scaleEffect(outerPulse ? 1.2 : 1.0)
-                            .opacity(outerPulse ? 0.0 : 0.5)
+                            .strokeBorder(activeColor.opacity(0.3), lineWidth: 1)
+                            .frame(width: ringSize + 60, height: ringSize + 60)
+                            .scaleEffect(outerPulse ? 1.1 : 1.0)
+                            .opacity(outerPulse ? 0.0 : 0.4)
                     }
                     
-                    // Orbital ring 1 (dashed, rotating)
+                    // Orbital ring 1 (Tech dashed)
                     if state != .locked {
                         Circle()
-                            .stroke(ringColor.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [5, 6]))
+                            .stroke(ringColor.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [10, 10]))
                             .frame(width: ringSize, height: ringSize)
                             .rotationEffect(.degrees(ringRotation))
                         
-                        // Small orbiting body
-                        Circle()
-                            .fill(ringColor.opacity(0.9))
-                            .frame(width: 6, height: 6)
-                            .shadow(color: ringColor, radius: 4)
+                        // Tech Nodes on Ring
+                        Rectangle()
+                            .fill(ringColor)
+                            .frame(width: 8, height: 8)
                             .offset(x: ringSize / 2)
-                            .rotationEffect(.degrees(ringRotation * 1.2))
+                            .rotationEffect(.degrees(ringRotation))
                     }
                     
                     // Orbital ring 2 (counter-rotate)
                     if state == .current {
                         Circle()
-                            .stroke(ringColor.opacity(0.15), style: StrokeStyle(lineWidth: 1, dash: [3, 10]))
-                            .frame(width: ringSize - 20, height: ringSize - 20)
-                            .rotationEffect(.degrees(-ringRotation * 0.5))
+                            .stroke(ringColor.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [2, 8]))
+                            .frame(width: ringSize - 30, height: ringSize - 30)
+                            .rotationEffect(.degrees(-ringRotation * 0.7))
                     }
                     
                     // Nebula glow (large soft halo)
                     Circle()
                         .fill(
                             RadialGradient(
-                                colors: [glowColor.opacity(0.35), glowColor.opacity(0.05), .clear],
+                                colors: [glowColor.opacity(0.4), glowColor.opacity(0.1), .clear],
                                 center: .center,
                                 startRadius: 10,
                                 endRadius: circleSize * 0.8
                             )
                         )
-                        .frame(width: circleSize + 60, height: circleSize + 60)
-                        .blur(radius: 15)
+                        .frame(width: circleSize + 80, height: circleSize + 80)
+                        .blur(radius: 20)
                         .opacity(state == .locked ? 0.2 : 1)
                     
                     // Core star body
@@ -233,47 +258,46 @@ struct NebulaLevelNode: View {
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    activeColor.opacity(state == .locked ? 0.08 : 0.9),
-                                    activeColor.opacity(state == .locked ? 0.03 : 0.3),
+                                    activeColor.opacity(state == .locked ? 0.1 : 0.95),
+                                    activeColor.opacity(state == .locked ? 0.05 : 0.4),
                                     .clear
                                 ],
-                                center: UnitPoint(x: 0.4, y: 0.4),
-                                startRadius: 5,
+                                center: UnitPoint(x: 0.5, y: 0.5),
+                                startRadius: 10,
                                 endRadius: circleSize / 2
                             )
                         )
                         .frame(width: circleSize, height: circleSize)
-                        .scaleEffect(corePulse ? 1.03 : 1.0)
+                        .scaleEffect(corePulse ? 1.05 : 1.0)
+                        .overlay(
+                             Circle()
+                                .stroke(activeColor.opacity(0.5), lineWidth: 2)
+                                .blur(radius: 4)
+                        )
                     
                     // Hard bright core
                     Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [.white.opacity(state == .locked ? 0.05 : 0.8), activeColor.opacity(0.4), .clear],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 30
-                            )
-                        )
-                        .frame(width: 60, height: 60)
-                        .blur(radius: 5)
-                        .opacity(state == .locked ? 0.3 : 1)
+                        .fill(Color.white)
+                        .frame(width: circleSize * 0.3, height: circleSize * 0.3)
+                        .blur(radius: circleSize * 0.1)
+                        .opacity(state == .locked ? 0.1 : 0.9)
+                        
                     
                     // Icon overlay
                     if state == .completed {
                         Image(systemName: "checkmark")
                             .font(.system(size: isLandscape ? 40 : 50, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(color: activeColor, radius: 12)
+                            .shadow(color: activeColor, radius: 10)
                     } else if state == .locked {
                         Image(systemName: "lock.fill")
-                            .font(.system(size: isLandscape ? 28 : 34))
+                            .font(.system(size: isLandscape ? 30 : 40))
                             .foregroundColor(.white.opacity(0.2))
                     } else {
                         Text("\(lesson.id)")
-                            .font(.system(size: isLandscape ? 48 : 56, weight: .black, design: .rounded))
+                            .font(.system(size: isLandscape ? 50 : 70, weight: .ultraLight, design: .default))
                             .foregroundColor(.white)
-                            .shadow(color: activeColor, radius: 16)
+                            .shadow(color: activeColor, radius: 10)
                     }
                 }
             }
@@ -283,54 +307,56 @@ struct NebulaLevelNode: View {
             // Title + Status
             VStack(spacing: 8) {
                 Text(lesson.title.uppercased())
-                    .font(.system(size: isLandscape ? 16 : 18, weight: .bold, design: .rounded))
+                    .font(.system(size: isLandscape ? 20 : 24, weight: .black, design: .rounded))
                     .multilineTextAlignment(.center)
-                    .foregroundColor(state == .locked ? .white.opacity(0.2) : .white.opacity(0.9))
+                    .foregroundColor(state == .locked ? .white.opacity(0.3) : .white)
+                    .scaleEffect(x: 1.1, y: 1.0) // Slight stretch for sci-fi feel
                     .lineLimit(2)
-                    .frame(maxWidth: 280)
+                    .frame(maxWidth: 300)
+                    .shadow(color: state == .locked ? .clear : activeColor.opacity(0.5), radius: 8)
                 
                 if state == .current {
-                    HStack(spacing: 5) {
-                        Image(systemName: "play.fill").font(.system(size: 9))
-                        Text("ENTER SYSTEM")
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    HStack(spacing: 8) {
+                        Image(systemName: "play.fill").font(.system(size: 10))
+                        Text("INITIATE SEQUENCE")
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
                     }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 8)
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 10)
                     .background(
                         Capsule()
                             .fill(activeColor)
-                            .shadow(color: activeColor.opacity(0.7), radius: 8)
+                            .shadow(color: activeColor.opacity(0.8), radius: 10)
                     )
-                    .padding(.top, 4)
+                    .padding(.top, 8)
                 } else if state == .completed {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.seal.fill").font(.system(size: 10))
-                        Text("EXPLORED")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.seal.fill").font(.system(size: 12))
+                        Text("SECTOR CLEARED")
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
                     }
-                    .foregroundColor(activeColor.opacity(0.6))
-                    .padding(.top, 4)
+                    .foregroundColor(activeColor.opacity(0.8))
+                    .padding(.top, 8)
                 } else {
-                    Text("LOCKED")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.15))
-                        .padding(.top, 4)
+                    Text("ACCESS DENIED")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundColor(.red.opacity(0.4))
+                        .padding(.top, 8)
                 }
             }
         }
         .onAppear {
             if state != .locked {
-                withAnimation(.linear(duration: 30).repeatForever(autoreverses: false)) {
+                withAnimation(.linear(duration: 40).repeatForever(autoreverses: false)) {
                     ringRotation = 360
                 }
-                withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
                     corePulse = true
                 }
             }
             if state == .current {
-                withAnimation(.easeInOut(duration: 2.5).repeatForever()) {
+                withAnimation(.easeOut(duration: 2).repeatForever(autoreverses: false)) {
                     outerPulse = true
                 }
             }
@@ -346,26 +372,20 @@ struct GalaxyHeader: View {
     
     var body: some View {
         VStack(spacing: isLandscape ? 4 : 8) {
-            Text("STAR CHART")
-                .font(.system(size: isLandscape ? 18 : 22, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .tracking(4)
+            HStack {
+                Rectangle().frame(height: 1).opacity(0.3)
+                Text("STAR CHART")
+                    .font(.system(size: isLandscape ? 14 : 16, weight: .black, design: .monospaced))
+                    .foregroundColor(.white)
+                    .tracking(6)
+                Rectangle().frame(height: 1).opacity(0.3)
+            }
+            .padding(.horizontal, 40)
             
-            Text("Select a star system to explore")
-                .font(.system(size: isLandscape ? 9 : 11, weight: .medium))
-                .foregroundColor(.nebulaCyan.opacity(0.5))
-            
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [.clear, .nebulaCyan.opacity(0.3), .clear],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(height: 1)
-                .padding(.horizontal, isLandscape ? 120 : 60)
-                .padding(.top, 1)
+            Text("Select Destination Coordinates")
+                .font(.system(size: isLandscape ? 9 : 10, weight: .medium, design: .monospaced))
+                .foregroundColor(.white.opacity(0.5))
+                .tracking(1)
         }
     }
 }
@@ -378,18 +398,19 @@ struct LevelIndicatorBar: View {
     let getLessonState: (Int) -> LessonNodeState
     
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             ForEach(0..<total, id: \.self) { i in
                 let lessonId = i + 1
                 let state = getLessonState(lessonId)
                 let isCurrent = lessonId == current
                 let palette = StarPalette.forLevel(lessonId)
                 
-                Capsule()
+                Rectangle()
                     .fill(barColor(state: state, isCurrent: isCurrent, palette: palette))
-                    .frame(width: isCurrent ? 24 : 8, height: 4)
-                    .shadow(color: isCurrent ? barColor(state: state, isCurrent: true, palette: palette).opacity(0.6) : .clear, radius: 4)
-                    .animation(.easeInOut(duration: 0.3), value: current)
+                    .frame(width: isCurrent ? 30 : 12, height: 4)
+                    .cornerRadius(2)
+                    .shadow(color: isCurrent ? barColor(state: state, isCurrent: true, palette: palette).opacity(0.8) : .clear, radius: 4)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: current)
                     .onTapGesture {
                         if state != .locked {
                             withAnimation { current = lessonId }
@@ -408,9 +429,39 @@ struct LevelIndicatorBar: View {
             }
         }
         switch state {
-        case .completed: return palette.core.opacity(0.3)
-        case .current: return palette.core.opacity(0.3)
-        case .locked: return .white.opacity(0.08)
+        case .completed: return palette.core.opacity(0.4)
+        case .current: return palette.core.opacity(0.4)
+        case .locked: return .white.opacity(0.1)
+        }
+    }
+}
+
+// MARK: - Tech Grid Background
+
+struct GridBackground: View {
+    var body: some View {
+        Canvas { context, size in
+            let step: CGFloat = 40
+            let width = size.width
+            let height = size.height
+            
+            // Vertical lines
+            for x in stride(from: 0, through: width, by: step) {
+                let path = Path { p in
+                    p.move(to: CGPoint(x: x, y: 0))
+                    p.addLine(to: CGPoint(x: x, y: height))
+                }
+                context.stroke(path, with: .color(.cyan.opacity(0.3)), lineWidth: 0.5)
+            }
+            
+            // Horizontal lines
+            for y in stride(from: 0, through: height, by: step) {
+                let path = Path { p in
+                    p.move(to: CGPoint(x: 0, y: y))
+                    p.addLine(to: CGPoint(x: width, y: y))
+                }
+                context.stroke(path, with: .color(.cyan.opacity(0.3)), lineWidth: 0.5)
+            }
         }
     }
 }
@@ -420,8 +471,8 @@ struct LevelIndicatorBar: View {
 struct StarButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
-            .brightness(configuration.isPressed ? 0.15 : 0.0)
-            .animation(.spring(response: 0.25, dampingFraction: 0.5), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .brightness(configuration.isPressed ? 0.2 : 0.0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.5), value: configuration.isPressed)
     }
 }
