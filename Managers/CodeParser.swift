@@ -149,7 +149,7 @@ struct CodeParser {
     
     static func parseCount(from code: String, defaultValue: Int = 5) -> Int {
         if let floatVal = parseFloat(from: code, keyword: "count") {
-            return max(1, min(Int(floatVal), 15))
+            return max(1, min(Int(floatVal), 50))
         }
         return defaultValue
     }

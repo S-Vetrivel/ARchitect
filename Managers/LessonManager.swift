@@ -234,7 +234,8 @@ class LessonManager {
             """,
             challenges: [Challenge(id: "gravity_mastery", description: "Zero Gravity", targetCount: 1, xpReward: 150)],
             steps: [
-                LessonStep(icon: "arrow.down.to.line.alt", title: "Place a Test Probe.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Test Probe")),
+                LessonStep(icon: "arrow.down.to.line.alt", title: "Gravity Engine online. Testing gravitational pull...", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "hand.tap.fill", title: "Place a Test Probe.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Test Probe")),
                 LessonStep(icon: "exclamationmark.triangle.fill", title: "Warning: Deep space has no gravity. Open console and set gravity to 0.0.", instruction: "", hint: "gravity: 0.0", showCodeEditor: true, goal: .modifyGravity(targetGravity: 0.0)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Gravity deactivated. The probe floats gracefully...", instruction: "", hint: "", goal: .any)
             ],
@@ -268,7 +269,8 @@ class LessonManager {
             """,
             challenges: [Challenge(id: "warp_drive", description: "Launch Ship", targetCount: 1, xpReward: 200)],
             steps: [
-                LessonStep(icon: "airplane", title: "Place a Starship.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Starship")),
+                LessonStep(icon: "airplane", title: "Warp Drive system initializing...", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "hand.tap.fill", title: "Place a Starship.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Starship")),
                 LessonStep(icon: "flame.fill", title: "Console shows upward thrust (forceY). Change forceY to 0.0, and forceZ to -15.0.", instruction: "", hint: "forceZ: -15.0", showCodeEditor: true, goal: .applyForce(target: "Starship", requiredZ: -15.0)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Warp engaged. Trajectory confirmed.", instruction: "", hint: "", goal: .any)
             ],
@@ -301,7 +303,8 @@ class LessonManager {
             """,
             challenges: [Challenge(id: "frictionless_space", description: "Zero Friction", targetCount: 1, xpReward: 150)],
             steps: [
-                LessonStep(icon: "cube.box", title: "Place a Supply Crate.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Crate")),
+                LessonStep(icon: "cube.box", title: "Vacuum conditions detected. Testing inertia...", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "hand.tap.fill", title: "Place a Supply Crate.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Crate")),
                 LessonStep(icon: "stop.fill", title: "It stopped quickly due to friction. Change friction to 0.0 to simulate a vacuum.", instruction: "", hint: "friction: 0.0", showCodeEditor: true, goal: .modifyPhysics(target: "Crate", targetFriction: 0.0, targetMass: nil, targetRestitution: nil)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Friction systems offline. Eternal glide achieved.", instruction: "", hint: "", goal: .any)
             ],
@@ -339,7 +342,7 @@ class LessonManager {
                 LessonStep(icon: "burst.fill", title: "Standard mass is too light. Increase mass to 50.0.", instruction: "", hint: "mass: 50.0", showCodeEditor: true, goal: .modifyPhysics(target: "Meteor", targetFriction: nil, targetMass: 50.0, targetRestitution: nil)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Impact successful. Path cleared.", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 3,
+            codeEditorStartStep: 2,
             prerequisites: [
                 PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
                 PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil),
@@ -368,7 +371,8 @@ class LessonManager {
             """,
             challenges: [Challenge(id: "perfect_bounce", description: "100% Bounciness", targetCount: 1, xpReward: 250)],
             steps: [
-                LessonStep(icon: "shield.slash.fill", title: "Place a Shield Generator.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Shield")),
+                LessonStep(icon: "shield.slash.fill", title: "Incoming projectiles detected. Shield systems offline...", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "hand.tap.fill", title: "Place a Shield Generator.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Shield")),
                 LessonStep(icon: "arrow.down", title: "Test asteroid absorbed damage. Change restitution to 1.0 for 100% reflection.", instruction: "", hint: "restitution: 1.0", showCodeEditor: true, goal: .modifyPhysics(target: "Shield", targetFriction: nil, targetMass: nil, targetRestitution: 1.0)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Asteroid deflected harmlessly. Sector secured.", instruction: "", hint: "", goal: .any)
             ],
@@ -405,7 +409,8 @@ class LessonManager {
             """,
             challenges: [Challenge(id: "modular_build", description: "Build Station", targetCount: 1, xpReward: 300)],
             steps: [
-                LessonStep(icon: "building.2.fill", title: "Construct the central cylinder core.", instruction: "", hint: "Shape: cylinder", showCodeEditor: true, goal: .buildOutpost(requiredParts: 1)),
+                LessonStep(icon: "building.2.fill", title: "Outpost blueprint loaded. Ready for construction.", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "hammer.fill", title: "Construct the central cylinder core.", instruction: "", hint: "Shape: cylinder", showCodeEditor: true, goal: .buildOutpost(requiredParts: 1)),
                 LessonStep(icon: "squareshape.fill", title: "Add two flat boxes for solar panels.", instruction: "", hint: "Scale flat", showCodeEditor: true, goal: .buildOutpost(requiredParts: 3)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Outpost Construction Complete.", instruction: "", hint: "", goal: .any)
             ],
@@ -432,22 +437,31 @@ class LessonManager {
             You have mastered the ARchitect Engine.
             """,
             codeSnippet: """
-            // Unlocked Engine Parameters
+            // ♾️ SANDBOX MODE — Edit & Tap to Spawn!
             let shape: String = "sphere"
             let color: Color = .cyan
-            let scaleX: Float = 1.0
+            let radius: Float = 0.1
             
+            // Scale (stretch your objects)
+            let scaleX: Float = 1.0
+            let scaleY: Float = 1.0
+            let scaleZ: Float = 1.0
+            
+            // Physics
             let mass: Float = 1.0
             let friction: Float = 0.5
             let restitution: Float = 0.5
             let gravity: Float = 9.8
             
+            // Forces & Orbits
             let forceZ: Float = 0.0
             let orbitRadius: Float = 0.0
+            let orbitSpeed: Float = 0.0
             """,
             challenges: [Challenge(id: "sandbox_master", description: "Creative Mode Unlocked", targetCount: 1, xpReward: 500)],
             steps: [
-                LessonStep(icon: "infinity", title: "Welcome to the Sandbox. Build anything.", instruction: "", hint: "Have fun", showCodeEditor: true, goal: .any)
+                LessonStep(icon: "sparkles", title: "Unlocking Creative Mode...", instruction: "", hint: "Tap next", goal: .none),
+                LessonStep(icon: "infinity", title: "Sandbox Mode Active. Build your own universe.", instruction: "Total freedom. No limits.", hint: "Tap screen to place", showCodeEditor: true, goal: .sandbox)
             ],
             codeEditorStartStep: 1,
             prerequisites: [

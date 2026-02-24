@@ -20,6 +20,7 @@ enum GoalType: Equatable {
     case modifyPhysics(target: String, targetFriction: Float?, targetMass: Float?, targetRestitution: Float?)
     case buildOutpost(requiredParts: Int)
     case any
+    case sandbox
 }
 
 // MARK: - Badges

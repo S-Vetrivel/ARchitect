@@ -83,7 +83,7 @@ struct ARViewContainer: UIViewRepresentable {
         // Virtual Studio
         var cameraRig: Entity?
         var virtualCamera: PerspectiveCamera?
-        var cameraPitch: Float = -0.3
+        var cameraPitch: Float = -0.35
         
         // Tutorial tracking
         var hasLookedAround = false
@@ -344,13 +344,19 @@ struct ARViewContainer: UIViewRepresentable {
             // Sky gradient — dark blue-black
             arView.environment.background = .color(UIColor(red: 0.02, green: 0.02, blue: 0.06, alpha: 1.0))
             
+            // Enable environment lighting for realistic reflections and ambient occlusion
+            if let envResource = try? EnvironmentResource.load(named: "default") {
+                arView.environment.lighting.resource = envResource
+            }
+            arView.environment.lighting.intensityExponent = 1.0
+            
             let anchor = AnchorEntity(world: .zero)
             arView.scene.addAnchor(anchor)
             
             // === Ground Floor (Large, Grid-like) ===
             let floorMesh = MeshResource.generatePlane(width: 50, depth: 50)
             var floorMat = SimpleMaterial(color: UIColor(red: 0.12, green: 0.12, blue: 0.15, alpha: 1.0), isMetallic: true)
-            floorMat.roughness = 0.3
+            floorMat.roughness = 0.6
             let floorEntity = ModelEntity(mesh: floorMesh, materials: [floorMat])
             floorEntity.name = "VirtualFloor"
             
@@ -435,14 +441,16 @@ struct ARViewContainer: UIViewRepresentable {
             
             // === Camera Rig ===
             let rig = Entity()
-            rig.position = [0, 0, 3]
+            rig.position = [0, 0, 5]
             anchor.addChild(rig)
             cameraRig = rig
             startPosition = rig.position
             
             let camera = PerspectiveCamera()
-            camera.camera.fieldOfViewInDegrees = 60
-            camera.position = [0, 1.5, 0]
+            camera.camera.fieldOfViewInDegrees = 50
+            camera.camera.near = 0.01
+            camera.camera.far = 200
+            camera.position = [0, 2.0, 0]
             camera.orientation = simd_quatf(angle: cameraPitch, axis: [1, 0, 0])
             rig.addChild(camera)
             virtualCamera = camera
@@ -635,14 +643,13 @@ struct ARViewContainer: UIViewRepresentable {
         /// Recursively find UserObject entities and apply gravity compensation
         private func applyGravityToEntity(_ entity: Entity, gravityDiff: Float) {
             if let model = entity as? ModelEntity,
-               model.name == "UserObject",
                let physics = model.components[PhysicsBodyComponent.self],
                physics.mode == .dynamic {
+                
                 let mass = physics.massProperties.mass
-                let compensatingForce = SIMD3<Float>(0, gravityDiff * mass, 0)
-                model.addForce(compensatingForce, relativeTo: nil)
+                let upwardForce = SIMD3<Float>(0, gravityDiff * mass, 0)
+                model.addForce(upwardForce, relativeTo: nil)
             }
-            
             for child in entity.children {
                 applyGravityToEntity(child, gravityDiff: gravityDiff)
             }
@@ -677,32 +684,19 @@ struct ARViewContainer: UIViewRepresentable {
                 gameManager.advanceTutorial()
                 
             case .placeEntity(let name):
-                if name == "Sun" {
-                    if let worldPos = getTapWorldPosition(location: location, in: arView) {
-                        let mesh = MeshResource.generateSphere(radius: 0.1)
-                        let mat = SimpleMaterial(color: .gray, isMetallic: false)
-                        let entity = ModelEntity(mesh: mesh, materials: [mat])
-                        entity.name = "Sun"
-                        entity.position = SIMD3<Float>(0, 0.1, 0) // Rest exactly on the floor relative to anchor
-                        let anchor = AnchorEntity(world: worldPos)
-                        anchor.addChild(entity)
-                        arView.scene.addAnchor(anchor)
-                        HapticsManager.shared.play(.medium)
-                        gameManager.advanceTutorial()
-                    }
-                } else if name == "Earth" {
-                    if let worldPos = getTapWorldPosition(location: location, in: arView) {
-                        let mesh = MeshResource.generateSphere(radius: 0.08)
-                        let mat = SimpleMaterial(color: .blue, isMetallic: false)
-                        let entity = ModelEntity(mesh: mesh, materials: [mat])
-                        entity.name = "Earth"
-                        entity.position = SIMD3<Float>(0, 0.08, 0)
-                        let anchor = AnchorEntity(world: worldPos)
-                        anchor.addChild(entity)
-                        arView.scene.addAnchor(anchor)
-                        HapticsManager.shared.play(.medium)
-                        gameManager.advanceTutorial()
-                    }
+                if let worldPos = getTapWorldPosition(location: location, in: arView) {
+                    spawnCosmicEntity(at: worldPos, name: name, in: arView)
+                    gameManager.advanceTutorial()
+                }
+                
+            case .buildOutpost(_):
+                if let worldPos = getTapWorldPosition(location: location, in: arView) {
+                    spawnCosmicEntity(at: worldPos, name: "Outpost Part", in: arView)
+                }
+                
+            case .sandbox:
+                if let worldPos = getTapWorldPosition(location: location, in: arView) {
+                    spawnCosmicEntity(at: worldPos, name: "UserObject", in: arView)
                 }
                 
             case .modifyProperty(_, _, _):
@@ -724,29 +718,61 @@ struct ARViewContainer: UIViewRepresentable {
         
         // MARK: - Helper: Generic Spawner (GoalType.placeCelestialBody)
         
-        private func spawnCosmicEntity(at position: SIMD3<Float>, in arView: ARView) {
+        private func spawnCosmicEntity(at position: SIMD3<Float>, name: String, in arView: ARView) {
             let anchor = AnchorEntity(world: position)
             arView.scene.addAnchor(anchor)
             
-            // Parse common parameters
-            let color = CodeParser.parseColor(from: gameManager.codeSnippet)
-            let radius = CodeParser.parseRadius(from: gameManager.codeSnippet, defaultValue: 0.1)
-            let mass = CodeParser.parseMass(from: gameManager.codeSnippet, defaultMass: 1.0)
-            let isMetallic = CodeParser.parseMetallic(from: gameManager.codeSnippet)
+            let code = gameManager.codeSnippet
+            let color = CodeParser.parseColor(from: code)
+            let radius = CodeParser.parseRadius(from: code, defaultValue: 0.1)
+            let mass = CodeParser.parseMass(from: code, defaultMass: 1.0)
+            let isMetallic = CodeParser.parseMetallic(from: code)
+            let scale = CodeParser.parseScale(from: code)
             
-            let shape = CodeParser.parseShape(from: gameManager.codeSnippet)
-            let isStar = (shape == "star" || color == .yellow || color == .orange)
+            let shapeName = CodeParser.parseShape(from: code).lowercased()
+            let isStar = (shapeName == "star" || color == .yellow || color == .orange)
             
-            // Visuals
-            let mesh = MeshResource.generateSphere(radius: radius)
+            // Generate Mesh based on Shape
+            let mesh: MeshResource
+            var verticalOffset: Float = radius // Default for sphere
+            
+            switch shapeName {
+            case "box":
+                // Standard box is 0.2 units per side, then scaled
+                mesh = MeshResource.generateBox(size: 0.2)
+                verticalOffset = 0.1 * scale.y
+            case "cylinder":
+                // Standard cylinder is 0.2 height, 0.1 radius (iOS 18+)
+                if #available(iOS 18.0, *) {
+                    mesh = MeshResource.generateCylinder(height: 0.2, radius: 0.1)
+                } else {
+                    // Fallback for older iOS versions
+                    mesh = MeshResource.generateBox(size: 0.2)
+                }
+                verticalOffset = 0.1 * scale.y
+            case "cone":
+                // Standard cone (iOS 18+)
+                if #available(iOS 18.0, *) {
+                    mesh = MeshResource.generateCone(height: 0.2, radius: 0.1)
+                } else {
+                    // Fallback for older iOS versions
+                    mesh = MeshResource.generateSphere(radius: 0.1)
+                }
+                verticalOffset = 0.1 * scale.y
+            default: // sphere or star
+                mesh = MeshResource.generateSphere(radius: radius)
+                verticalOffset = radius * scale.y
+            }
+            
             var mat = SimpleMaterial(color: color, isMetallic: isMetallic)
             if isStar {
-                // Stars glow, no metallic reflection
                 mat = SimpleMaterial(color: color, isMetallic: false)
             }
+            
             let entity = ModelEntity(mesh: mesh, materials: [mat])
-            entity.name = "CosmicEntity"
-            entity.position.y = radius // Rest on the floor
+            entity.name = name
+            entity.scale = scale
+            entity.position.y = verticalOffset // Rest on the floor
             
             if isStar {
                 let light = PointLight()
@@ -761,9 +787,9 @@ struct ARViewContainer: UIViewRepresentable {
             entity.components[PhysicsBodyComponent.self] = physics
             
             // Orbit (if applicable)
-            if let _ = gameManager.codeSnippet.range(of: "orbit") {
-                let orbitSpeed = CodeParser.parseOrbitSpeed(from: gameManager.codeSnippet)
-                let orbitRadius = CodeParser.parseOrbitRadius(from: gameManager.codeSnippet)
+            if let _ = code.range(of: "orbit") {
+                let orbitSpeed = CodeParser.parseOrbitSpeed(from: code)
+                let orbitRadius = CodeParser.parseOrbitRadius(from: code)
                 entity.components[OrbitComponent.self] = OrbitComponent(radius: orbitRadius, speed: orbitSpeed)
             }
             
@@ -789,9 +815,8 @@ struct ARViewContainer: UIViewRepresentable {
                 // Color parser maps "yellow" string to .yellow UIColor.
                 // It's a simplistic check for this specific lesson
                 if color == .yellow && radius >= minRadius {
-                    // Find the entity "Sun"
-                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
-                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                    // Find the entity recursively
+                    if let entity = findEntity(named: target, in: arView) {
                         
                         // Change material to Unlit yellow for Emissive look
                         entity.model?.materials = [UnlitMaterial(color: .yellow)]
@@ -823,9 +848,8 @@ struct ARViewContainer: UIViewRepresentable {
                 let posX = CodeParser.parsePositionX(from: code)
                 
                 if abs(posX - targetX) < 0.01 {
-                    // Find the target entity
-                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
-                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                    // Find the target entity recursively
+                    if let entity = findEntity(named: target, in: arView) {
                         
                         var transform = entity.transform
                         transform.translation = SIMD3<Float>(posX, entity.position.y, entity.position.z)
@@ -844,8 +868,7 @@ struct ARViewContainer: UIViewRepresentable {
                 let speed = CodeParser.parseOrbitSpeed(from: code)
                 
                 if abs(radius - targetRadius) < 0.01 && abs(speed - targetSpeed) < 0.01 {
-                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
-                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                    if let entity = findEntity(named: target, in: arView) {
                         
                         if var orbitComponent = entity.components[OrbitComponent.self] {
                             orbitComponent.radius = radius
@@ -869,8 +892,7 @@ struct ARViewContainer: UIViewRepresentable {
                 let speed = CodeParser.parseOrbitSpeed(from: code)
                 
                 if abs(radius - targetRadius) < 0.01 && abs(speed - targetSpeed) < 0.01 {
-                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == parent }) }),
-                       let parentEntity = anchor.children.first(where: { $0.name == parent }) as? ModelEntity {
+                    if let parentEntity = findEntity(named: parent, in: arView) {
                         
                         let mesh = MeshResource.generateSphere(radius: 0.05)
                         let mat = SimpleMaterial(color: .gray, isMetallic: false)
@@ -895,8 +917,8 @@ struct ARViewContainer: UIViewRepresentable {
                 let count = CodeParser.parseCount(from: code)
                 
                 if count >= minCount {
-                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
-                       let parentEntity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                    // Use recursive search to find the target entity anywhere in the scene
+                    if let parentEntity = findEntity(named: target, in: arView) {
                         
                         for _ in 0..<count {
                             let randomScale = Float.random(in: 0.02...0.06)
@@ -947,8 +969,7 @@ struct ARViewContainer: UIViewRepresentable {
                 let forceZ = CodeParser.parseFloat(from: code, keyword: "forceZ") ?? 0.0
                 
                 if abs(forceZ - requiredZ) < 0.01 {
-                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
-                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                    if let entity = findEntity(named: target, in: arView) {
                         
                         let force = SIMD3<Float>(0, 0, forceZ)
                         entity.applyLinearImpulse(force, relativeTo: nil)
@@ -971,8 +992,7 @@ struct ARViewContainer: UIViewRepresentable {
                 if let tr = targetRestitution, abs((restitution ?? -1) - tr) > 0.01 { success = false }
                 
                 if success {
-                    if let anchor = arView.scene.anchors.first(where: { $0.children.contains(where: { $0.name == target }) }),
-                       let entity = anchor.children.first(where: { $0.name == target }) as? ModelEntity {
+                    if let entity = findEntity(named: target, in: arView) {
                         
                         let safeFriction = friction ?? 0.5
                         let safeRestitution = restitution ?? 0.0
@@ -1005,6 +1025,15 @@ struct ARViewContainer: UIViewRepresentable {
                         self.gameManager.advanceTutorial()
                     }
                 }
+            } else if case .sandbox = currentGoal {
+                // Sandbox mode: Execute code and spawn/modify objects but never advance.
+                // Modifications are handled by applying properties to the found target or creating a generic object.
+                // For sandbox, we'll try to find any "UserObject" or the target specified in code.
+                _ = CodeParser.parseFloat(from: gameManager.codeSnippet, keyword: "target") == nil ? "UserObject" : "SpecifiedTarget"
+                // Actually, in sandbox, EXECUTE usually means "apply these global/local settings to the NEXT spawn" 
+                // or "modify the last touched object". Since our architecture is data-driven, 
+                // EXECUTE already updates the codeSnippet for the NEXT tap.
+                HapticsManager.shared.play(.light)
             }
         }
         
@@ -1022,6 +1051,28 @@ struct ARViewContainer: UIViewRepresentable {
                     if let result = arView.raycast(from: location, allowing: target, alignment: .horizontal).first {
                         return SIMD3<Float>(result.worldTransform.columns.3.x, result.worldTransform.columns.3.y + 0.5, result.worldTransform.columns.3.z)
                     }
+                }
+            }
+            return nil
+        }
+        
+        /// Recursively finds an entity by name anywhere in the scene graph
+        private func findEntity(named name: String, in arView: ARView) -> ModelEntity? {
+            for anchor in arView.scene.anchors {
+                if let found = findEntityRecursive(named: name, in: anchor) {
+                    return found
+                }
+            }
+            return nil
+        }
+        
+        private func findEntityRecursive(named name: String, in entity: Entity) -> ModelEntity? {
+            if entity.name == name, let model = entity as? ModelEntity {
+                return model
+            }
+            for child in entity.children {
+                if let found = findEntityRecursive(named: name, in: child) {
+                    return found
                 }
             }
             return nil

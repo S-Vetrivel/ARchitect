@@ -455,7 +455,7 @@ struct MissionSuccessBadge: View {
                 .foregroundColor(.white)
                 .symbolRenderingMode(.hierarchical)
             
-            Text("Tutorial Complete!")
+            Text("Level Complete!")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.white)

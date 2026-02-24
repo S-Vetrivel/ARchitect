@@ -27,7 +27,7 @@ class GameManager: ObservableObject {
     @Published var isTaskCompleted: Bool = false
     @Published var feedbackMessage: String = ""
     @Published var codeSnippet: String = ""
-    @Published var isSimulationMode: Bool = false
+    @Published var isSimulationMode: Bool = true
     @Published var viewRecreationId: Int = 0 // Forces ARView recreation on toggle
     
     // Tutorial/Lesson Step State
@@ -77,19 +77,19 @@ class GameManager: ObservableObject {
         return false
     }
     
-    /// Whether the code editor should be available (any step from codeEditorStartStep onward)
+    /// Whether the code editor should be available (any step from codeEditorStartStep onward, or if current step explicitly requires it)
     var isCodeEditorAvailable: Bool {
         guard let lesson = currentLesson else { return false }
-        return tutorialStep >= lesson.codeEditorStartStep
+        // Available if we're past the start step threshold
+        if tutorialStep >= lesson.codeEditorStartStep { return true }
+        // Also available if the current step explicitly requires it
+        if tutorialStep < lesson.steps.count && lesson.steps[tutorialStep].showCodeEditor { return true }
+        return false
     }
     
     private init() {
-        // Auto-detect Simulation Mode for non-AR devices
-        #if targetEnvironment(simulator) || targetEnvironment(macCatalyst)
+        // Always default to Simulation Mode for consistent POV
         isSimulationMode = true
-        #else
-        isSimulationMode = !ARWorldTrackingConfiguration.isSupported
-        #endif
     }
     
     func toggleSimulationMode() {
@@ -175,7 +175,7 @@ class GameManager: ObservableObject {
             // Handled explicitly by UI continuation or Tap gestures
             break
             
-        case .placeEntity, .modifyProperty, .modifyPosition, .modifyOrbit, .placeSatellite, .generateBelt, .modifyGravity, .applyForce, .modifyPhysics, .buildOutpost:
+        case .placeEntity, .modifyProperty, .modifyPosition, .modifyOrbit, .placeSatellite, .generateBelt, .modifyGravity, .applyForce, .modifyPhysics, .buildOutpost, .sandbox:
             // Handled by handleTap or evaluateConsoleExecution in ARViewContainer
             break
         }
