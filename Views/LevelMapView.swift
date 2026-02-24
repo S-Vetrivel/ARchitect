@@ -183,7 +183,7 @@ struct NebulaLevelNode: View {
                     .fill(activeColor.opacity(0.6))
                     .frame(width: 4, height: 16)
                 
-                Text("SYSTEM \(String(format: "%02d", lesson.id))")
+                Text("Level \(String(format: "%02d", lesson.id))")
                     .font(.custom("CourierNewPS-BoldMT", size: isLandscape ? 12 : 14))
                     .foregroundColor(activeColor)
                     .tracking(4)
@@ -196,8 +196,10 @@ struct NebulaLevelNode: View {
             .padding(.vertical, 6)
             .background(
                 Capsule()
-                    .strokeBorder(activeColor.opacity(0.3), lineWidth: 1)
+                    .strokeBorder(activeColor.opacity(0.4), lineWidth: 1.5)
+                    .background(activeColor.opacity(0.1))
             )
+            .shadow(color: activeColor.opacity(0.2), radius: 5)
             
             // The Star
             Button(action: {
@@ -224,7 +226,7 @@ struct NebulaLevelNode: View {
                             .rotationEffect(.degrees(ringRotation))
                         
                         // Tech Nodes on Ring
-                        Rectangle()
+                        Circle()
                             .fill(ringColor)
                             .frame(width: 8, height: 8)
                             .offset(x: ringSize / 2)
@@ -239,19 +241,19 @@ struct NebulaLevelNode: View {
                             .rotationEffect(.degrees(-ringRotation * 0.7))
                     }
                     
-                    // Nebula glow (large soft halo)
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [glowColor.opacity(0.4), glowColor.opacity(0.1), .clear],
-                                center: .center,
-                                startRadius: 10,
-                                endRadius: circleSize * 0.8
-                            )
-                        )
-                        .frame(width: circleSize + 80, height: circleSize + 80)
-                        .blur(radius: 20)
-                        .opacity(state == .locked ? 0.2 : 1)
+                    // Nebula glow (thick high-fidelity halo)
+                    ZStack {
+                        Circle()
+                            .fill(glowColor.opacity(0.35))
+                            .frame(width: circleSize * 1.6, height: circleSize * 1.6)
+                            .blur(radius: 40)
+                        
+                        Circle()
+                            .fill(glowColor.opacity(0.15))
+                            .frame(width: circleSize * 2.2, height: circleSize * 2.2)
+                            .blur(radius: 60)
+                    }
+                    .opacity(state == .locked ? 0.2 : 1)
                     
                     // Core star body
                     Circle()
@@ -285,19 +287,19 @@ struct NebulaLevelNode: View {
                     
                     // Icon overlay
                     if state == .completed {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: isLandscape ? 40 : 50, weight: .bold))
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: isLandscape ? 45 : 55, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(color: activeColor, radius: 10)
+                            .shadow(color: activeColor, radius: 15)
                     } else if state == .locked {
                         Image(systemName: "lock.fill")
                             .font(.system(size: isLandscape ? 30 : 40))
-                            .foregroundColor(.white.opacity(0.2))
+                            .foregroundColor(.white.opacity(0.25))
                     } else {
                         Text("\(lesson.id)")
-                            .font(.system(size: isLandscape ? 50 : 70, weight: .ultraLight, design: .default))
+                            .font(.system(size: isLandscape ? 55 : 75, weight: .black, design: .monospaced))
                             .foregroundColor(.white)
-                            .shadow(color: activeColor, radius: 10)
+                            .shadow(color: activeColor, radius: 12)
                     }
                 }
             }
@@ -307,29 +309,40 @@ struct NebulaLevelNode: View {
             // Title + Status
             VStack(spacing: 8) {
                 Text(lesson.title.uppercased())
-                    .font(.system(size: isLandscape ? 20 : 24, weight: .black, design: .rounded))
+                    .font(.system(size: isLandscape ? 22 : 28, weight: .black, design: .monospaced))
                     .multilineTextAlignment(.center)
                     .foregroundColor(state == .locked ? .white.opacity(0.3) : .white)
-                    .scaleEffect(x: 1.1, y: 1.0) // Slight stretch for sci-fi feel
+                    .tracking(2)
                     .lineLimit(2)
-                    .frame(maxWidth: 300)
-                    .shadow(color: state == .locked ? .clear : activeColor.opacity(0.5), radius: 8)
+                    .frame(maxWidth: 320)
+                    .shadow(color: state == .locked ? .clear : activeColor.opacity(0.6), radius: 12)
                 
                 if state == .current {
                     HStack(spacing: 8) {
                         Image(systemName: "play.fill").font(.system(size: 10))
-                        Text("INITIATE SEQUENCE")
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        Text("Start Challenge")
+                            .font(.system(size: 14, weight: .black, design: .monospaced))
+                            .tracking(2)
                     }
                     .foregroundColor(.black)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 10)
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 14)
                     .background(
-                        Capsule()
-                            .fill(activeColor)
-                            .shadow(color: activeColor.opacity(0.8), radius: 10)
+                        ZStack {
+                            Capsule()
+                                .fill(activeColor)
+                            
+                            // Glass shimmer overlay
+                            Capsule()
+                                .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
+                                .background(
+                                    LinearGradient(colors: [.white.opacity(0.3), .clear], startPoint: .top, endPoint: .bottom)
+                                )
+                                .blendMode(.overlay)
+                        }
                     )
-                    .padding(.top, 8)
+                    .shadow(color: activeColor.opacity(0.6), radius: 15, x: 0, y: 5)
+                    .padding(.top, 12)
                 } else if state == .completed {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.seal.fill").font(.system(size: 12))
@@ -367,25 +380,52 @@ struct NebulaLevelNode: View {
 // MARK: - Galaxy Header
 
 struct GalaxyHeader: View {
+    @ObservedObject var gameManager = GameManager.shared
     @Environment(\.verticalSizeClass) var verticalSizeClass
     var isLandscape: Bool { verticalSizeClass == .compact }
     
     var body: some View {
-        VStack(spacing: isLandscape ? 4 : 8) {
-            HStack {
-                Rectangle().frame(height: 1).opacity(0.3)
+        VStack(spacing: isLandscape ? 4 : 12) {
+            HStack(spacing: 20) {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("SECTOR")
+                        .font(.system(size: 8, weight: .bold, design: .monospaced))
+                        .foregroundColor(.cyan.opacity(0.5))
+                    Text("ALPHA-0\(gameManager.currentLessonIndex)")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(.cyan)
+                }
+                
+                Rectangle().frame(width: 1, height: 24).opacity(0.2)
+                
                 Text("STAR CHART")
-                    .font(.system(size: isLandscape ? 14 : 16, weight: .black, design: .monospaced))
+                    .font(.system(size: isLandscape ? 18 : 22, weight: .black, design: .monospaced))
                     .foregroundColor(.white)
-                    .tracking(6)
-                Rectangle().frame(height: 1).opacity(0.3)
+                    .tracking(8)
+                    .shadow(color: .cyan.opacity(0.5), radius: 10)
+                
+                Rectangle().frame(width: 1, height: 24).opacity(0.2)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("COORD")
+                        .font(.system(size: 8, weight: .bold, design: .monospaced))
+                        .foregroundColor(.cyan.opacity(0.5))
+                    Text("\(String(format: "%.2f", Double.random(in: 40...45)))°N")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(.cyan)
+                }
+            }
+            .padding(.horizontal, 20)
+            
+            HStack {
+                Rectangle().frame(height: 1).opacity(0.15)
+                Text("NEBULA ENGINE v2.5 // NAV-LINK ACTIVE")
+                    .font(.system(size: 8, weight: .black, design: .monospaced))
+                    .foregroundColor(.cyan.opacity(0.6))
+                    .tracking(2)
+                Rectangle().frame(height: 1).opacity(0.15)
             }
             .padding(.horizontal, 40)
-            
-            Text("Select Destination Coordinates")
-                .font(.system(size: isLandscape ? 9 : 10, weight: .medium, design: .monospaced))
-                .foregroundColor(.white.opacity(0.5))
-                .tracking(1)
         }
     }
 }
@@ -407,9 +447,14 @@ struct LevelIndicatorBar: View {
                 
                 Rectangle()
                     .fill(barColor(state: state, isCurrent: isCurrent, palette: palette))
-                    .frame(width: isCurrent ? 30 : 12, height: 4)
-                    .cornerRadius(2)
-                    .shadow(color: isCurrent ? barColor(state: state, isCurrent: true, palette: palette).opacity(0.8) : .clear, radius: 4)
+                    .frame(width: isCurrent ? 36 : 10, height: 6)
+                    .cornerRadius(3)
+                    .shadow(color: isCurrent ? barColor(state: state, isCurrent: true, palette: palette).opacity(0.9) : .clear, radius: 6)
+                    .overlay(
+                         isCurrent ? 
+                         Capsule().stroke(Color.white.opacity(0.5), lineWidth: 1) : 
+                         nil
+                    )
                     .animation(.spring(response: 0.3, dampingFraction: 0.6), value: current)
                     .onTapGesture {
                         if state != .locked {
@@ -451,7 +496,7 @@ struct GridBackground: View {
                     p.move(to: CGPoint(x: x, y: 0))
                     p.addLine(to: CGPoint(x: x, y: height))
                 }
-                context.stroke(path, with: .color(.cyan.opacity(0.3)), lineWidth: 0.5)
+                context.stroke(path, with: .color(.cyan.opacity(0.15)), lineWidth: 0.5)
             }
             
             // Horizontal lines
@@ -460,7 +505,15 @@ struct GridBackground: View {
                     p.move(to: CGPoint(x: 0, y: y))
                     p.addLine(to: CGPoint(x: width, y: y))
                 }
-                context.stroke(path, with: .color(.cyan.opacity(0.3)), lineWidth: 0.5)
+                context.stroke(path, with: .color(.cyan.opacity(0.15)), lineWidth: 0.5)
+            }
+            
+            // Subtle crosshairs at grid intersections
+            for x in stride(from: step, through: width - step, by: step * 2) {
+                for y in stride(from: step, through: height - step, by: step * 2) {
+                    let dot = Path(ellipseIn: CGRect(x: x - 1, y: y - 1, width: 2, height: 2))
+                    context.fill(dot, with: .color(.cyan.opacity(0.3)))
+                }
             }
         }
     }

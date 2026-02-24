@@ -162,7 +162,7 @@ class GameManager: ObservableObject {
     
     // Evaluate if the current AR scene satisfies the current step's goal
     func evaluateCurrentGoal(context: Any) {
-        guard let arView = context as? ARView,
+        guard let _ = context as? ARView,
               let lesson = currentLesson,
               tutorialStep < lesson.steps.count else { return }
         

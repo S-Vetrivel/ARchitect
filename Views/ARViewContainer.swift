@@ -197,6 +197,20 @@ struct ARViewContainer: UIViewRepresentable {
             case "box":
                 let size = prereq.radius * 2
                 mesh = MeshResource.generateBox(size: size)
+            case "cylinder":
+                if #available(iOS 18.0, *) {
+                    mesh = MeshResource.generateCylinder(height: prereq.radius * 2, radius: prereq.radius)
+                } else {
+                    mesh = MeshResource.generateBox(size: prereq.radius * 2)
+                }
+            case "cone":
+                if #available(iOS 18.0, *) {
+                    mesh = MeshResource.generateCone(height: prereq.radius * 2, radius: prereq.radius)
+                } else {
+                    mesh = MeshResource.generateSphere(radius: prereq.radius)
+                }
+            case "plane":
+                mesh = MeshResource.generatePlane(width: prereq.radius * 2, depth: prereq.radius * 2)
             default:
                 mesh = MeshResource.generateSphere(radius: prereq.radius)
             }
@@ -707,7 +721,7 @@ struct ARViewContainer: UIViewRepresentable {
                 // Handled via evaluateConsoleExecution when user runs code
                 break
                 
-            case .modifyOrbit(_, _, _), .placeSatellite(_, _, _, _), .generateBelt(_, _, _), .modifyGravity(_), .applyForce(_, _), .modifyPhysics(_, _, _, _), .buildOutpost(_):
+            case .modifyOrbit(_, _, _), .placeSatellite(_, _, _, _), .generateBelt(_, _, _), .modifyGravity(_), .applyForce(_, _), .modifyPhysics(_, _, _, _):
                 // Handled via evaluateConsoleExecution when user runs code
                 break
                 
@@ -738,27 +752,32 @@ struct ARViewContainer: UIViewRepresentable {
             
             switch shapeName {
             case "box":
-                // Standard box is 0.2 units per side, then scaled
-                mesh = MeshResource.generateBox(size: 0.2)
-                verticalOffset = 0.1 * scale.y
+                let w = CodeParser.parseWidth(from: code, defaultWidth: radius * 2)
+                let h = CodeParser.parseHeight(from: code, defaultHeight: radius * 2)
+                let d = CodeParser.parseDepth(from: code, defaultDepth: radius * 2)
+                mesh = MeshResource.generateBox(width: w, height: h, depth: d)
+                verticalOffset = (h / 2) * scale.y
             case "cylinder":
-                // Standard cylinder is 0.2 height, 0.1 radius (iOS 18+)
+                let h = CodeParser.parseHeight(from: code, defaultHeight: 0.2)
                 if #available(iOS 18.0, *) {
-                    mesh = MeshResource.generateCylinder(height: 0.2, radius: 0.1)
+                    mesh = MeshResource.generateCylinder(height: h, radius: radius)
                 } else {
-                    // Fallback for older iOS versions
-                    mesh = MeshResource.generateBox(size: 0.2)
+                    mesh = MeshResource.generateBox(size: radius * 2)
                 }
-                verticalOffset = 0.1 * scale.y
+                verticalOffset = (h / 2) * scale.y
             case "cone":
-                // Standard cone (iOS 18+)
+                let h = CodeParser.parseHeight(from: code, defaultHeight: 0.2)
                 if #available(iOS 18.0, *) {
-                    mesh = MeshResource.generateCone(height: 0.2, radius: 0.1)
+                    mesh = MeshResource.generateCone(height: h, radius: radius)
                 } else {
-                    // Fallback for older iOS versions
-                    mesh = MeshResource.generateSphere(radius: 0.1)
+                    mesh = MeshResource.generateSphere(radius: radius)
                 }
-                verticalOffset = 0.1 * scale.y
+                verticalOffset = (h / 2) * scale.y
+            case "plane":
+                let w = CodeParser.parseWidth(from: code, defaultWidth: 0.3)
+                let d = CodeParser.parseDepth(from: code, defaultDepth: 0.3)
+                mesh = MeshResource.generatePlane(width: w, depth: d)
+                verticalOffset = 0.001
             default: // sphere or star
                 mesh = MeshResource.generateSphere(radius: radius)
                 verticalOffset = radius * scale.y

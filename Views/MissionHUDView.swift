@@ -191,7 +191,7 @@ struct MissionHUDView: View {
                 Button(action: {
                     withAnimation { gameManager.advanceTutorial() }
                 }) {
-                    Text("INITIATE SEQUENCE")
+                    Text("Start Challenge")
                         .font(.system(size: 14, weight: .black, design: .monospaced))
                         .foregroundColor(.black)
                         .padding(.horizontal, 24)

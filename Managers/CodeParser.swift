@@ -62,7 +62,7 @@ struct CodeParser {
     
     static func parseShape(from code: String) -> String {
         let pattern = "(?i)shape[^\\.]*\\.\\s*([a-zA-Z]+)|(?i)shape[^=]*=\\s*\"?([a-zA-Z]+)\"?"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return "box" }
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return "sphere" }
         let nsString = code as NSString
         let results = regex.matches(in: code, options: [], range: NSRange(location: 0, length: nsString.length))
         if let match = results.first {
@@ -72,7 +72,7 @@ struct CodeParser {
                 return nsString.substring(with: match.range(at: 2)).lowercased()
             }
         }
-        return "box"
+        return "sphere"
     }
     
     static func parseForceX(from code: String, defaultValue: Float = 0.0) -> Float {

@@ -370,7 +370,7 @@ struct ModernCodeEditor: View {
                     HStack(spacing: 4) {
                         Image(systemName: "bolt.fill")
                             .font(.system(size: 10))
-                        Text("EXECUTE PROTOCOL")
+                        Text("Run Challenge")
                             .font(.system(size: 11, weight: .bold, design: .monospaced))
                     }
                     .padding(.horizontal, 10)

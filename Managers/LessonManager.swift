@@ -230,6 +230,7 @@ class LessonManager {
             - 🛸 Set to **0.0** for Anti-Gravity
             """,
             codeSnippet: """
+            let shape: String = "box"
             let gravity: Float = 9.8
             """,
             challenges: [Challenge(id: "gravity_mastery", description: "Zero Gravity", targetCount: 1, xpReward: 150)],
@@ -264,6 +265,7 @@ class LessonManager {
             - 🚀 Launch **Forward** (Negative Z is forward in ARKit)
             """,
             codeSnippet: """
+            let shape: String = "cone"
             let forceY: Float = 5.0
             let forceZ: Float = 0.0
             """,
@@ -299,6 +301,7 @@ class LessonManager {
             - ⛸️ Watch it **glide forever**
             """,
             codeSnippet: """
+            let shape: String = "box"
             let friction: Float = 1.0
             """,
             challenges: [Challenge(id: "frictionless_space", description: "Zero Friction", targetCount: 1, xpReward: 150)],
@@ -367,6 +370,7 @@ class LessonManager {
             - 💫 **Bounce** threats away without damage
             """,
             codeSnippet: """
+            let shape: String = "cylinder"
             let restitution: Float = 0.1
             """,
             challenges: [Challenge(id: "perfect_bounce", description: "100% Bounciness", targetCount: 1, xpReward: 250)],
@@ -438,9 +442,15 @@ class LessonManager {
             """,
             codeSnippet: """
             // ♾️ SANDBOX MODE — Edit & Tap to Spawn!
+            // Shapes: sphere, box, cylinder, cone, plane
             let shape: String = "sphere"
             let color: Color = .cyan
             let radius: Float = 0.1
+            
+            // Box dimensions (when shape = "box")
+            let width: Float = 0.2
+            let height: Float = 0.2
+            let depth: Float = 0.2
             
             // Scale (stretch your objects)
             let scaleX: Float = 1.0
