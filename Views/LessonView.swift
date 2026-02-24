@@ -160,13 +160,13 @@ struct LessonView: View {
                 .padding(.top, 40)
                 .padding(.horizontal, 24)
                 
+                Spacer()
+                
                 if gameManager.isTaskCompleted {
                     MissionSuccessBadge()
-                        .padding(.top, 20)
+                        .padding(.bottom, 40)
                         .transition(.scale.combined(with: .opacity))
                 }
-                
-                Spacer()
             }
             // ZIndex 2 ensures HUD is clickable
             .zIndex(2)
@@ -237,10 +237,10 @@ struct LessonView: View {
                 
                 Spacer()
                 
-                // Mission Badge
+                // Mission Badge — pinned to bottom
                 if gameManager.isTaskCompleted {
                     MissionSuccessBadge()
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 30)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
