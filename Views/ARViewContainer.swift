@@ -27,6 +27,11 @@ struct ARViewContainer: UIViewRepresentable {
             arView.session.delegate = context.coordinator // Set delegate
             arView.session.run(config)
             
+            // Spawn prerequisite entities from previous levels (AR mode)
+            if let lesson = gameManager.currentLesson {
+                context.coordinator.spawnPrerequisites(for: lesson, in: arView)
+            }
+            
             // Enable Occlusion and Physics for real-world Interaction
             arView.environment.sceneUnderstanding.options = []
             
@@ -104,6 +109,124 @@ struct ARViewContainer: UIViewRepresentable {
             focusSquare = ModelEntity(mesh: mesh, materials: [material])
             focusSquare?.name = "FocusSquare"
             focusSquare?.isEnabled = false
+        }
+        
+        // MARK: - Color Mapping
+        
+        private func colorFromString(_ name: String) -> UIColor {
+            switch name.lowercased() {
+            case "yellow":  return .yellow
+            case "blue":    return .blue
+            case "red":     return .red
+            case "green":   return .green
+            case "gray", "grey": return .gray
+            case "orange":  return .orange
+            case "cyan":    return .cyan
+            case "white":   return .white
+            case "brown":   return .brown
+            default:        return .lightGray
+            }
+        }
+        
+        // MARK: - Prerequisite World State Restoration
+        
+        func spawnPrerequisites(for lesson: Lesson, in arView: ARView) {
+            guard !lesson.prerequisites.isEmpty else { return }
+            
+            // Single shared anchor so orbits work relative to world origin
+            let anchor = AnchorEntity(world: .zero)
+            var spawnedEntities: [String: ModelEntity] = [:]
+            
+            // --- Pass 1: Spawn root entities (no parent, not a belt) ---
+            for prereq in lesson.prerequisites where prereq.parentName == nil && prereq.shape.lowercased() != "belt" {
+                let entity = createPrerequisiteEntity(from: prereq)
+                entity.position = SIMD3<Float>(prereq.positionX, prereq.radius, 0)
+                anchor.addChild(entity)
+                spawnedEntities[prereq.name] = entity
+            }
+            
+            // --- Pass 2: Spawn child entities (has parent, not a belt) ---
+            for prereq in lesson.prerequisites where prereq.parentName != nil && prereq.shape.lowercased() != "belt" {
+                if let parent = spawnedEntities[prereq.parentName!] {
+                    let entity = createPrerequisiteEntity(from: prereq)
+                    entity.position = .zero // orbit will position it
+                    parent.addChild(entity)
+                    spawnedEntities[prereq.name] = entity
+                }
+            }
+            
+            // --- Pass 3: Generate belts (shape == "belt") ---
+            for prereq in lesson.prerequisites where prereq.shape.lowercased() == "belt" {
+                let parentEntity: Entity? = prereq.parentName.flatMap { spawnedEntities[$0] } ?? anchor
+                let count = prereq.count ?? 20
+                let beltOrbitRadius = prereq.orbitRadius ?? 1.5
+                
+                let beltColors: [UIColor] = [.gray, .brown, .darkGray, .lightGray]
+                
+                for _ in 0..<count {
+                    let randomScale = Float.random(in: 0.02...0.06)
+                    let mesh = MeshResource.generateSphere(radius: randomScale)
+                    let mat = SimpleMaterial(color: beltColors.randomElement()!, isMetallic: false)
+                    
+                    let asteroid = ModelEntity(mesh: mesh, materials: [mat])
+                    asteroid.name = "Asteroid"
+                    
+                    let variance = Float.random(in: -0.15...0.15)
+                    let finalRadius = beltOrbitRadius + variance
+                    let speed = Float.random(in: 0.5...1.5)
+                    
+                    var orbit = OrbitComponent(radius: finalRadius, speed: speed)
+                    orbit.currentAngle = Float.random(in: 0...(2 * .pi))
+                    asteroid.components.set(orbit)
+                    
+                    asteroid.position.y = Float.random(in: -0.05...0.05)
+                    parentEntity?.addChild(asteroid)
+                }
+            }
+            
+            arView.scene.addAnchor(anchor)
+        }
+        
+        /// Creates a single ModelEntity from a PreRequisiteEntity definition
+        private func createPrerequisiteEntity(from prereq: PreRequisiteEntity) -> ModelEntity {
+            // Generate mesh
+            let mesh: MeshResource
+            switch prereq.shape.lowercased() {
+            case "sphere":
+                mesh = MeshResource.generateSphere(radius: prereq.radius)
+            case "box":
+                let size = prereq.radius * 2
+                mesh = MeshResource.generateBox(size: size)
+            default:
+                mesh = MeshResource.generateSphere(radius: prereq.radius)
+            }
+            
+            // Material — stars (yellow/orange) use UnlitMaterial for glow
+            let color = colorFromString(prereq.color)
+            let isStar = (prereq.color.lowercased() == "yellow" || prereq.color.lowercased() == "orange")
+            let materials: [any RealityKit.Material] = isStar
+                ? [UnlitMaterial(color: color)]
+                : [SimpleMaterial(color: color, isMetallic: false)]
+            
+            let entity = ModelEntity(mesh: mesh, materials: materials)
+            entity.name = prereq.name
+            
+            // Star glow light
+            if isStar {
+                let light = PointLight()
+                light.light.color = color
+                light.light.intensity = 5000
+                light.light.attenuationRadius = 10.0
+                entity.addChild(light)
+            }
+            
+            // Orbit
+            if let orbitRadius = prereq.orbitRadius, let orbitSpeed = prereq.orbitSpeed {
+                let orbit = OrbitComponent(radius: orbitRadius, speed: orbitSpeed)
+                entity.components.set(orbit)
+            }
+            
+            return entity
         }
         
         // MARK: - AR Session Delegate
@@ -208,6 +331,11 @@ struct ARViewContainer: UIViewRepresentable {
         
         func setupVirtualEnvironment(in arView: ARView) {
             setupLandWorld(in: arView)
+            
+            // Spawn prerequisite entities from previous levels
+            if let lesson = gameManager.currentLesson {
+                spawnPrerequisites(for: lesson, in: arView)
+            }
         }
         
         // MARK: - ️ Land World (Ground, Gravity, Sunlight)

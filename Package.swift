@@ -16,8 +16,8 @@ let package = Package(
         .iOSApplication(
             name: "ARchitect",
             targets: ["AppModule"],
-            bundleIdentifier: "V3.ARchitect",
-            teamIdentifier: "S749N6FFP2",
+            bundleIdentifier: "com.svetrivel.ARchitect",
+            teamIdentifier: "YWBN65B9JA",
             displayVersion: "1.0",
             bundleVersion: "1",
             appIcon: .placeholder(icon: .cloud),

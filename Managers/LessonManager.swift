@@ -18,6 +18,18 @@ struct LessonStep {
     }
 }
 
+struct PreRequisiteEntity: Codable {
+    let name: String
+    let shape: String        // "sphere", "box", "belt"
+    let color: String
+    let radius: Float
+    let positionX: Float
+    let orbitRadius: Float?
+    let orbitSpeed: Float?
+    let parentName: String?  // if set, entity is a child of the named entity
+    let count: Int?          // for procedural generation (belt); nil = 1 entity
+}
+
 struct Lesson: Identifiable {
     let id: Int
     let title: String
@@ -27,6 +39,7 @@ struct Lesson: Identifiable {
     let challenges: [Challenge]
     let steps: [LessonStep]
     let codeEditorStartStep: Int
+    let prerequisites: [PreRequisiteEntity]
 }
 
 @MainActor
@@ -62,7 +75,8 @@ class LessonManager {
                 LessonStep(icon: "hand.tap.fill", title: "Tap anywhere to spawn a protostar core.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Sun")),
                 LessonStep(icon: "terminal.fill", title: "Open console. Change color to .yellow and radius to 0.5.", instruction: "", hint: "Edit code", showCodeEditor: true, goal: .modifyProperty(target: "Sun", requiredColor: "yellow", minRadius: 0.4))
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 2,
+            prerequisites: []
         ),
         
         // MARK: - Level 2: Goldilocks Zone
@@ -92,7 +106,10 @@ class LessonManager {
                 LessonStep(icon: "hand.tap.fill", title: "Tap near the Star to spawn a planetary mass.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Earth")),
                 LessonStep(icon: "terminal.fill", title: "Warning: Planet is too close to the Star! Open console and set positionX to 0.8.", instruction: "", hint: "Edit code", showCodeEditor: true, goal: .modifyPosition(target: "Earth", targetX: 0.8))
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 2,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil)
+            ]
         ),
         
         // MARK: - Level 3: Orbital Mechanics
@@ -121,7 +138,11 @@ class LessonManager {
                 LessonStep(icon: "hare.fill", title: "Orbit is stable but slow. Increase orbitSpeed to 2.0.", instruction: "", hint: "Speed it up", showCodeEditor: true, goal: .modifyOrbit(target: "Earth", targetRadius: 0.8, targetSpeed: 2.0)),
                 LessonStep(icon: "checkmark.circle.fill", title: "System Clock Active. Years are passing in seconds.", instruction: "Time is relative.", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 1
+            codeEditorStartStep: 1,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil)
+            ]
         ),
         
         // MARK: - Level 4: Lunar Injection
@@ -152,7 +173,11 @@ class LessonManager {
                 LessonStep(icon: "terminal.fill", title: "Open console. Set orbitRadius to 0.2 and orbitSpeed to 3.0.", instruction: "", hint: "Run the code", showCodeEditor: true, goal: .placeSatellite(parent: "Earth", name: "Moon", targetRadius: 0.2, targetSpeed: 3.0)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Tidal forces stabilized. Surfing is now possible.", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 1
+            codeEditorStartStep: 1,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil)
+            ]
         ),
         
         // MARK: - Level 5: The Belt
@@ -181,7 +206,12 @@ class LessonManager {
                 LessonStep(icon: "loop", title: "Open console. Change count to 20 to generate the belt.", instruction: "", hint: "count: 20", showCodeEditor: true, goal: .generateBelt(target: "Sun", minCount: 20, targetRadius: 1.5)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Navigation is hazardous. Perfect defense system.", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 1
+            codeEditorStartStep: 1,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Moon", shape: "sphere", color: "gray", radius: 0.05, positionX: 0, orbitRadius: 0.2, orbitSpeed: 3.0, parentName: "Earth", count: nil)
+            ]
         ),
         
         // MARK: - Level 6: Singularity
@@ -208,7 +238,13 @@ class LessonManager {
                 LessonStep(icon: "exclamationmark.triangle.fill", title: "Warning: Deep space has no gravity. Open console and set gravity to 0.0.", instruction: "", hint: "gravity: 0.0", showCodeEditor: true, goal: .modifyGravity(targetGravity: 0.0)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Gravity deactivated. The probe floats gracefully...", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 2,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Moon", shape: "sphere", color: "gray", radius: 0.05, positionX: 0, orbitRadius: 0.2, orbitSpeed: 3.0, parentName: "Earth", count: nil),
+                PreRequisiteEntity(name: "Asteroid", shape: "belt", color: "gray", radius: 0.04, positionX: 0, orbitRadius: 1.5, orbitSpeed: 1.0, parentName: "Sun", count: 20)
+            ]
         ),
         
         // MARK: - Level 7: Warp Drive
@@ -236,7 +272,13 @@ class LessonManager {
                 LessonStep(icon: "flame.fill", title: "Console shows upward thrust (forceY). Change forceY to 0.0, and forceZ to -15.0.", instruction: "", hint: "forceZ: -15.0", showCodeEditor: true, goal: .applyForce(target: "Starship", requiredZ: -15.0)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Warp engaged. Trajectory confirmed.", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 2,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Moon", shape: "sphere", color: "gray", radius: 0.05, positionX: 0, orbitRadius: 0.2, orbitSpeed: 3.0, parentName: "Earth", count: nil),
+                PreRequisiteEntity(name: "Asteroid", shape: "belt", color: "gray", radius: 0.04, positionX: 0, orbitRadius: 1.5, orbitSpeed: 1.0, parentName: "Sun", count: 20)
+            ]
         ),
         
         // MARK: - Level 8: Vacuum Drift
@@ -263,7 +305,13 @@ class LessonManager {
                 LessonStep(icon: "stop.fill", title: "It stopped quickly due to friction. Change friction to 0.0 to simulate a vacuum.", instruction: "", hint: "friction: 0.0", showCodeEditor: true, goal: .modifyPhysics(target: "Crate", targetFriction: 0.0, targetMass: nil, targetRestitution: nil)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Friction systems offline. Eternal glide achieved.", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 2,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Moon", shape: "sphere", color: "gray", radius: 0.05, positionX: 0, orbitRadius: 0.2, orbitSpeed: 3.0, parentName: "Earth", count: nil),
+                PreRequisiteEntity(name: "Asteroid", shape: "belt", color: "gray", radius: 0.04, positionX: 0, orbitRadius: 1.5, orbitSpeed: 1.0, parentName: "Sun", count: 20)
+            ]
         ),
         
         // MARK: - Level 9: Kinetic Strike
@@ -291,7 +339,13 @@ class LessonManager {
                 LessonStep(icon: "burst.fill", title: "Standard mass is too light. Increase mass to 50.0.", instruction: "", hint: "mass: 50.0", showCodeEditor: true, goal: .modifyPhysics(target: "Meteor", targetFriction: nil, targetMass: 50.0, targetRestitution: nil)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Impact successful. Path cleared.", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 3
+            codeEditorStartStep: 3,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Moon", shape: "sphere", color: "gray", radius: 0.05, positionX: 0, orbitRadius: 0.2, orbitSpeed: 3.0, parentName: "Earth", count: nil),
+                PreRequisiteEntity(name: "Asteroid", shape: "belt", color: "gray", radius: 0.04, positionX: 0, orbitRadius: 1.5, orbitSpeed: 1.0, parentName: "Sun", count: 20)
+            ]
         ),
         
         // MARK: - Level 10: Deflector Shields
@@ -318,7 +372,13 @@ class LessonManager {
                 LessonStep(icon: "arrow.down", title: "Test asteroid absorbed damage. Change restitution to 1.0 for 100% reflection.", instruction: "", hint: "restitution: 1.0", showCodeEditor: true, goal: .modifyPhysics(target: "Shield", targetFriction: nil, targetMass: nil, targetRestitution: 1.0)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Asteroid deflected harmlessly. Sector secured.", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 2
+            codeEditorStartStep: 2,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Moon", shape: "sphere", color: "gray", radius: 0.05, positionX: 0, orbitRadius: 0.2, orbitSpeed: 3.0, parentName: "Earth", count: nil),
+                PreRequisiteEntity(name: "Asteroid", shape: "belt", color: "gray", radius: 0.04, positionX: 0, orbitRadius: 1.5, orbitSpeed: 1.0, parentName: "Sun", count: 20)
+            ]
         ),
         
         // MARK: - Level 11: Orbital Outpost
@@ -349,7 +409,13 @@ class LessonManager {
                 LessonStep(icon: "squareshape.fill", title: "Add two flat boxes for solar panels.", instruction: "", hint: "Scale flat", showCodeEditor: true, goal: .buildOutpost(requiredParts: 3)),
                 LessonStep(icon: "checkmark.circle.fill", title: "Outpost Construction Complete.", instruction: "", hint: "", goal: .any)
             ],
-            codeEditorStartStep: 1
+            codeEditorStartStep: 1,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Moon", shape: "sphere", color: "gray", radius: 0.05, positionX: 0, orbitRadius: 0.2, orbitSpeed: 3.0, parentName: "Earth", count: nil),
+                PreRequisiteEntity(name: "Asteroid", shape: "belt", color: "gray", radius: 0.04, positionX: 0, orbitRadius: 1.5, orbitSpeed: 1.0, parentName: "Sun", count: 20)
+            ]
         ),
         
         // MARK: - Level 12: Universe Sandbox
@@ -383,7 +449,13 @@ class LessonManager {
             steps: [
                 LessonStep(icon: "infinity", title: "Welcome to the Sandbox. Build anything.", instruction: "", hint: "Have fun", showCodeEditor: true, goal: .any)
             ],
-            codeEditorStartStep: 1
+            codeEditorStartStep: 1,
+            prerequisites: [
+                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil),
+                PreRequisiteEntity(name: "Moon", shape: "sphere", color: "gray", radius: 0.05, positionX: 0, orbitRadius: 0.2, orbitSpeed: 3.0, parentName: "Earth", count: nil),
+                PreRequisiteEntity(name: "Asteroid", shape: "belt", color: "gray", radius: 0.04, positionX: 0, orbitRadius: 1.5, orbitSpeed: 1.0, parentName: "Sun", count: 20)
+            ]
         )
     ]
     
