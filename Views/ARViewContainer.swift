@@ -703,9 +703,14 @@ struct ARViewContainer: UIViewRepresentable {
                     gameManager.advanceTutorial()
                 }
                 
-            case .buildOutpost(_):
+            case .buildOutpost(let required):
                 if let worldPos = getTapWorldPosition(location: location, in: arView) {
                     spawnCosmicEntity(at: worldPos, name: "Outpost Part", in: arView)
+                    
+                    // Auto-advance if goal met
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self.checkBuildOutpostGoal(requiredParts: required)
+                    }
                 }
                 
             case .sandbox:
@@ -1047,12 +1052,26 @@ struct ARViewContainer: UIViewRepresentable {
             } else if case .sandbox = currentGoal {
                 // Sandbox mode: Execute code and spawn/modify objects but never advance.
                 // Modifications are handled by applying properties to the found target or creating a generic object.
-                // For sandbox, we'll try to find any "UserObject" or the target specified in code.
                 _ = CodeParser.parseFloat(from: gameManager.codeSnippet, keyword: "target") == nil ? "UserObject" : "SpecifiedTarget"
-                // Actually, in sandbox, EXECUTE usually means "apply these global/local settings to the NEXT spawn" 
-                // or "modify the last touched object". Since our architecture is data-driven, 
-                // EXECUTE already updates the codeSnippet for the NEXT tap.
-                HapticsManager.shared.play(.light)
+            }
+        }
+        
+        /// Automated goal check for construction levels (Level 11)
+        private func checkBuildOutpostGoal(requiredParts: Int) {
+            guard let arView = arView else { return }
+            var outpostParts = 0
+            
+            for anchor in arView.scene.anchors {
+                for entity in anchor.children {
+                    // Check for either the explicit name or if it looks like a primitive part
+                    if entity.name == "Outpost Part" || entity.name.contains("ylinder") || entity.name.contains("ox") {
+                        outpostParts += 1
+                    }
+                }
+            }
+            
+            if outpostParts >= requiredParts {
+                gameManager.advanceTutorial()
             }
         }
         

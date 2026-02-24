@@ -410,6 +410,7 @@ class LessonManager {
             let scaleX: Float = 1.0
             let scaleY: Float = 3.0
             let scaleZ: Float = 1.0
+            let gravity: Float = 0.0
             """,
             challenges: [Challenge(id: "modular_build", description: "Build Station", targetCount: 1, xpReward: 300)],
             steps: [
