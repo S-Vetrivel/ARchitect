@@ -97,9 +97,6 @@ struct ContentView: View {
             // UI Overlay
             Group {
                 switch gameManager.appState {
-                case .onboarding:
-                    OnboardingView()
-                        .transition(.opacity)
                 case .welcome:
                     WelcomeView()
                         .transition(.asymmetric(

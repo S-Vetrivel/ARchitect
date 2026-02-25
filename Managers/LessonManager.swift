@@ -33,7 +33,6 @@ struct PreRequisiteEntity: Codable {
 struct Lesson: Identifiable {
     let id: Int
     let title: String
-    let category: String
     let instruction: String
     let conceptExplanation: String
     let codeSnippet: String
@@ -47,19 +46,12 @@ struct Lesson: Identifiable {
 class LessonManager {
     static let shared = LessonManager()
     
-    static let categories = ["Stellar Genesis", "Force & Motion", "Engineering", "Advanced Systems", "Mastery"]
-    
     let lessons: [Lesson] = [
-        
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // MARK: - ★ CATEGORY 1: STELLAR GENESIS (Levels 1–5)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         
         // MARK: - Level 1: Starbirth
         Lesson(
             id: 1,
             title: "Starbirth",
-            category: "Stellar Genesis",
             instruction: "Initialize a G-Type Main Sequence Star.",
             conceptExplanation: """
             **System Initialization**
@@ -91,7 +83,6 @@ class LessonManager {
         Lesson(
             id: 2,
             title: "Goldilocks Zone",
-            category: "Stellar Genesis",
             instruction: "Place a habitable planet at a safe distance.",
             conceptExplanation: """
             **Habitable Zone Calculation**
@@ -125,7 +116,6 @@ class LessonManager {
         Lesson(
             id: 3,
             title: "Orbital Mechanics",
-            category: "Stellar Genesis",
             instruction: "Set the planet in motion around the Star.",
             conceptExplanation: """
             **Kepler's Laws**
@@ -159,7 +149,6 @@ class LessonManager {
         Lesson(
             id: 4,
             title: "Lunar Injection",
-            category: "Stellar Genesis",
             instruction: "Create a Moon orbiting the Earth.",
             conceptExplanation: """
             **Satellite Deployment**
@@ -195,7 +184,6 @@ class LessonManager {
         Lesson(
             id: 5,
             title: "The Belt",
-            category: "Stellar Genesis",
             instruction: "Generate a field of debris.",
             conceptExplanation: """
             **Procedural Generation**
@@ -226,15 +214,10 @@ class LessonManager {
             ]
         ),
         
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // MARK: - ★ CATEGORY 2: FORCE & MOTION (Levels 6–10)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        
         // MARK: - Level 6: Singularity
         Lesson(
             id: 6,
             title: "Singularity",
-            category: "Force & Motion",
             instruction: "Controlling the fundamental forces of the universe.",
             conceptExplanation: """
             **Gravity Engine**
@@ -270,7 +253,6 @@ class LessonManager {
         Lesson(
             id: 7,
             title: "Warp Drive",
-            category: "Force & Motion",
             instruction: "Moving objects through a vacuum using thrust.",
             conceptExplanation: """
             **Linear Impulses**
@@ -307,7 +289,6 @@ class LessonManager {
         Lesson(
             id: 8,
             title: "Vacuum Drift",
-            category: "Force & Motion",
             instruction: "Understanding inertia in space.",
             conceptExplanation: """
             **Vacuum Physics**
@@ -343,7 +324,6 @@ class LessonManager {
         Lesson(
             id: 9,
             title: "Kinetic Strike",
-            category: "Force & Motion",
             instruction: "Using heavy mass to clear blockades.",
             conceptExplanation: """
             **Kinetic Impact**
@@ -378,7 +358,6 @@ class LessonManager {
         Lesson(
             id: 10,
             title: "Deflector Shields",
-            category: "Force & Motion",
             instruction: "Bounce projectiles away with shields.",
             conceptExplanation: """
             **Shield Generator**
@@ -410,15 +389,10 @@ class LessonManager {
             ]
         ),
         
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // MARK: - ★ CATEGORY 3: ENGINEERING (Levels 11–15)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        
         // MARK: - Level 11: Orbital Outpost
         Lesson(
             id: 11,
             title: "Orbital Outpost",
-            category: "Engineering",
             instruction: "Building a space station out of primitives.",
             conceptExplanation: """
             **Shape Composition**
@@ -454,352 +428,10 @@ class LessonManager {
             ]
         ),
         
-        // MARK: - Level 12: Red Dwarf
+        // MARK: - Level 12: Universe Sandbox
         Lesson(
             id: 12,
-            title: "Red Dwarf",
-            category: "Engineering",
-            instruction: "Create a compact red star.",
-            conceptExplanation: """
-            **Stellar Classification**
-            
-            Not all stars are yellow G-type.
-            Red Dwarfs are smaller and cooler, but far more common.
-            
-            Task:
-            - 🔴 Color: **.red**
-            - 📏 Radius: **0.2** (Compact)
-            - ⭐ Create a red star
-            """,
-            codeSnippet: """
-            let radius: Float = 0.1
-            let starColor: Color = .gray
-            """,
-            challenges: [Challenge(id: "red_dwarf", description: "Ignite Red Dwarf", targetCount: 1, xpReward: 200)],
-            steps: [
-                LessonStep(icon: "star.fill", title: "Scanning for low-mass stellar candidates...", instruction: "", hint: "Tap next", goal: .none),
-                LessonStep(icon: "hand.tap.fill", title: "Tap to spawn a protostellar core.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Red Star")),
-                LessonStep(icon: "terminal.fill", title: "Set color to .red and radius to 0.2 to form a Red Dwarf.", instruction: "", hint: "color: .red, radius: 0.2", showCodeEditor: true, goal: .modifyProperty(target: "Red Star", requiredColor: "red", minRadius: 0.15)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Red Dwarf ignited. It will burn for trillions of years.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 2,
-            prerequisites: []
-        ),
-        
-        // MARK: - Level 13: Twin Worlds
-        Lesson(
-            id: 13,
-            title: "Twin Worlds",
-            category: "Engineering",
-            instruction: "Position a second planet in the system.",
-            conceptExplanation: """
-            **Multi-Planet Systems**
-            
-            Most star systems have multiple planets.
-            Let's add Mars to our solar system.
-            
-            Task:
-            - 🔴 Create Mars
-            - 📍 Position: **x: 1.2** (Farther out)
-            - 🎨 Color: **.red** (Iron oxide surface)
-            """,
-            codeSnippet: """
-            let positionX: Float = 0.0
-            let positionY: Float = 0.0
-            let positionZ: Float = 0.0
-            """,
-            challenges: [Challenge(id: "twin_worlds", description: "Deploy Mars", targetCount: 1, xpReward: 250)],
-            steps: [
-                LessonStep(icon: "globe.americas", title: "Earth needs a neighbor. Scanning habitable zones...", instruction: "", hint: "Tap next", goal: .none),
-                LessonStep(icon: "hand.tap.fill", title: "Tap to spawn a planetary mass for Mars.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Mars")),
-                LessonStep(icon: "terminal.fill", title: "Mars is too close. Set positionX to 1.2 to establish proper spacing.", instruction: "", hint: "positionX: 1.2", showCodeEditor: true, goal: .modifyPosition(target: "Mars", targetX: 1.2)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Binary planetary system established. Stable configuration.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 2,
-            prerequisites: [
-                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
-                PreRequisiteEntity(name: "Earth", shape: "sphere", color: "blue", radius: 0.08, positionX: 0.8, orbitRadius: 0.8, orbitSpeed: 2.0, parentName: nil, count: nil)
-            ]
-        ),
-        
-        // MARK: - Level 14: Space Dock
-        Lesson(
-            id: 14,
-            title: "Space Dock",
-            category: "Engineering",
-            instruction: "Build a large orbital construction facility.",
-            conceptExplanation: """
-            **Modular Construction**
-            
-            Space stations are built module by module.
-            Build a larger facility with 4 parts.
-            
-            Task:
-            - 🏗️ Place **4** structural modules
-            - 🔧 Mix shapes: cylinders + boxes
-            - ⚖️ Zero gravity environment
-            """,
-            codeSnippet: """
-            let shape: String = "box"
-            let scaleX: Float = 2.0
-            let scaleY: Float = 1.0
-            let scaleZ: Float = 1.0
-            let gravity: Float = 0.0
-            """,
-            challenges: [Challenge(id: "space_dock", description: "Build Space Dock", targetCount: 1, xpReward: 300)],
-            steps: [
-                LessonStep(icon: "wrench.and.screwdriver", title: "Space Dock construction authorized. Zero-G environment.", instruction: "", hint: "Tap next", goal: .none),
-                LessonStep(icon: "hammer.fill", title: "Place the first hull segment.", instruction: "", hint: "Tap to place", showCodeEditor: true, goal: .buildOutpost(requiredParts: 1)),
-                LessonStep(icon: "square.grid.2x2", title: "Continue building. Place 3 more structural modules.", instruction: "", hint: "Place 3 more", showCodeEditor: true, goal: .buildOutpost(requiredParts: 4)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Space Dock operational. Ready for fleet deployment.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 1,
-            prerequisites: []
-        ),
-        
-        // MARK: - Level 15: Debris Sweep
-        Lesson(
-            id: 15,
-            title: "Debris Sweep",
-            category: "Engineering",
-            instruction: "Launch a cleanup probe to sweep debris.",
-            conceptExplanation: """
-            **Orbital Cleanup**
-            
-            Space junk is a real problem.
-            Launch a high-speed probe to push debris out of orbit.
-            
-            Task:
-            - 🚀 Apply **Force Z: -20.0** (Maximum thrust)
-            - 🧹 Clear the orbital lane
-            """,
-            codeSnippet: """
-            let shape: String = "cone"
-            let forceY: Float = 0.0
-            let forceZ: Float = 0.0
-            """,
-            challenges: [Challenge(id: "debris_sweep", description: "Launch Sweep Probe", targetCount: 1, xpReward: 300)],
-            steps: [
-                LessonStep(icon: "tornado", title: "Orbital debris critical. Initiating cleanup protocol.", instruction: "", hint: "Tap next", goal: .none),
-                LessonStep(icon: "hand.tap.fill", title: "Deploy the Sweep Probe.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Sweep Probe")),
-                LessonStep(icon: "flame.fill", title: "Maximum thrust needed. Set forceZ to -20.0.", instruction: "", hint: "forceZ: -20.0", showCodeEditor: true, goal: .applyForce(target: "Sweep Probe", requiredZ: -20.0)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Debris cleared. Orbital lane is safe.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 2,
-            prerequisites: [
-                PreRequisiteEntity(name: "Sun", shape: "sphere", color: "yellow", radius: 0.5, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil),
-                PreRequisiteEntity(name: "Asteroid", shape: "belt", color: "gray", radius: 0.04, positionX: 0, orbitRadius: 1.5, orbitSpeed: 1.0, parentName: "Sun", count: 10)
-            ]
-        ),
-        
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // MARK: - ★ CATEGORY 4: ADVANCED SYSTEMS (Levels 16–20)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        
-        // MARK: - Level 16: Featherfall
-        Lesson(
-            id: 16,
-            title: "Featherfall",
-            category: "Advanced Systems",
-            instruction: "Simulating lunar gravity.",
-            conceptExplanation: """
-            **Variable Gravity**
-            
-            The Moon's gravity is only **1.6 m/s²**.
-            Objects fall 6x slower than on Earth.
-            
-            Task:
-            - 🌑 Set gravity to **1.6** (Moon gravity)
-            - 🪶 Watch objects fall in slow motion
-            """,
-            codeSnippet: """
-            let shape: String = "sphere"
-            let gravity: Float = 9.8
-            """,
-            challenges: [Challenge(id: "lunar_gravity", description: "Moon Gravity", targetCount: 1, xpReward: 250)],
-            steps: [
-                LessonStep(icon: "moon.fill", title: "Entering lunar orbit. Adjusting gravity field...", instruction: "", hint: "Tap next", goal: .none),
-                LessonStep(icon: "hand.tap.fill", title: "Drop a test mass.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Lunar Probe")),
-                LessonStep(icon: "arrow.down", title: "Too fast! We're on the Moon. Set gravity to 1.6.", instruction: "", hint: "gravity: 1.6", showCodeEditor: true, goal: .modifyGravity(targetGravity: 1.6)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Lunar gravity active. Every step covers 6x the distance.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 2,
-            prerequisites: []
-        ),
-        
-        // MARK: - Level 17: Ring World
-        Lesson(
-            id: 17,
-            title: "Ring World",
-            category: "Advanced Systems",
-            instruction: "Create a planetary ring system.",
-            conceptExplanation: """
-            **Planetary Rings**
-            
-            Saturn has thousands of ice and rock particles in orbit.
-            Create a dense ring around a planet.
-            
-            Task:
-            - 💍 Generate **30** particles
-            - 📏 Orbit Radius: **0.3** (Close ring)
-            - 🪐 Ring around the planet
-            """,
-            codeSnippet: """
-            let count: Int = 0
-            let orbitRadius: Float = 0.3
-            """,
-            challenges: [Challenge(id: "ring_world", description: "Create Ring System", targetCount: 30, xpReward: 350)],
-            steps: [
-                LessonStep(icon: "circle.dashed", title: "Scanning for ring material... Ice and rock detected.", instruction: "", hint: "Tap next", goal: .none),
-                LessonStep(icon: "loop", title: "Set count to 30 to generate the planetary ring.", instruction: "", hint: "count: 30", showCodeEditor: true, goal: .generateBelt(target: "Saturn", minCount: 30, targetRadius: 0.3)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Magnificent! A complete ring system, just like Saturn.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 1,
-            prerequisites: [
-                PreRequisiteEntity(name: "Saturn", shape: "sphere", color: "orange", radius: 0.3, positionX: 0, orbitRadius: nil, orbitSpeed: nil, parentName: nil, count: nil)
-            ]
-        ),
-        
-        // MARK: - Level 18: Neutron Core
-        Lesson(
-            id: 18,
-            title: "Neutron Core",
-            category: "Advanced Systems",
-            instruction: "Create an ultra-dense stellar remnant.",
-            conceptExplanation: """
-            **Neutron Star Physics**
-            
-            When a massive star collapses, its core becomes incredibly dense.
-            A teaspoon of neutron star weighs as much as a mountain.
-            
-            Task:
-            - ⚛️ Set **Mass** to **100.0** (Ultra-dense)
-            - 📏 Keep it small (default radius)
-            """,
-            codeSnippet: """
-            let mass: Float = 1.0
-            """,
-            challenges: [Challenge(id: "neutron_core", description: "Create Neutron Core", targetCount: 1, xpReward: 300)],
-            steps: [
-                LessonStep(icon: "atom", title: "Stellar collapse detected. Core density increasing...", instruction: "", hint: "Tap next", goal: .none),
-                LessonStep(icon: "hand.tap.fill", title: "Spawn the collapsing stellar core.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Neutron")),
-                LessonStep(icon: "burst.fill", title: "More mass needed! Set mass to 100.0 for neutron density.", instruction: "", hint: "mass: 100.0", showCodeEditor: true, goal: .modifyPhysics(target: "Neutron", targetFriction: nil, targetMass: 100.0, targetRestitution: nil)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Neutron core stable. Gravitational lensing detected.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 2,
-            prerequisites: []
-        ),
-        
-        // MARK: - Level 19: Cosmic Pinball
-        Lesson(
-            id: 19,
-            title: "Cosmic Pinball",
-            category: "Advanced Systems",
-            instruction: "Perfect bounce with zero friction.",
-            conceptExplanation: """
-            **Elastic Collisions**
-            
-            Combine maximum bounce with zero friction.
-            Objects will ricochet forever in this environment.
-            
-            Task:
-            - 🏐 **Restitution: 1.0** (Perfect bounce)
-            - 🧊 **Friction: 0.0** (No drag)
-            """,
-            codeSnippet: """
-            let shape: String = "sphere"
-            let friction: Float = 0.5
-            let restitution: Float = 0.5
-            """,
-            challenges: [Challenge(id: "cosmic_pinball", description: "Cosmic Pinball", targetCount: 1, xpReward: 350)],
-            steps: [
-                LessonStep(icon: "circle.grid.cross", title: "Initializing pinball physics chamber...", instruction: "", hint: "Tap next", goal: .none),
-                LessonStep(icon: "hand.tap.fill", title: "Place a bouncing probe.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Pinball")),
-                LessonStep(icon: "sparkles", title: "Set restitution to 1.0 AND friction to 0.0. Eternal bounce!", instruction: "", hint: "restitution: 1.0, friction: 0.0", showCodeEditor: true, goal: .modifyPhysics(target: "Pinball", targetFriction: 0.0, targetMass: nil, targetRestitution: 1.0)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Perpetual motion achieved. Physics is beautiful.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 2,
-            prerequisites: []
-        ),
-        
-        // MARK: - Level 20: Fleet Deploy
-        Lesson(
-            id: 20,
-            title: "Fleet Deploy",
-            category: "Advanced Systems",
-            instruction: "Build a fleet of 5 ships.",
-            conceptExplanation: """
-            **Mass Production**
-            
-            One ship won't defend the system.
-            Construct a fleet of 5 vessels for the defense grid.
-            
-            Task:
-            - 🚀 Build **5** ship modules
-            - 🔧 Use any shape combination
-            - ⚖️ Zero gravity for orbital assembly
-            """,
-            codeSnippet: """
-            let shape: String = "cone"
-            let scaleX: Float = 1.0
-            let scaleY: Float = 2.0
-            let scaleZ: Float = 1.0
-            let gravity: Float = 0.0
-            """,
-            challenges: [Challenge(id: "fleet_deploy", description: "Deploy Fleet", targetCount: 5, xpReward: 400)],
-            steps: [
-                LessonStep(icon: "shield.fill", title: "Fleet authorization granted. Begin construction.", instruction: "", hint: "Tap next", goal: .none),
-                LessonStep(icon: "hammer.fill", title: "Build the first ship. Tap to place hull segments.", instruction: "", hint: "Tap to build", showCodeEditor: true, goal: .buildOutpost(requiredParts: 2)),
-                LessonStep(icon: "square.grid.3x3", title: "More ships needed! Deploy 3 more vessels.", instruction: "", hint: "Place 3 more", showCodeEditor: true, goal: .buildOutpost(requiredParts: 5)),
-                LessonStep(icon: "checkmark.circle.fill", title: "Fleet operational! The system is defended.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 1,
-            prerequisites: []
-        ),
-        
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // MARK: - ★ CATEGORY 5: MASTERY (Levels 21–22)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        
-        // MARK: - Level 21: Architect's Trial
-        Lesson(
-            id: 21,
-            title: "Architect's Trial",
-            category: "Mastery",
-            instruction: "Prove your mastery. Build a complete mini solar system.",
-            conceptExplanation: """
-            **Final Examination**
-            
-            Combine everything you've learned.
-            Build a star, place a planet, set its orbit, and add a moon.
-            
-            Task:
-            - ☀️ Create a Star
-            - 🌍 Place a Planet
-            - 🔄 Set planet orbit
-            - 🌑 Add a Moon
-            """,
-            codeSnippet: """
-            let radius: Float = 0.1
-            let starColor: Color = .gray
-            """,
-            challenges: [Challenge(id: "architects_trial", description: "Complete Trial", targetCount: 1, xpReward: 500)],
-            steps: [
-                LessonStep(icon: "crown.fill", title: "The Architect's Trial begins. Show us what you've learned.", instruction: "", hint: "Tap to begin", goal: .none),
-                LessonStep(icon: "sun.max.fill", title: "Step 1: Create a star. Tap to spawn.", instruction: "", hint: "Tap the screen", goal: .placeEntity(name: "Trial Star")),
-                LessonStep(icon: "terminal.fill", title: "Ignite the star. Set color to .yellow, radius to 0.3.", instruction: "", hint: "color: .yellow, radius: 0.3", showCodeEditor: true, goal: .modifyProperty(target: "Trial Star", requiredColor: "yellow", minRadius: 0.25)),
-                LessonStep(icon: "globe.americas.fill", title: "Step 2: Spawn a planet.", instruction: "", hint: "Tap to place", goal: .placeEntity(name: "Trial Planet")),
-                LessonStep(icon: "checkmark.circle.fill", title: "You are a true Cosmic Architect. The universe bows to you.", instruction: "", hint: "", goal: .any)
-            ],
-            codeEditorStartStep: 2,
-            prerequisites: []
-        ),
-        
-        // MARK: - Level 22: Universe Sandbox
-        Lesson(
-            id: 22,
             title: "Universe Sandbox",
-            category: "Mastery",
             instruction: "Total freedom.",
             conceptExplanation: """
             **Creative Mode**
@@ -854,9 +486,5 @@ class LessonManager {
     
     func getLesson(id: Int) -> Lesson? {
         return lessons.first { $0.id == id }
-    }
-    
-    func lessonsForCategory(_ category: String) -> [Lesson] {
-        return lessons.filter { $0.category == category }
     }
 }

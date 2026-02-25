@@ -4,10 +4,9 @@ import ARKit
 import RealityKit
 
 enum AppState: Equatable {
-    case onboarding
     case welcome
     case levelMap
-    case lesson(Int)
+    case lesson(Int) // 1 to 5
     case arExperience
 }
 
@@ -15,7 +14,6 @@ enum AppState: Equatable {
 class GameManager: ObservableObject {
     static let shared = GameManager()
     
-    @AppStorage("hasSeenOnboarding") var hasSeenOnboarding: Bool = false
     @Published var appState: AppState = .welcome
     @Published var currentLessonIndex: Int = 1
     
@@ -92,10 +90,6 @@ class GameManager: ObservableObject {
     private init() {
         // Always default to Simulation Mode for consistent POV
         isSimulationMode = true
-        // Show onboarding on first launch
-        if !hasSeenOnboarding {
-            appState = .onboarding
-        }
     }
     
     func toggleSimulationMode() {
@@ -154,14 +148,11 @@ class GameManager: ObservableObject {
             case 5: unlockBadge(id: "kessler_syndrome")
             case 6: unlockBadge(id: "gravity_master")
             case 10: unlockBadge(id: "shield_tactician")
-            case 15: unlockBadge(id: "engineer_elite")
-            case 20: unlockBadge(id: "systems_commander")
-            case 21: unlockBadge(id: "cosmic_architect")
             default: break
             }
             
-            // Check if all story levels are complete (1-21, sandbox excluded)
-            let allLessonIds = Array(1...21)
+            // Check if all 10 levels are complete
+            let allLessonIds = Array(1...10)
             let allComplete = allLessonIds.allSatisfy { isLessonCompleted(id: $0) }
             if allComplete {
                 unlockBadge(id: "completionist")
