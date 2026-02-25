@@ -6,8 +6,16 @@ struct LevelMapView: View {
     @ObservedObject var gameManager = GameManager.shared
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @State private var selectedPage: Int = 0
+    @State private var selectedCategory: String? = nil
     
     var isLandscape: Bool { verticalSizeClass == .compact }
+    
+    var filteredLessons: [Lesson] {
+        if let cat = selectedCategory {
+            return LessonManager.shared.lessonsForCategory(cat)
+        }
+        return LessonManager.shared.lessons
+    }
     
     var body: some View {
         ZStack {
@@ -63,19 +71,42 @@ struct LevelMapView: View {
                 // Header
                 GalaxyHeader()
                     .padding(.top, isLandscape ? 8 : 16)
-                    .padding(.bottom, isLandscape ? 4 : 8)
+                    .padding(.bottom, isLandscape ? 4 : 4)
+                
+                // Category Pills
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        CategoryPill(name: "All", isSelected: selectedCategory == nil) {
+                            withAnimation(.spring(response: 0.35)) {
+                                selectedCategory = nil
+                                selectedPage = filteredLessons.first?.id ?? 0
+                            }
+                        }
+                        ForEach(LessonManager.categories, id: \.self) { cat in
+                            CategoryPill(name: cat, isSelected: selectedCategory == cat) {
+                                withAnimation(.spring(response: 0.35)) {
+                                    selectedCategory = cat
+                                    selectedPage = filteredLessons.first?.id ?? 0
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+                .padding(.bottom, isLandscape ? 2 : 8)
                 
                 // Page indicator
                 LevelIndicatorBar(
-                    total: LessonManager.shared.lessons.count,
+                    total: filteredLessons.count,
                     current: $selectedPage,
+                    lessonIds: filteredLessons.map { $0.id },
                     getLessonState: { getLessonState(id: $0) }
                 )
-                .padding(.bottom, isLandscape ? 4 : 20)
+                .padding(.bottom, isLandscape ? 4 : 12)
                 
                 // Paging carousel
                 TabView(selection: $selectedPage) {
-                    ForEach(LessonManager.shared.lessons) { lesson in
+                    ForEach(filteredLessons) { lesson in
                         GeometryReader { geo in
                             let midX = geo.frame(in: .global).midX
                             let screenMidX = UIScreen.main.bounds.width / 2
@@ -143,6 +174,18 @@ struct StarPalette {
         case 8:  return StarPalette(core: Color(red: 0.1, green: 0.8, blue: 1.0),   glow: Color(red: 0.0, green: 0.5, blue: 0.8),   ring: Color(red: 0.2, green: 0.9, blue: 1.0))   // Cyan Dwarf
         case 9:  return StarPalette(core: Color(red: 1.0, green: 0.5, blue: 0.0),   glow: Color(red: 0.9, green: 0.3, blue: 0.0),   ring: Color(red: 1.0, green: 0.6, blue: 0.1))   // Solar Flare
         case 10: return StarPalette(core: Color(red: 0.8, green: 0.8, blue: 1.0),   glow: Color(red: 0.6, green: 0.6, blue: 0.9),   ring: Color(red: 0.9, green: 0.9, blue: 1.0))   // White Dwarf
+        case 11: return StarPalette(core: Color(red: 0.4, green: 0.7, blue: 0.3),   glow: Color(red: 0.3, green: 0.5, blue: 0.2),   ring: Color(red: 0.5, green: 0.8, blue: 0.4))   // Forest Station
+        case 12: return StarPalette(core: Color(red: 0.9, green: 0.1, blue: 0.1),   glow: Color(red: 0.7, green: 0.0, blue: 0.0),   ring: Color(red: 1.0, green: 0.2, blue: 0.2))   // Red Dwarf
+        case 13: return StarPalette(core: Color(red: 0.3, green: 0.3, blue: 0.9),   glow: Color(red: 0.2, green: 0.2, blue: 0.7),   ring: Color(red: 0.4, green: 0.4, blue: 1.0))   // Twin Blue
+        case 14: return StarPalette(core: Color(red: 0.7, green: 0.5, blue: 0.2),   glow: Color(red: 0.5, green: 0.3, blue: 0.1),   ring: Color(red: 0.8, green: 0.6, blue: 0.3))   // Bronze Dock
+        case 15: return StarPalette(core: Color(red: 0.9, green: 0.4, blue: 0.7),   glow: Color(red: 0.7, green: 0.2, blue: 0.5),   ring: Color(red: 1.0, green: 0.5, blue: 0.8))   // Magenta Sweep
+        case 16: return StarPalette(core: Color(red: 0.6, green: 0.9, blue: 1.0),   glow: Color(red: 0.4, green: 0.7, blue: 0.8),   ring: Color(red: 0.7, green: 1.0, blue: 1.0))   // Ice Moon
+        case 17: return StarPalette(core: Color(red: 0.9, green: 0.7, blue: 0.3),   glow: Color(red: 0.7, green: 0.5, blue: 0.2),   ring: Color(red: 1.0, green: 0.8, blue: 0.4))   // Saturn Gold
+        case 18: return StarPalette(core: Color(red: 0.5, green: 0.0, blue: 0.8),   glow: Color(red: 0.3, green: 0.0, blue: 0.6),   ring: Color(red: 0.6, green: 0.1, blue: 0.9))   // Deep Violet
+        case 19: return StarPalette(core: Color(red: 1.0, green: 0.3, blue: 0.0),   glow: Color(red: 0.8, green: 0.2, blue: 0.0),   ring: Color(red: 1.0, green: 0.4, blue: 0.1))   // Fireball
+        case 20: return StarPalette(core: Color(red: 0.0, green: 0.6, blue: 0.5),   glow: Color(red: 0.0, green: 0.4, blue: 0.3),   ring: Color(red: 0.1, green: 0.7, blue: 0.6))   // Fleet Teal
+        case 21: return StarPalette(core: Color(red: 1.0, green: 0.85, blue: 0.4),  glow: Color(red: 0.9, green: 0.7, blue: 0.2),   ring: Color(red: 1.0, green: 0.9, blue: 0.5))   // Crown Gold
+        case 22: return StarPalette(core: Color(red: 0.0, green: 1.0, blue: 1.0),   glow: Color(red: 0.0, green: 0.8, blue: 0.8),   ring: Color(red: 0.2, green: 1.0, blue: 1.0))   // Sandbox Cyan
         default: return StarPalette(core: Color(red: 0.5, green: 0.5, blue: 0.5),   glow: .gray,                                     ring: .gray)
         }
     }
@@ -434,13 +477,20 @@ struct GalaxyHeader: View {
 
 struct LevelIndicatorBar: View {
     let total: Int
+    let lessonIds: [Int]
     @Binding var current: Int
     let getLessonState: (Int) -> LessonNodeState
     
+    init(total: Int, current: Binding<Int>, lessonIds: [Int] = [], getLessonState: @escaping (Int) -> LessonNodeState) {
+        self.total = total
+        self._current = current
+        self.lessonIds = lessonIds.isEmpty ? Array(1...max(total, 1)) : lessonIds
+        self.getLessonState = getLessonState
+    }
+    
     var body: some View {
         HStack(spacing: 4) {
-            ForEach(0..<total, id: \.self) { i in
-                let lessonId = i + 1
+            ForEach(lessonIds, id: \.self) { lessonId in
                 let state = getLessonState(lessonId)
                 let isCurrent = lessonId == current
                 let palette = StarPalette.forLevel(lessonId)
@@ -527,5 +577,41 @@ struct StarButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .brightness(configuration.isPressed ? 0.2 : 0.0)
             .animation(.spring(response: 0.2, dampingFraction: 0.5), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Category Pill
+
+struct CategoryPill: View {
+    let name: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(name)
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundColor(isSelected ? .black : .white.opacity(0.6))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? Color.cyan : Color.white.opacity(0.08))
+                )
+                .overlay(
+                    Capsule()
+                        .strokeBorder(isSelected ? Color.cyan.opacity(0.8) : Color.white.opacity(0.15), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Safe Array Subscript
+
+extension Array {
+    subscript(safe index: Int) -> Element? {
+        guard index >= 0 && index < count else { return nil }
+        return self[index]
     }
 }
