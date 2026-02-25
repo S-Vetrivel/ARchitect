@@ -92,6 +92,7 @@ struct LevelMapView: View {
                         }
                     }
                     .padding(.horizontal, 20)
+                    .frame(maxWidth: .infinity)
                 }
                 .padding(.bottom, isLandscape ? 2 : 8)
                 
@@ -220,29 +221,19 @@ struct NebulaLevelNode: View {
     
     var body: some View {
         VStack(spacing: isLandscape ? 16 : 40) {
-            // Star system label
-            HStack(spacing: 8) {
-                UnevenRoundedRectangle(cornerRadii: .init(topLeading: 2, bottomLeading: 2, bottomTrailing: 0, topTrailing: 0))
-                    .fill(activeColor.opacity(0.6))
-                    .frame(width: 4, height: 16)
-                
-                Text("Level \(String(format: "%02d", lesson.id))")
-                    .font(.custom("CourierNewPS-BoldMT", size: isLandscape ? 12 : 14))
-                    .foregroundColor(activeColor)
-                    .tracking(4)
-                
-                UnevenRoundedRectangle(cornerRadii: .init(topLeading: 0, bottomLeading: 0, bottomTrailing: 2, topTrailing: 2))
-                    .fill(activeColor.opacity(0.6))
-                    .frame(width: 4, height: 16)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .strokeBorder(activeColor.opacity(0.4), lineWidth: 1.5)
-                    .background(activeColor.opacity(0.1))
-            )
-            .shadow(color: activeColor.opacity(0.2), radius: 5)
+            // Level badge
+            Text("Level \(lesson.id)")
+                .font(.system(size: isLandscape ? 12 : 14, weight: .bold, design: .monospaced))
+                .foregroundColor(activeColor)
+                .tracking(2)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .strokeBorder(activeColor.opacity(0.4), lineWidth: 1.5)
+                        .background(Capsule().fill(activeColor.opacity(0.1)))
+                )
+                .shadow(color: activeColor.opacity(0.2), radius: 5)
             
             // The Star
             Button(action: {
@@ -361,43 +352,54 @@ struct NebulaLevelNode: View {
                     .shadow(color: state == .locked ? .clear : activeColor.opacity(0.6), radius: 12)
                 
                 if state == .current {
-                    HStack(spacing: 8) {
-                        Image(systemName: "play.fill").font(.system(size: 10))
-                        Text("Start Challenge")
-                            .font(.system(size: 14, weight: .black, design: .monospaced))
-                            .tracking(2)
-                    }
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 14)
-                    .background(
-                        ZStack {
-                            Capsule()
-                                .fill(activeColor)
-                            
-                            // Glass shimmer overlay
-                            Capsule()
-                                .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
-                                .background(
-                                    LinearGradient(colors: [.white.opacity(0.3), .clear], startPoint: .top, endPoint: .bottom)
-                                )
-                                .blendMode(.overlay)
+                    Button(action: {
+                        HapticsManager.shared.selection()
+                        gameManager.startLesson(lesson.id)
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "play.fill").font(.system(size: 10))
+                            Text("Start Challenge")
+                                .font(.system(size: 14, weight: .black, design: .monospaced))
+                                .tracking(2)
                         }
-                    )
-                    .shadow(color: activeColor.opacity(0.6), radius: 15, x: 0, y: 5)
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 14)
+                        .background(
+                            ZStack {
+                                Capsule()
+                                    .fill(activeColor)
+                                
+                                Capsule()
+                                    .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
+                            }
+                        )
+                        .clipShape(Capsule())
+                        .shadow(color: activeColor.opacity(0.6), radius: 15, x: 0, y: 5)
+                    }
+                    .buttonStyle(.plain)
                     .padding(.top, 12)
                 } else if state == .completed {
-                    HStack(spacing: 6) {
-                        Image(systemName: "checkmark.seal.fill").font(.system(size: 12))
-                        Text("SECTOR CLEARED")
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    Button(action: {
+                        HapticsManager.shared.selection()
+                        gameManager.startLesson(lesson.id)
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill").font(.system(size: 12))
+                            Text("Completed")
+                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        }
+                        .foregroundColor(activeColor.opacity(0.8))
                     }
-                    .foregroundColor(activeColor.opacity(0.8))
+                    .buttonStyle(.plain)
                     .padding(.top, 8)
                 } else {
-                    Text("ACCESS DENIED")
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundColor(.red.opacity(0.4))
+                    HStack(spacing: 5) {
+                        Image(systemName: "lock.fill").font(.system(size: 9))
+                        Text("Locked")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    }
+                    .foregroundColor(.white.opacity(0.3))
                         .padding(.top, 8)
                 }
             }
@@ -428,47 +430,33 @@ struct GalaxyHeader: View {
     var isLandscape: Bool { verticalSizeClass == .compact }
     
     var body: some View {
-        VStack(spacing: isLandscape ? 4 : 12) {
-            HStack(spacing: 20) {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("SECTOR")
-                        .font(.system(size: 8, weight: .bold, design: .monospaced))
-                        .foregroundColor(.cyan.opacity(0.5))
-                    Text("ALPHA-0\(gameManager.currentLessonIndex)")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundColor(.cyan)
-                }
-                
-                Rectangle().frame(width: 1, height: 24).opacity(0.2)
-                
-                Text("STAR CHART")
-                    .font(.system(size: isLandscape ? 18 : 22, weight: .black, design: .monospaced))
-                    .foregroundColor(.white)
-                    .tracking(8)
-                    .shadow(color: .cyan.opacity(0.5), radius: 10)
-                
-                Rectangle().frame(width: 1, height: 24).opacity(0.2)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("COORD")
-                        .font(.system(size: 8, weight: .bold, design: .monospaced))
-                        .foregroundColor(.cyan.opacity(0.5))
-                    Text("\(String(format: "%.2f", Double.random(in: 40...45)))°N")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundColor(.cyan)
-                }
-            }
-            .padding(.horizontal, 20)
+        VStack(spacing: isLandscape ? 4 : 10) {
+            Text("Levels")
+                .font(.system(size: isLandscape ? 20 : 26, weight: .black, design: .monospaced))
+                .foregroundColor(.white)
+                .tracking(4)
             
-            HStack {
-                Rectangle().frame(height: 1).opacity(0.15)
-                Text("NEBULA ENGINE v2.5 // NAV-LINK ACTIVE")
-                    .font(.system(size: 8, weight: .black, design: .monospaced))
-                    .foregroundColor(.cyan.opacity(0.6))
-                    .tracking(2)
-                Rectangle().frame(height: 1).opacity(0.15)
+            HStack(spacing: 12) {
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(.cyan)
+                    Text("\(gameManager.completedLessonIds.count) / \(LessonManager.shared.lessons.count)")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundColor(.cyan.opacity(0.8))
+                }
+                
+                Circle().fill(Color.white.opacity(0.2)).frame(width: 3, height: 3)
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(.cyan)
+                    Text("\(gameManager.totalXP) XP")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundColor(.cyan.opacity(0.8))
+                }
             }
-            .padding(.horizontal, 40)
         }
     }
 }

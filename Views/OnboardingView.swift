@@ -7,6 +7,7 @@ struct OnboardingView: View {
     
     private let pages: [(icon: String, title: String, subtitle: String, detail: String)] = [
         ("sparkles", "Welcome, Architect", "You've been chosen to build\nthe next universe.", "Write code. Shape reality."),
+        ("camera.fill", "Use Your Camera", "Point your device at a flat surface.\nObjects appear in the real world.", "ARchitect uses Augmented Reality — your camera is your viewport."),
         ("hand.tap.fill", "Tap to Spawn", "Tap anywhere on the surface\nto place 3D objects.", "Stars, planets, ships — anything you can imagine."),
         ("terminal.fill", "Code to Control", "Open the console to edit\nphysics, colors, and behavior.", "Change radius, color, mass, orbit, gravity — all in code."),
         ("crown.fill", "Master the Stars", "Complete missions.\nEarn badges.\nUnlock Sandbox Mode.", "22 levels across 5 categories await you.")
