@@ -115,7 +115,7 @@ struct LevelMapView: View {
                             let maxDist: CGFloat = UIScreen.main.bounds.width * 0.6
                             let normalizedDist = min(distance / maxDist, 1.0)
                             let scale = 1.0 - (normalizedDist * 0.3)
-                            let blurAmount = normalizedDist * 3
+                            let blurAmount = normalizedDist * 0.6
                             
                             NebulaLevelNode(
                                 lesson: lesson,
@@ -123,7 +123,7 @@ struct LevelMapView: View {
                                 isLandscape: isLandscape
                             )
                             .scaleEffect(scale)
-                            .blur(radius: blurAmount)
+                            .opacity(1.0 - Double(blurAmount))
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                         .tag(lesson.id)
@@ -275,17 +275,18 @@ struct NebulaLevelNode: View {
                             .rotationEffect(.degrees(-ringRotation * 0.7))
                     }
                     
-                    // Nebula glow (thick high-fidelity halo)
+                    // Nebula glow (soft halo via gradient — no blur)
                     ZStack {
                         Circle()
-                            .fill(glowColor.opacity(0.35))
-                            .frame(width: circleSize * 1.4, height: circleSize * 1.4)
-                            .blur(radius: 20)
-                        
-                        Circle()
-                            .fill(glowColor.opacity(0.15))
+                            .fill(
+                                RadialGradient(
+                                    colors: [glowColor.opacity(0.4), glowColor.opacity(0.1), .clear],
+                                    center: .center,
+                                    startRadius: circleSize * 0.3,
+                                    endRadius: circleSize * 0.9
+                                )
+                            )
                             .frame(width: circleSize * 1.8, height: circleSize * 1.8)
-                            .blur(radius: 35)
                     }
                     .opacity(state == .locked ? 0.2 : 1)
                     
@@ -308,14 +309,19 @@ struct NebulaLevelNode: View {
                         .overlay(
                              Circle()
                                 .stroke(activeColor.opacity(0.5), lineWidth: 2)
-                                .blur(radius: 2)
                         )
                     
                     // Hard bright core
                     Circle()
-                        .fill(Color.white)
+                        .fill(
+                            RadialGradient(
+                                colors: [.white, .white.opacity(0.3), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: circleSize * 0.15
+                            )
+                        )
                         .frame(width: circleSize * 0.3, height: circleSize * 0.3)
-                        .blur(radius: circleSize * 0.05)
                         .opacity(state == .locked ? 0.1 : 0.9)
                         
                     
