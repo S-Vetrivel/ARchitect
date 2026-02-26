@@ -761,10 +761,10 @@ class LessonManager {
         // MARK: - ★ CATEGORY 5: MASTERY (Levels 21–22)
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         
-        // MARK: - Level 21: Architect's Trial
+        // MARK: - Level 21: Nebula's Trial
         Lesson(
             id: 21,
-            title: "Architect's Trial",
+            title: "Nebula's Trial",
             category: "Mastery",
             instruction: "Prove your mastery. Build a complete mini solar system.",
             conceptExplanation: """

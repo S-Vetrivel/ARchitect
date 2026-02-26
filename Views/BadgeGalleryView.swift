@@ -20,7 +20,7 @@ struct BadgeGalleryView: View {
             
             VStack {
                 HStack {
-                    Text("ARCHITECTURAL ACHIEVEMENTS")
+                    Text("MISSION ACHIEVEMENTS")
                         .font(.headline)
                         .foregroundColor(.white)
                         .kerning(2)

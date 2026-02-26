@@ -1,10 +1,10 @@
 import SwiftUI
 
 @main
-struct ARchitectApp: App {
+struct NebulaApp: App {
     
     init() {
-        print("ARchitect App Launched")
+        print("Nebula App Launched")
     }
     
     var body: some Scene {

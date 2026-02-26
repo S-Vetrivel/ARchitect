@@ -1,42 +1,72 @@
-# ARchitect Academy 🏗️📐
+# Nebula: Master the Physics of the Cosmos 🌌🚀
 
-**ARchitect Academy** is an interactive, level-based ARKit learning experience designed for Swift Playgrounds. Transition from a "Zero to Hero" AR Developer by building, designing, and understanding the core principles of Augmented Reality.
+**Nebula** is an immersive, interactive Augmented Reality experience designed for the Swift Student Challenge. It blends spatial computing with astrophysical education, allowing users to build, simulate, and understand the mechanics of the universe—from the birth of a star to the complex engineering of orbital outposts.
 
-## 🌟 Features
+---
 
-- **Architectural Aesthetic**: A professional blueprint-themed interface with high-tech grid visualizations.
-- **Interactive Curriculum**: 5 progressive lessons teaching core ARKit & RealityKit concepts.
-- **Real-time Code Snippets**: View the actual Swift code powering every AR interaction on-the-screen.
-- **Cinematic Transitions**: Seamless flow between technical learning and immersive AR experiences.
+## 🏗️ The Vision
+Understanding spatial relationships and physics in 3D can be challenging. **Nebula** bridges this gap by turning your physical environment into a celestial drafting table. Using a high-tech "Blueprint" aesthetic, users don't just watch simulations—they engineer them.
+
+## 🌟 Key Features
+
+- **Blueprint Hud Evolution**: A sleek, frosted-glass interface providing real-time orbital data and tactical overviews.
+- **Telemetry Console**: A live session editor that allows users to modify the AR environment's properties—like gravity, orbit speed, and material types—using Swift-like syntax.
+- **22 Progressive Missions**: A comprehensive curriculum spanning 5 distinct categories of spatial and physical mastery.
+- **Realistic Physics Engine**: Powered by RealityKit, featuring complex orbital mechanics, linear impulses, and collision dynamics.
+- **Haptic Immersion**: Integrated `CoreHaptics` provides tactile feedback for celestial events, enhancing the sense of presence.
+- **Cinematic Experience**: Smooth transitions and an evocative "Nebula" design system that makes learning feel like a sci-fi journey.
+
+---
 
 ## 🎓 The Curriculum
 
-### 1. Foundations
-Discover how ARKit detects the physical world. Learn to scan for horizontal planes and anchor virtual objects using `ARWorldTrackingConfiguration` and `AnchorEntity`.
+The experience is divided into five thematic categories, each introducing deeper concepts of AR and Physics:
 
-### 2. Interaction & Materials
-Master the art of selection. Use raycasting to detect virtual objects and manipulate their appearance using `SimpleMaterial`.
+### 1. Stellar Genesis (Levels 1–5)
+*Foundations of spatial anchoring and object instantiation.*
+- **Starbirth**: Initializing spatial anchors and G-type stars.
+- **Goldilocks Zone**: Calculating habitable distances.
+- **Orbital Mechanics**: Establishing stable gravitational paths.
 
-### 3. Physics & Gravity
-Bring weight to your world. Implement `PhysicsBodyComponent` and `CollisionComponent` to make objects react to gravity and surfaces.
+### 2. Force & Motion (Levels 6–10)
+*Advanced kinematics and energy states.*
+- **Singularity**: Managing high-mass gravitational wells.
+- **Kinetic Strike**: Implementing linear impulses and impact physics.
+- **Deflector Shields**: Collision detection and reactive boundaries.
 
-### 4. Forces & Dynamics
-Learn about motion and energy. Apply linear impulses to projectiles to create dynamic, interactive scenes.
+### 3. Engineering (Levels 11–15)
+*Complex structural assembly in 3D space.*
+- **Orbital Outpost**: Multi-component spatial parent-child hierarchies.
+- **Space Dock**: Precision snapping and alignment in AR.
+- **Debris Sweep**: Procedural object generation and cleanup.
 
-### 5. World Space UI
-Bridge the gap between 2D and 3D. Learn to generate `MeshResource` text and anchor it precisely in physical space.
+### 4. Advanced Systems (Levels 16–20)
+*Interpreting environmental data and complex simulations.*
+- **Neutron Core**: High-energy particle simulations.
+- **Fleet Deploy**: Managing large-scale entity systems.
+- **Ring Worlds**: Creating massive, procedurally animated structures.
 
-## 🛠️ Tech Stack
+### 5. Mastery (Levels 21–22)
+*The final trials of a Cosmic Architect.*
+- **Nebula's Trial**: A timed challenge combining all learned concepts.
+- **Universe Sandbox**: A free-form creative mode to build your own solar systems.
 
-- **SwiftUI**: Responsive overlay system and sleek transitions.
-- **RealityKit**: High-performance 3D rendering and physics engine.
-- **ARKit**: Advanced spatial awareness and plane detection.
+---
+
+## 🛠️ Technical Implementation
+
+- **RealityKit & ARKit**: Utilizes `ARWorldTrackingConfiguration` for world-scale tracking and `Entity` components for high-performance 3D rendering.
+- **SwiftUI**: A custom-built "Nebula" design system using `ultraThinMaterial` and advanced animations.
+- **Physics**: Leverages `PhysicsBodyComponent` and `CollisionComponent` for realistic interactions.
+- **Swift 6**: Built using the latest Swift features for safety and performance.
 
 ## 🚀 Getting Started
 
-1. Open `ARchitect.swiftpm` in **Swift Playgrounds** or **Xcode**.
-2. Tap **"INITIALIZE PROTOCOL"** on the welcome screen.
-3. Follow the guided instructions and explore the "Code Behind" to learn as you play.
+1. Open `Nebula.swiftpm` in **Swift Playgrounds 4.4+** or **Xcode 15+**.
+2. Run the project on an **AR-capable iPad or iPhone** (iPad Pro with LiDAR recommended for best experience).
+3. Tap **"LAUNCH MISSION"** to initialize the Nebula Protocol.
+4. Follow the HUD objectives to progress through the curriculum.
 
 ---
-Built with ❤️ for AR Developers.
+
+Built with ❤️ for the Swift Student Challenge by **Vetrivel**.

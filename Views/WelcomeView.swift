@@ -135,7 +135,7 @@ struct WelcomeView: View {
                         .opacity(showTitle ? 1 : 0)
                         .offset(y: showTitle ? 0 : 15)
                     
-                    Text("ARCHITECT  ACADEMY")
+                    Text("SPACE ACADEMY")
                         .font(.system(size: 13, weight: .semibold, design: .monospaced))
                         .foregroundColor(.nebulaCyan.opacity(0.7))
                         .tracking(6)

@@ -35,14 +35,14 @@ struct Badge: Identifiable, Codable, Equatable {
     static let allBadges: [Badge] = [
         Badge(id: "first_steps", name: "First Steps", description: "Complete the tutorial.", iconName: "shoeprints.fill", xpReward: 50),
         Badge(id: "star_forge", name: "Star Forge", description: "Ignite a new star.", iconName: "sparkles", xpReward: 100),
-        Badge(id: "orbital_architect", name: "Orbital Architect", description: "Master planetary motion.", iconName: "arrow.2.circlepath", xpReward: 150),
+        Badge(id: "orbital_architect", name: "Orbital Engineer", description: "Master planetary motion.", iconName: "arrow.2.circlepath", xpReward: 150),
         Badge(id: "kessler_syndrome", name: "Kessler Syndrome", description: "Create an asteroid belt.", iconName: "moon.stars.fill", xpReward: 200),
         Badge(id: "gravity_master", name: "Gravity Master", description: "Control the forces of gravity.", iconName: "arrow.down.to.line.alt", xpReward: 250),
         Badge(id: "shield_tactician", name: "Shield Tactician", description: "Deflect incoming threats.", iconName: "shield.fill", xpReward: 300),
         Badge(id: "engineer_elite", name: "Engineer Elite", description: "Complete all Engineering missions.", iconName: "wrench.and.screwdriver.fill", xpReward: 350),
         Badge(id: "systems_commander", name: "Systems Commander", description: "Master all Advanced Systems.", iconName: "star.circle.fill", xpReward: 400),
-        Badge(id: "cosmic_architect", name: "Cosmic Architect", description: "Pass the Architect's Trial.", iconName: "crown.fill", xpReward: 450),
-        Badge(id: "completionist", name: "Cosmic ARchitect", description: "Complete the cosmic curriculum.", iconName: "checkmark.seal.fill", xpReward: 500)
+        Badge(id: "cosmic_architect", name: "Cosmic Master", description: "Pass Nebula's Trial.", iconName: "crown.fill", xpReward: 450),
+        Badge(id: "completionist", name: "Nebula Master", description: "Complete the cosmic curriculum.", iconName: "checkmark.seal.fill", xpReward: 500)
     ]
 }
 

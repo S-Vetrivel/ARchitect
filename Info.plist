@@ -3,6 +3,6 @@
 <plist version="1.0">
 <dict>
     <key>NSCameraUsageDescription</key>
-    <string>ARchitect needs camera access to display AR content.</string>
+    <string>Nebula needs camera access to display AR content.</string>
 </dict>
 </plist>
