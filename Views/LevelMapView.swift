@@ -115,7 +115,7 @@ struct LevelMapView: View {
                             let maxDist: CGFloat = UIScreen.main.bounds.width * 0.6
                             let normalizedDist = min(distance / maxDist, 1.0)
                             let scale = 1.0 - (normalizedDist * 0.3)
-                            let blurAmount = normalizedDist * 8
+                            let blurAmount = normalizedDist * 3
                             
                             NebulaLevelNode(
                                 lesson: lesson,
@@ -279,13 +279,13 @@ struct NebulaLevelNode: View {
                     ZStack {
                         Circle()
                             .fill(glowColor.opacity(0.35))
-                            .frame(width: circleSize * 1.6, height: circleSize * 1.6)
-                            .blur(radius: 40)
+                            .frame(width: circleSize * 1.4, height: circleSize * 1.4)
+                            .blur(radius: 20)
                         
                         Circle()
                             .fill(glowColor.opacity(0.15))
-                            .frame(width: circleSize * 2.2, height: circleSize * 2.2)
-                            .blur(radius: 60)
+                            .frame(width: circleSize * 1.8, height: circleSize * 1.8)
+                            .blur(radius: 35)
                     }
                     .opacity(state == .locked ? 0.2 : 1)
                     
@@ -308,14 +308,14 @@ struct NebulaLevelNode: View {
                         .overlay(
                              Circle()
                                 .stroke(activeColor.opacity(0.5), lineWidth: 2)
-                                .blur(radius: 4)
+                                .blur(radius: 2)
                         )
                     
                     // Hard bright core
                     Circle()
                         .fill(Color.white)
                         .frame(width: circleSize * 0.3, height: circleSize * 0.3)
-                        .blur(radius: circleSize * 0.1)
+                        .blur(radius: circleSize * 0.05)
                         .opacity(state == .locked ? 0.1 : 0.9)
                         
                     
